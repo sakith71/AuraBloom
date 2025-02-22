@@ -1,6 +1,6 @@
 import '../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
-import 'PeriodLoggingScreen.dart';
+import 'cycle-length-screen.dart';
 class AdditionalSymptomsScreen extends StatefulWidget {
   const AdditionalSymptomsScreen({super.key});
 
@@ -25,7 +25,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const PeriodLoggingScreen(),
+        builder: (context) => const CycleLengthScreen(),
       ),
     );
   }
