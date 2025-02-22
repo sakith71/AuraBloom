@@ -1,114 +1,59 @@
 import '../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
-import 'additional-symptoms-screen.dart';
 
-class MenstrualSymptomsScreen extends StatefulWidget {
-  const MenstrualSymptomsScreen({super.key});
+class AdditionalSymptomsScreen extends StatefulWidget {
+  const AdditionalSymptomsScreen({super.key});
 
   @override
-  State<MenstrualSymptomsScreen> createState() => _MenstrualSymptomsScreenState();
+  State<AdditionalSymptomsScreen> createState() => _AdditionalSymptomsScreenState();
 }
 
-class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
-  int _currentPageIndex = 0;
-  String? _regularityAnswer;
-  String? _crampsAnswer;
-  String? _daysAnswer;
-
-  final List<Map<String, dynamic>> _questions = [
-    {
-      'question': 'Are your periods regular?',
-      'options': ['Yes', 'No', "I don't know"],
-      'answer': null,
-    },
-    {
-      'question': 'Do you experience menstrual pain (cramps) during your period?',
-      'options': ['Yes, every cycle', 'Sometimes', 'Rarely', 'No'],
-      'answer': null,
-    },
-    {
-      'question': 'How many days per cycle do you experience symptoms?',
-      'options': ['1-3 days', '3-5 days', '6 or more days'],
-      'answer': null,
-    },
+class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
+  final List<Map<String, dynamic>> _symptoms = [
+    {'name': 'Headaches', 'isSelected': false},
+    {'name': 'Mood changes', 'isSelected': false},
+    {'name': 'Bloating', 'isSelected': false},
+    {'name': 'Back Pain', 'isSelected': false},
+    {'name': 'Nausea', 'isSelected': false},
+    {'name': 'Fatigue', 'isSelected': false},
+    {'name': 'Diarrhea', 'isSelected': false},
   ];
 
-  String? _getCurrentAnswer() {
-    switch (_currentPageIndex) {
-      case 0:
-        return _regularityAnswer;
-      case 1:
-        return _crampsAnswer;
-      case 2:
-        return _daysAnswer;
-      default:
-        return null;
-    }
-  }
-
-  void _setCurrentAnswer(String? value) {
-    setState(() {
-      switch (_currentPageIndex) {
-        case 0:
-          _regularityAnswer = value;
-          break;
-        case 1:
-          _crampsAnswer = value;
-          break;
-        case 2:
-          _daysAnswer = value;
-          break;
-      }
-    });
-  }
+  bool get hasSelectedSymptoms => _symptoms.any((symptom) => symptom['isSelected']);
 
   void _handleNext() {
-    if (_currentPageIndex < _questions.length - 1) {
-      setState(() {
-        _currentPageIndex++;
-      });
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const AdditionalSymptomsScreen(),
-        ),
-      );
-    }
   }
 
   void _handlePrevious() {
-    if (_currentPageIndex > 0) {
-      setState(() {
-        _currentPageIndex--;
-      });
-    } else {
-      Navigator.pop(context);
-    }
+    Navigator.pop(context);
   }
 
-  Widget _buildOption(String option, bool isSelected) {
+  Widget _buildSymptomOption(Map<String, dynamic> symptom) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: InkWell(
-        onTap: () => _setCurrentAnswer(option),
+        onTap: () {
+          setState(() {
+            symptom['isSelected'] = !symptom['isSelected'];
+          });
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 15,
           ),
           decoration: BoxDecoration(
-            color: isSelected 
+            color: symptom['isSelected']
                 ? const Color(0xFFE1F5FE)
                 : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
+              color: symptom['isSelected']
                   ? Colors.blue
                   : Colors.grey.shade300,
               width: 2,
             ),
-            boxShadow: isSelected
+            boxShadow: symptom['isSelected']
                 ? [
                     BoxShadow(
                       color: Colors.blue.withOpacity(0.1),
@@ -123,19 +68,19 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  option,
+                  symptom['name'],
                   style: TextStyle(
                     fontSize: 16,
-                    color: isSelected
+                    color: symptom['isSelected']
                         ? Colors.blue.shade700
                         : Colors.black87,
-                    fontWeight: isSelected
+                    fontWeight: symptom['isSelected']
                         ? FontWeight.w600
                         : FontWeight.normal,
                   ),
                 ),
               ),
-              if (isSelected)
+              if (symptom['isSelected'])
                 Icon(
                   Icons.check_circle,
                   color: Colors.blue.shade700,
@@ -168,9 +113,9 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 40),
-                Text(
-                  _questions[_currentPageIndex]['question'],
-                  style: const TextStyle(
+                const Text(
+                  'What additional symptoms do you\nexperience during menstruation?',
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
@@ -178,11 +123,9 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                 const SizedBox(height: 30),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: _questions[_currentPageIndex]['options'].length,
+                    itemCount: _symptoms.length,
                     itemBuilder: (context, index) {
-                      final option = _questions[_currentPageIndex]['options'][index];
-                      final isSelected = _getCurrentAnswer() == option;
-                      return _buildOption(option, isSelected);
+                      return _buildSymptomOption(_symptoms[index]);
                     },
                   ),
                 ),
@@ -190,7 +133,8 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                 NavigationButtonRow(
                   onPrevious: _handlePrevious,
                   onNext: _handleNext,
-                  isNextEnabled: _getCurrentAnswer() != null,
+                  // Since this screen doesn't require selection, we can always enable the next button
+                  isNextEnabled: true,
                 ),
               ],
             ),
