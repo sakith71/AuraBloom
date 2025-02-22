@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/validates.dart'; // Ensure Validators is imported
+import '../utils/validators.dart';
 import 'reset-password-dialog.dart';
 
 class ForgotPasswordDialog extends StatelessWidget {

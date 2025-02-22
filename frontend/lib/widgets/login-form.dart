@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../utils/validates.dart';
+import '../utils/validators.dart';
 import 'forgot-password-dialog.dart';
-// import '../screens/signup-screen.dart';
+import '../screens/signup-screen.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -135,10 +135,10 @@ class _LoginFormState extends State<LoginForm> {
               style: TextStyle(color: Colors.black45)),
           TextButton(
             onPressed: () {
-              // Navigator.push(
-                // context,
-                // MaterialPageRoute(builder: (context) => const SignUpScreen()),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SignUpScreen()),
+              );
             },
             child: const Text(
               'Sign up',
