@@ -3,7 +3,7 @@ import '../widgets/custom-text-field.dart';
 import '../utils/validators.dart';
 import '../widgets/personal-info-illustration.dart';
 import '../widgets/navigation-buttons.dart';
-// import 'menstrual-symptoms-screen.dart';
+import 'menstrual-symptoms-screen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -32,12 +32,12 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   void _handleNext() {
     if (_formKey.currentState!.validate()) {
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(
-      //     builder: (context) => const MenstrualSymptomsScreen(),
-      //   ),
-      // );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const MenstrualSymptomsScreen(),
+        ),
+      );
     }
   }
 
