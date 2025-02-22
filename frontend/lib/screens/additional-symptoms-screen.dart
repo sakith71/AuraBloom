@@ -1,6 +1,6 @@
 import '../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
-
+import 'PeriodLoggingScreen.dart';
 class AdditionalSymptomsScreen extends StatefulWidget {
   const AdditionalSymptomsScreen({super.key});
 
@@ -22,6 +22,12 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
   bool get hasSelectedSymptoms => _symptoms.any((symptom) => symptom['isSelected']);
 
   void _handleNext() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PeriodLoggingScreen(),
+      ),
+    );
   }
 
   void _handlePrevious() {
