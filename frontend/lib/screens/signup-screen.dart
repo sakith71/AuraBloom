@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom_text_field.dart';
+import '../widgets/custom-text-field.dart';
 import '../widgets/signup-illustration.dart';
 import '../widgets/signup-button.dart';
 import '../utils/validators.dart';
-// import 'personal_info_screen.dart';
+import 'personal-info-screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -31,10 +31,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _handleSignUp() {
     if (_formKey.currentState!.validate()) {
       // Navigate to Personal Information Screen
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => const PersonalInfoScreen()),
-      // );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PersonalInfoScreen()),
+      );
     }
   }
 
