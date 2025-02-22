@@ -1,39 +1,39 @@
 import 'package:flutter/material.dart';
 import '../widgets/navigation-buttons.dart';
-import 'period-length-screen.dart';
+import 'period-logging-screen.dart';
 
-class CycleLengthScreen extends StatefulWidget {
-  const CycleLengthScreen({super.key});
+class PeriodLengthScreen extends StatefulWidget {
+  const PeriodLengthScreen({super.key});
 
   @override
-  State<CycleLengthScreen> createState() => _CycleLengthScreenState();
+  State<PeriodLengthScreen> createState() => _PeriodLengthScreenState();
 }
 
-class _CycleLengthScreenState extends State<CycleLengthScreen> {
-  int selectedLength = 28; // Default selected value
-  final List<int> cycleLengths = List.generate(
-    21,
-    (index) => index + 20,
-  ); // 20 to 40 days
+class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
+  int? selectedLength; // Allow null for "I don't know"
+  final List<int> periodLengths = List.generate(15, (index) => index + 1); // 1 to 11 days
 
   void _handleNext() {
-    // Ensure a cycle length is selected
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PeriodLengthScreen()),
-    );
+    if (selectedLength != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PeriodLoggingScreen(), // Navigate forward
+        ),
+      );
+    }
   }
 
   void _handlePrevious() {
-    Navigator.pop(context); // Go back to Additional Symptoms Screen
+    Navigator.pop(context); // Navigate back to Cycle Length Screen
   }
 
   void _handleIDontKnow() {
+    // Navigate directly without selecting a period length
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => const PeriodLengthScreen(), // Skip cycle selection
+        builder: (context) => const PeriodLoggingScreen(),
       ),
     );
   }
@@ -60,7 +60,7 @@ class _CycleLengthScreenState extends State<CycleLengthScreen> {
               children: [
                 const SizedBox(height: 40),
                 const Text(
-                  'Enter the average length of\nyour cycle',
+                  'Enter the average length of\nyour periods',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -84,39 +84,31 @@ class _CycleLengthScreenState extends State<CycleLengthScreen> {
                             physics: const FixedExtentScrollPhysics(),
                             onSelectedItemChanged: (index) {
                               setState(() {
-                                selectedLength = cycleLengths[index];
+                                selectedLength = periodLengths[index];
                               });
                             },
                             childDelegate: ListWheelChildBuilderDelegate(
                               builder: (context, index) {
-                                if (index < 0 || index >= cycleLengths.length) {
+                                if (index < 0 || index >= periodLengths.length) {
                                   return null;
                                 }
-                                final length = cycleLengths[index];
+                                final length = periodLengths[index];
                                 final isSelected = length == selectedLength;
                                 return AnimatedDefaultTextStyle(
                                   duration: const Duration(milliseconds: 200),
                                   style: TextStyle(
-                                    fontSize:
-                                        isSelected
-                                            ? 28
-                                            : 22, // Larger font for selected item
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                    color:
-                                        isSelected
-                                            ? Colors.black
-                                            : Colors.black.withOpacity(0.5),
+                                    fontSize: isSelected ? 28 : 22, // Larger font for selected item
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: isSelected 
+                                        ? Colors.black 
+                                        : Colors.black.withOpacity(0.5),
                                   ),
-                                  child: Center(
-                                    // Ensures proper alignment in the box
+                                  child: Center( // Ensures proper alignment in the box
                                     child: Text(length.toString()),
                                   ),
                                 );
                               },
-                              childCount: cycleLengths.length,
+                              childCount: periodLengths.length,
                             ),
                           ),
                           Positioned.fill(
@@ -138,24 +130,29 @@ class _CycleLengthScreenState extends State<CycleLengthScreen> {
                     ),
                   ),
                 ),
+
+                // "I Don't Know" Button - Navigates Directly
                 TextButton(
-                  onPressed: _handleIDontKnow,
+                  onPressed: _handleIDontKnow, // Navigates to the next screen
                   child: const Text(
                     "I don't remember",
-                    style: TextStyle(color: Colors.black54, fontSize: 18),
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
+
+                // Navigation Buttons (Previous & Next)
                 NavigationButtonRow(
                   onPrevious: _handlePrevious,
                   onNext: _handleNext,
-                  isNextEnabled:
-                      // ignore: unnecessary_null_comparison
-                      selectedLength !=
-                      null, // Enable "Next" only if a selection is made
+                  isNextEnabled: selectedLength != null, // Enable "Next" only if a selection is made
                 ),
+
+                const SizedBox(height: 20),
               ],
             ),
           ),
