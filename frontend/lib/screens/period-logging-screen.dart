@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/navigation-buttons.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
-// import '../screens/home_screen.dart';
+import 'home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
   const PeriodLoggingScreen({super.key});
@@ -42,18 +42,20 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
   }
 
   void _handleNext() {
-    // if (_selectedDate != null) {
-    //   Navigator.pushReplacement(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => HomeScreen(selectedDate: _selectedDate!),
-    //     ),
-    //   );
-    // }
+    if (_selectedDate != null) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+        (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Rest of the build method remains the same
     List<Widget> monthWidgets = [];
     DateTime currentMonth = DateTime(_currentDate.year, _currentDate.month);
     
