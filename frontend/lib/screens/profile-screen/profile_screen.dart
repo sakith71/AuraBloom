@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../widgets/profile-widgets/profile_header.dart';
 import '../../widgets/profile-widgets/profile_menu_section.dart';
+import '../../widgets/profile-widgets/profile_health_section.dart';
+import '../../widgets/profile-widgets/profile_settings_section.dart';
 import '../../widgets/profile-widgets/logout_button.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -24,6 +26,10 @@ class ProfileScreen extends StatelessWidget {
           const ProfileHeader(),
           const SizedBox(height: 25),
           const ProfileMenuSection(),
+          const SizedBox(height: 25),
+          const ProfileHealthSection(),
+          const SizedBox(height: 25),
+          const ProfileSettingsSection(),
           const SizedBox(height: 25),
           LogoutButton(
             onLogout: () {
