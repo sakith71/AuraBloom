@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/navigation-buttons.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
-import 'home-screen.dart';
+import '../screens/home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
   const PeriodLoggingScreen({super.key});
@@ -15,7 +15,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
   String? _selectedDate;
   final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
-  
+
   @override
   void initState() {
     super.initState();
@@ -43,22 +43,20 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
 
   void _handleNext() {
     if (_selectedDate != null) {
-      Navigator.pushAndRemoveUntil(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
+          builder: (context) => HomeScreen(selectedDates: {_selectedDate!}),
         ),
-        (route) => false,
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Rest of the build method remains the same
     List<Widget> monthWidgets = [];
     DateTime currentMonth = DateTime(_currentDate.year, _currentDate.month);
-    
+
     for (int i = -11; i <= 0; i++) {
       DateTime targetMonth = DateTime(
         currentMonth.year,
@@ -96,26 +94,18 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
                 const SizedBox(height: 40),
                 const Text(
                   'When did your last period start?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 10),
                 const Text(
                   'Please select a single date',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 30),
                 Expanded(
                   child: SingleChildScrollView(
                     controller: _scrollController,
-                    child: Column(
-                      children: monthWidgets,
-                    ),
+                    child: Column(children: monthWidgets),
                   ),
                 ),
                 const SizedBox(height: 20),
