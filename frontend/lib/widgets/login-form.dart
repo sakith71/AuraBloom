@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../utils/validators.dart';
 import 'forgot-password-dialog.dart';
 import '../screens/signup-screen.dart';
+import '../screens/home-screen.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -15,13 +16,39 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _rememberMe = false; // Track the state of the "Remember Me" checkbox
+  bool _rememberMe = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _handleLogin(BuildContext context) {
+    if (_formKey.currentState!.validate()) {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_rememberMe
+              ? "Logging In with Remember Me..."
+              : "Logging In..."),
+          duration: const Duration(seconds: 1),  // Shorter duration
+        ),
+      );
+
+      // Navigate to HomeScreen after brief delay to show loading
+      Future.delayed(const Duration(seconds: 1), () {
+        Navigator.pushReplacement(  // Use pushReplacement to prevent going back to login
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              selectedDates: <String>{},  // Pass empty set for now
+            ),
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -107,16 +134,7 @@ class _LoginFormState extends State<LoginForm> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(_rememberMe
-                              ? "Logging In with Remember Me..."
-                              : "Logging In...")),
-                    );
-                  }
-                },
+                onPressed: () => _handleLogin(context),  // Updated onPressed
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
