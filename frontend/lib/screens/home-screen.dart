@@ -4,11 +4,11 @@ import '../widgets/home-widgets/welcome-section.dart';
 import '../widgets/home-widgets/quick-actions.dart';
 import '../widgets/home-widgets/upcoming-cycle.dart';
 import '../widgets/home-widgets/mood-tracker.dart';
-
+import 'profile-screen/profile-screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Set<String> selectedDates;
-
+  
   const HomeScreen({
     super.key, 
     required this.selectedDates,
@@ -27,6 +27,32 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _navigateToProfile() {
+    setState(() {
+      _selectedIndex = 4; // Set to profile index (4) instead of 5
+    });
+  }
+
+  Widget _getPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return _buildHomePage();
+      case 1:
+        // return CalendarPage(selectedDates: widget.selectedDates);
+        return _buildHomePage(); // Temporary fallback
+      case 2:
+        // return const CommunityPage();
+        return _buildHomePage(); // Temporary fallback
+      case 3:
+        // return const ChatBotPage();
+        return _buildHomePage(); // Temporary fallback
+      case 4:
+        return const ProfileScreen();
+      default:
+        return _buildHomePage();
+    }
+  }
+
   Widget _buildHomePage() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -40,8 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
           UpcomingCycle(selectedDates: widget.selectedDates),
           const SizedBox(height: 25),
           const MoodTracker(),
-          // const SizedBox(height: 25),
-          // const HealthInsights(),
         ],
       ),
     );
@@ -66,14 +90,10 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomAppBar(
-                onProfileTap: () {
-                  setState(() {
-                    _selectedIndex = 4;
-                  });
-                },
+                onProfileTap: _navigateToProfile, // Use the new method
               ),
               Expanded(
-                child: _buildHomePage(),
+                child: _getPage(),
               ),
             ],
           ),
@@ -103,11 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Colors.white,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services),
-            label: 'Management',
-            backgroundColor: Colors.white,
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Calendar',
             backgroundColor: Colors.white,
@@ -122,8 +137,13 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Chat Bot',
             backgroundColor: Colors.white,
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+            backgroundColor: Colors.white,
+          ),
         ],
-        currentIndex: _selectedIndex > 4 ? 0 : _selectedIndex,
+        currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,

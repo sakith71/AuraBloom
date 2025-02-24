@@ -17,11 +17,12 @@ class Validators {
     return null;
   }
 
+
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter an email';
     }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    final emailRegex = RegExp(r'^[a-z0-9._%+-]+@[a-z.-]+\.[a-z]{2,}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email address';
     }

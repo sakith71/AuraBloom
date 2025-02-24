@@ -1,8 +1,7 @@
-// lib/screens/profile/widgets/profile_menu_section.dart
 import 'package:flutter/material.dart';
-import '../../screens/profile-screen/personal_info_page.dart';
-import '../../screens/profile-screen/notifications_page.dart';
-import '../../screens/profile-screen/privacy_page.dart';
+import '../../screens/profile-screen/personal-info-page.dart';
+import '../../screens/profile-screen/notifications-page.dart';
+import '../../screens/profile-screen/privacy-page.dart';
 
 class ProfileMenuSection extends StatelessWidget {
   const ProfileMenuSection({super.key});

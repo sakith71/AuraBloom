@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../widgets/profile-widgets/profile_header.dart';
-import '../../widgets/profile-widgets/profile_menu_section.dart';
-import '../../widgets/profile-widgets/profile_health_section.dart';
-import '../../widgets/profile-widgets/profile_settings_section.dart';
-import '../../widgets/profile-widgets/logout_button.dart';
+import '../../widgets/profile-widgets/profile-header.dart';
+import '../../widgets/profile-widgets/profile-menu-section.dart';
+import '../../widgets/profile-widgets/profile-health-section.dart';
+import '../../widgets/profile-widgets/profile-settings-section.dart';
+import '../../widgets/profile-widgets/logout-button.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

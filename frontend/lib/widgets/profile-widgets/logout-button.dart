@@ -1,4 +1,3 @@
-// lib/screens/profile/widgets/logout_button.dart
 import 'package:flutter/material.dart';
 
 class LogoutButton extends StatelessWidget {

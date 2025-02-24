@@ -15,13 +15,23 @@ class CustomAppBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'AuraBloom',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: const Color.fromARGB(255, 255, 255, 255),
-            ),
+          Row(
+            children: [
+              Image.asset(
+                'assets/logo.png', // Make sure to add your logo image to assets
+                height: 30,
+                width: 30,
+              ),
+              const SizedBox(width: 8), // Add spacing between logo and text
+              Text(
+                'AuraBloom',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: const Color.fromARGB(255, 255, 115, 166),
+                ),
+              ),
+            ],
           ),
           Row(
             children: [
@@ -30,12 +40,12 @@ class CustomAppBar extends StatelessWidget {
                 onPressed: () {
                   // Notifications navigation
                 },
-                color: const Color.fromARGB(255, 255, 255, 255),
+                color: const Color.fromARGB(255, 255, 115, 166),
               ),
               IconButton(
                 icon: const Icon(Icons.person_outline),
                 onPressed: onProfileTap,
-                color: const Color.fromARGB(255, 255, 255, 255),
+                color: const Color.fromARGB(255, 255, 115, 166),
               ),
             ],
           ),

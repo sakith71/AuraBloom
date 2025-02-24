@@ -1,4 +1,3 @@
-// lib/screens/profile/widgets/profile_health_section.dart
 import 'package:flutter/material.dart';
 
 class ProfileHealthSection extends StatefulWidget {

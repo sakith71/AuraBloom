@@ -1,4 +1,3 @@
-// lib/screens/profile/widgets/profile_settings_section.dart
 import 'package:flutter/material.dart';
 
 class ProfileSettingsSection extends StatelessWidget {
@@ -114,14 +113,10 @@ class ProfileSettingsSection extends StatelessWidget {
               trailing: const Icon(Icons.check, color: Colors.blue),
               onTap: () => Navigator.pop(context),
             ),
-            ListTile(
-              title: const Text('Spanish'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              title: const Text('French'),
-              onTap: () => Navigator.pop(context),
-            ),
+            // ListTile(
+            //   title: const Text('Sinhala'),
+            //   onTap: () => Navigator.pop(context),
+            // ),
           ],
         ),
       ),

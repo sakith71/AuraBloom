@@ -1,4 +1,3 @@
-// lib/screens/profile/widgets/profile_header.dart
 import 'package:flutter/material.dart';
 
 class ProfileHeader extends StatelessWidget {
