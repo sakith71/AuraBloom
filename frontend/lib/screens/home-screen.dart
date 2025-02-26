@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/chat-screen.dart';
 import '../widgets/home-widgets/app-bar.dart';
 import '../widgets/home-widgets/welcome-section.dart';
 import '../widgets/home-widgets/quick-actions.dart';
@@ -9,11 +10,8 @@ import 'community/community-screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Set<String> selectedDates;
-  
-  const HomeScreen({
-    super.key, 
-    required this.selectedDates,
-  });
+
+  const HomeScreen({super.key, required this.selectedDates});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -45,9 +43,11 @@ class _HomeScreenState extends State<HomeScreen> {
         // return const CommunityPage();
         return const CommunityScreen(); // Temporary fallback
       case 3:
+        return PeriodPainChatScreen();
+      case 4:
         // return const ChatBotPage();
         return _buildHomePage(); // Temporary fallback
-      case 4:
+      case 5:
         return const ProfileScreen();
       default:
         return _buildHomePage();
@@ -93,9 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
               CustomAppBar(
                 onProfileTap: _navigateToProfile, // Use the new method
               ),
-              Expanded(
-                child: _getPage(),
-              ),
+              Expanded(child: _getPage()),
             ],
           ),
         ),
