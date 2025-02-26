@@ -11,7 +11,15 @@ Original file is located at
 `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`
 """
 
-pip install openai==0.28
+# Install required packages using subprocess
+import subprocess
+import sys
+
+def install_package(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Install OpenAI package
+install_package("openai==0.28")
 
 import openai
 
