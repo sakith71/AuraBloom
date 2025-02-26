@@ -4,6 +4,7 @@ import '../../widgets/profile-widgets/profile-menu-section.dart';
 import '../../widgets/profile-widgets/profile-health-section.dart';
 import '../../widgets/profile-widgets/profile-settings-section.dart';
 import '../../widgets/profile-widgets/logout-button.dart';
+import '../login-page.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -17,10 +18,7 @@ class ProfileScreen extends StatelessWidget {
         children: [
           const Text(
             'Profile',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           const ProfileHeader(),
@@ -36,24 +34,30 @@ class ProfileScreen extends StatelessWidget {
               // Handle logout
               showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Logout'),
-                  content: const Text('Are you sure you want to logout?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                builder:
+                    (context) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // Implement logout logic
+                            Navigator.pop(context);
+                            Navigator.pushReplacementNamed(context, '/login');
+                          },
+                          child: const Text('Logout'),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () {
-                        // Implement logout logic
-                        Navigator.pop(context);
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      child: const Text('Logout'),
-                    ),
-                  ],
-                ),
+              );
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false, // Clear all routes
               );
             },
           ),
