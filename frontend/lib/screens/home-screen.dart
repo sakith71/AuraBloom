@@ -5,6 +5,7 @@ import '../widgets/home-widgets/quick-actions.dart';
 import '../widgets/home-widgets/upcoming-cycle.dart';
 import '../widgets/home-widgets/mood-tracker.dart';
 import 'profile-screen/profile-screen.dart';
+import 'community/community-screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Set<String> selectedDates;
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildHomePage(); // Temporary fallback
       case 2:
         // return const CommunityPage();
-        return _buildHomePage(); // Temporary fallback
+        return const CommunityScreen(); // Temporary fallback
       case 3:
         // return const ChatBotPage();
         return _buildHomePage(); // Temporary fallback
