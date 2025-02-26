@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'AuraBloom',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.pink,
         scaffoldBackgroundColor: Color(0xFFD4C0D6)
         // Set other theme properties as needed
       ),

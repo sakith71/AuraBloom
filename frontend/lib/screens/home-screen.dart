@@ -45,9 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         return PeriodPainChatScreen();
       case 4:
-        // return const ChatBotPage();
-        return _buildHomePage(); // Temporary fallback
-      case 5:
         return const ProfileScreen();
       default:
         return _buildHomePage();
@@ -144,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: const Color.fromARGB(255, 238, 107, 209),
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
