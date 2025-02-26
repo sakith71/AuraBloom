@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'screens/splash-screen.dart';
+import 'screens/login-page.dart';
+import 'screens/signup-screen.dart';
+import 'screens/home-screen.dart';
+import 'screens/personal-info-screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,10 +19,17 @@ class MyApp extends StatelessWidget {
       title: 'AuraBloom',
       theme: ThemeData(
         primarySwatch: Colors.pink,
-        scaffoldBackgroundColor: Color(0xFFD4C0D6),
+        scaffoldBackgroundColor: const Color(0xFFD4C0D6)
         // Set other theme properties as needed
       ),
-      home: const SplashScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/home': (context) => const HomeScreen(selectedDates: {}),
+        '/personal-info': (context) => const PersonalInfoScreen(),
+      },
     );
   }
 }

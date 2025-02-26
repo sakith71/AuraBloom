@@ -1,5 +1,6 @@
-// lib/screens/profile/pages/privacy_page.dart
+
 import 'package:flutter/material.dart';
+import '../login-page.dart';
 
 class PrivacyPage extends StatefulWidget {
   const PrivacyPage({super.key});
@@ -19,7 +20,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
     '3 months',
     '6 months',
     '1 year',
-    'Forever'
+    'Forever',
   ];
 
   @override
@@ -104,10 +105,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
               ),
               child: Text(
                 'Delete My Account',
-                style: TextStyle(
-                  color: Colors.red.shade300,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.red.shade300, fontSize: 16),
               ),
             ),
           ],
@@ -151,19 +149,12 @@ class _PrivacyPageState extends State<PrivacyPage> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                 ),
               ],
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: Colors.blue,
-          ),
+          Switch(value: value, onChanged: onChanged, activeColor: Colors.blue),
         ],
       ),
     );
@@ -188,18 +179,12 @@ class _PrivacyPageState extends State<PrivacyPage> {
         children: [
           const Text(
             'Data Retention',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 4),
           Text(
             'Choose how long to keep your data',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
           ),
           const SizedBox(height: 15),
           DropdownButtonFormField<String>(
@@ -235,7 +220,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
   void _handleDataDownload() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder:(context) => AlertDialog(
         title: const Text('Download My Data'),
         content: const Text(
           'You can download all your personal data. The process may take a few minutes.',
@@ -250,7 +235,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Data download started. You\'ll be notified when it\'s ready.'),
+                  content: Text(
+                    'Data download started. You\'ll be notified when it\'s ready.',
+                  ),
                 ),
               );
             },
@@ -264,7 +251,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
   void _handleDataDeletion() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder:(context) => AlertDialog(
         title: const Text('Delete Account'),
         content: const Text(
           'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
@@ -277,12 +264,17 @@ class _PrivacyPageState extends State<PrivacyPage> {
           TextButton(
             onPressed: () {
               // Implement account deletion logic
-              Navigator.of(context).popUntil((route) => route.isFirst);
-              Navigator.of(context).pushReplacementNamed('/login');
+
+              // Clear the navigation stack and navigate to login page
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LoginScreen(),
+                ),
+                (route) => false, // Clear all routes
+              );
             },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete Account'),
           ),
         ],

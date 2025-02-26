@@ -59,6 +59,11 @@ class ProfileScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
                 (route) => false, // Clear all routes
               );
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false, // Clear all routes
+              );
             },
           ),
         ],
