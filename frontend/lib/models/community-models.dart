@@ -37,7 +37,8 @@ class CommunityPost {
       tags: List<String>.from(map['tags']),
       likeCount: map['likeCount'] ?? 0,
       commentCount: map['commentCount'] ?? 0,
-      imageUrls: map['imageUrls'] != null ? List<String>.from(map['imageUrls']) : null,
+      imageUrls:
+          map['imageUrls'] != null ? List<String>.from(map['imageUrls']) : null,
       isAnonymous: map['isAnonymous'] ?? false,
     );
   }
@@ -71,7 +72,7 @@ class Comment {
   final String content;
   final bool isAnonymous;
 
-  Comment( {
+  Comment({
     required this.id,
     required this.postId,
     required this.authorId,
@@ -81,7 +82,7 @@ class Comment {
     required this.content,
     this.isAnonymous = false,
   }) {
-    // TODO: implement 
+    // TODO: implement
     throw UnimplementedError();
   }
 
