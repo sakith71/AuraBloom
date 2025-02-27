@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../providers/community_provider.dart';
+import '../providers/community-provider.dart';
 
 class PostWidget extends StatelessWidget {
   final PostModel post;
