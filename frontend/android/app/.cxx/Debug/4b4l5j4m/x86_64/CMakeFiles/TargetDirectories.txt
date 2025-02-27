@@ -1,0 +1,2 @@
+C:/Users/modis/OneDrive/Documents/GitHub/AuraBloom/frontend/android/app/.cxx/Debug/4b4l5j4m/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/modis/OneDrive/Documents/GitHub/AuraBloom/frontend/android/app/.cxx/Debug/4b4l5j4m/x86_64/CMakeFiles/rebuild_cache.dir
