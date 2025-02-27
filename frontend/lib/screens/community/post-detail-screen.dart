@@ -4,7 +4,7 @@ import 'package:frontend/services/community-service.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CommunityPost post;
-  
+
   const PostDetailScreen({super.key, required this.post});
 
   @override
@@ -16,20 +16,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final TextEditingController _commentController = TextEditingController();
   List<Comment> _comments = [];
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadComments();
   }
-  
+
   Future<void> _loadComments() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
-      final comments = await _communityService.getCommentsForPost(widget.post.id);
+      final comments = await _communityService.getCommentsForPost(
+        widget.post.id,
+      );
       setState(() {
         _comments = comments;
         _isLoading = false;
@@ -38,17 +40,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load comments: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load comments: $e')));
     }
   }
-  
+
   Future<void> _addComment() async {
     if (_commentController.text.trim().isEmpty) {
       return;
     }
-    
+
     final newComment = Comment(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       postId: widget.post.id,
@@ -57,22 +59,22 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       createdAt: DateTime.now(),
       content: _commentController.text.trim(),
     );
-    
+
     try {
       await _communityService.addComment(newComment);
       _commentController.clear();
       _loadComments();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add comment: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add comment: $e')));
     }
   }
-  
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {
@@ -83,7 +85,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return 'Just now';
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,7 +163,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ),
                           SizedBox(height: 16),
                           // Post image if available
-                          if (widget.post.imageUrls != null && widget.post.imageUrls!.isNotEmpty)
+                          if (widget.post.imageUrls != null &&
+                              widget.post.imageUrls!.isNotEmpty)
                             Container(
                               height: 200,
                               width: double.infinity,
@@ -169,7 +172,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 color: Colors.grey[200],
                                 borderRadius: BorderRadius.circular(8),
                                 image: DecorationImage(
-                                  image: NetworkImage(widget.post.imageUrls![0]),
+                                  image: NetworkImage(
+                                    widget.post.imageUrls![0],
+                                  ),
                                   fit: BoxFit.cover,
                                 ),
                               ),
@@ -178,19 +183,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           // Tags
                           Wrap(
                             spacing: 8,
-                            children: widget.post.tags.map((tag) => Chip(
-                              label: Text(
-                                tag,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              backgroundColor: Colors.blue,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              padding: EdgeInsets.zero,
-                              labelPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                            )).toList(),
+                            children:
+                                widget.post.tags
+                                    .map(
+                                      (tag) => Chip(
+                                        label: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.blue,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        padding: EdgeInsets.zero,
+                                        labelPadding: EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 0,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                           ),
                           SizedBox(height: 12),
                           // Like and comment counts
@@ -198,7 +212,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             children: [
                               InkWell(
                                 onTap: () async {
-                                  await _communityService.likePost(widget.post.id, 'currentUserId');
+                                  await _communityService.likePost(
+                                    widget.post.id,
+                                    'currentUserId',
+                                  );
                                   setState(() {
                                     widget.post.likeCount + 1;
                                   });
@@ -233,38 +250,38 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                     ),
                   ),
-                  
+
                   SizedBox(height: 24),
                   Text(
                     'Comments',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 8),
-                  
+
                   // Comments section
                   _isLoading
                       ? Center(child: CircularProgressIndicator())
                       : _comments.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: Text(
-                                  'No comments yet. Be the first to comment!',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                              ),
-                            )
-                          : Column(
-                              children: _comments.map((comment) => _buildCommentCard(comment)).toList(),
-                            ),
+                      ? Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text(
+                            'No comments yet. Be the first to comment!',
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ),
+                      )
+                      : Column(
+                        children:
+                            _comments
+                                .map((comment) => _buildCommentCard(comment))
+                                .toList(),
+                      ),
                 ],
               ),
             ),
           ),
-          
+
           // Comment input
           Container(
             padding: EdgeInsets.all(16),
@@ -291,7 +308,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                       filled: true,
                       fillColor: Colors.grey[100],
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                     maxLines: null,
                   ),
@@ -305,11 +325,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       color: Colors.purple,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    child: Icon(Icons.send, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -319,13 +335,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
     );
   }
-  
+
   Widget _buildCommentCard(Comment comment) {
     return Card(
       margin: EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: EdgeInsets.all(12),
         child: Column(
@@ -338,10 +352,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   radius: 16,
                   child: Text(
                     comment.authorName[0],
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
                 SizedBox(width: 8),
@@ -357,10 +368,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ),
                     Text(
                       _formatDate(comment.createdAt),
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 10),
                     ),
                   ],
                 ),
