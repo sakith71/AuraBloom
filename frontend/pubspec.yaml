@@ -90,8 +90,6 @@ flutter:
 
   assets:
     - assets/loginPage.png
-    - assets/google.png
-    - assets/apple.png
     - assets/sign_up.png
     - assets/personal_info.png
     - assets/logo.png
