@@ -38,10 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildHomePage();
       case 1:
         // return CalendarPage(selectedDates: widget.selectedDates);
-        return _buildHomePage(); // Temporary fallback
+        return _buildHomePage();
       case 2:
-        // return const CommunityPage();
-        return const CommunityScreen(); // Temporary fallback
+        return const CommunityScreen();
       case 3:
         return PeriodPainChatScreen();
       case 4:
