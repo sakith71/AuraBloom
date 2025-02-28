@@ -4,7 +4,7 @@ import '../widgets/home-widgets/app-bar.dart';
 import '../widgets/home-widgets/welcome-section.dart';
 import '../widgets/home-widgets/quick-actions.dart';
 import '../widgets/home-widgets/upcoming-cycle.dart';
-import '../widgets/home-widgets/mood-tracker.dart';
+// import '../widgets/home-widgets/mood-tracker.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
 
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 25),
           UpcomingCycle(selectedDates: widget.selectedDates),
           const SizedBox(height: 25),
-          const MoodTracker(),
+          // const MoodTracker(),
         ],
       ),
     );
