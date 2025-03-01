@@ -39,7 +39,10 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHomePage();
       case 1:
-        return CalendarPage(selectedDate: widget.selectedDate);
+        return CalendarPage(
+          selectedDates:
+              widget.selectedDate != null ? {widget.selectedDate!} : {},
+        );
       case 2:
         return const CommunityScreen();
       case 3:

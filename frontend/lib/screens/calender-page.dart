@@ -1,13 +1,56 @@
 import 'package:flutter/material.dart';
+import '../widgets/calendar-card.dart';
 
 class CalendarPage extends StatefulWidget {
   final String? selectedDate;
-  const CalendarPage({super.key, this.selectedDate});
+  final Set<String> selectedDates; // Add this line
+  const CalendarPage({
+    super.key,
+    this.selectedDate,
+    required this.selectedDates,
+  });
   @override
   State<CalendarPage> createState() => _CalendarPageState();
 }
 
 class _CalendarPageState extends State<CalendarPage> {
+  late Set<String> selectedDates;
+  int currentMonthIndex = DateTime.now().month - 1;
+  int currentYear = DateTime.now().year;
+  bool isDatesChanged = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with dates passed from parent
+    selectedDates = Set<String>.from(widget.selectedDates);
+  }
+
+  void onDateSelected(String dateKey) {
+    setState(() {
+      if (selectedDates.contains(dateKey)) {
+        selectedDates.remove(dateKey);
+      } else {
+        selectedDates.add(dateKey);
+      }
+      isDatesChanged = true;
+    });
+  }
+
+  void navigateMonth(int direction) {
+    setState(() {
+      currentMonthIndex += direction;
+
+      if (currentMonthIndex > 11) {
+        currentMonthIndex = 0;
+        currentYear++;
+      } else if (currentMonthIndex < 0) {
+        currentMonthIndex = 11;
+        currentYear--;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,6 +79,23 @@ class _CalendarPageState extends State<CalendarPage> {
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CalendarCard(
+                        currentMonthIndex: currentMonthIndex,
+                        currentYear: currentYear,
+                        selectedDates: selectedDates,
+                        onDateSelected: onDateSelected,
+                        onNavigateMonth: navigateMonth,
+                      ),
+                    ],
                   ),
                 ),
               ),
