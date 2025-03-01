@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/validators.dart';
 import 'forgot-password-dialog.dart';
@@ -17,6 +18,7 @@ class _LoginFormState extends State<LoginForm> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _rememberMe = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,29 +27,63 @@ class _LoginFormState extends State<LoginForm> {
     super.dispose();
   }
 
-  void _handleLogin(BuildContext context) {
+  void _handleLogin(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Show loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_rememberMe
-              ? "Logging In with Remember Me..."
-              : "Logging In..."),
-          duration: const Duration(seconds: 1),  // Shorter duration
-        ),
-      );
-
-      // Navigate to HomeScreen after brief delay to show loading
-      Future.delayed(const Duration(seconds: 1), () {
-        Navigator.pushReplacement(  // Use pushReplacement to prevent going back to login
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              selectedDates: <String>{},  // Pass empty set for now
-            ),
-          ),
-        );
+      setState(() {
+        _isLoading = true;
       });
+
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
+
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: email, password: password);
+
+        if (userCredential.user != null) {
+          Navigator.pushReplacement(
+            // Use pushReplacement to prevent going back to login
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => HomeScreen(
+                    selectedDates: <String>{}, // Pass empty set for now
+                  ),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed: ${e.toString()}")),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      // // Show loading indicator
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text(
+      //       _rememberMe ? "Logging In with Remember Me..." : "Logging In...",
+      //     ),
+      //     duration: const Duration(seconds: 1), // Shorter duration
+      //   ),
+      // );
+
+      // // Navigate to HomeScreen after brief delay to show loading
+      // Future.delayed(const Duration(seconds: 1), () {
+      //   Navigator.pushReplacement(
+      //     // Use pushReplacement to prevent going back to login
+      //     context,
+      //     MaterialPageRoute(
+      //       builder:
+      //           (context) => HomeScreen(
+      //             selectedDates: <String>{}, // Pass empty set for now
+      //           ),
+      //     ),
+      //   );
+      // });
     }
   }
 
@@ -107,8 +143,10 @@ class _LoginFormState extends State<LoginForm> {
                         });
                       },
                     ),
-                    const Text('Remember Me',
-                        style: TextStyle(color: Colors.black45)),
+                    const Text(
+                      'Remember Me',
+                      style: TextStyle(color: Colors.black45),
+                    ),
                   ],
                 ),
                 TextButton(
@@ -121,7 +159,9 @@ class _LoginFormState extends State<LoginForm> {
                   child: const Text(
                     'Forget Password?',
                     style: TextStyle(
-                        color: Colors.blue, fontWeight: FontWeight.bold),
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -134,23 +174,28 @@ class _LoginFormState extends State<LoginForm> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () => _handleLogin(context),  // Updated onPressed
+                onPressed: _isLoading ? null : () => _handleLogin(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  'Log In',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child:
+                    _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                          'Log In',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
               ),
             ),
           ),
           const SizedBox(height: 10),
-          const Text("Don't have an account?",
-              style: TextStyle(color: Colors.black45)),
+          const Text(
+            "Don't have an account?",
+            style: TextStyle(color: Colors.black45),
+          ),
           TextButton(
             onPressed: () {
               Navigator.push(

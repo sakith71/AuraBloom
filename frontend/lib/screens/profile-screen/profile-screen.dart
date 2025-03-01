@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/profile-widgets/profile-header.dart';
 import '../../widgets/profile-widgets/profile-menu-section.dart';
@@ -44,8 +45,9 @@ class ProfileScreen extends StatelessWidget {
                           child: const Text('Cancel'),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // Implement logout logic
+                          onPressed: () async {
+                            //Firebase Logout logic
+                            await FirebaseAuth.instance.signOut();
                             Navigator.pop(context);
                             Navigator.pushReplacementNamed(context, '/login');
                           },
