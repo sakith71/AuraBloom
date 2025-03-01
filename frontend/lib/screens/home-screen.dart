@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/calender-page.dart';
 import 'package:frontend/screens/chat-screen.dart';
 import '../widgets/home-widgets/app-bar.dart';
 import '../widgets/home-widgets/welcome-section.dart';
@@ -38,8 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHomePage();
       case 1:
-        // Placeholder for Calendar Page
-        return _buildHomePage();
+        return CalendarPage(selectedDate: widget.selectedDate);
       case 2:
         return const CommunityScreen();
       case 3:
@@ -87,9 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CustomAppBar(
-                onProfileTap: _navigateToProfile,
-              ),
+              CustomAppBar(onProfileTap: _navigateToProfile),
               Expanded(child: _getPage()),
             ],
           ),
