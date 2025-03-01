@@ -1,4 +1,6 @@
 // lib/models/comment.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Comment {
   final String id;
   final String postId;
@@ -21,20 +23,37 @@ class Comment {
   });
 
   factory Comment.fromMap(Map<String, dynamic> map) {
-    return Comment(
-      id: map['id'],
-      postId: map['postId'],
-      authorId: map['authorId'],
-      authorName: map['authorName'],
-      authorAvatar: map['authorAvatar'] ?? '',
-      createdAt:
-          map['createdAt'] is DateTime
-              ? map['createdAt']
-              : DateTime.parse(map['createdAt']),
-      content: map['content'],
-      isAnonymous: map['isAnonymous'] ?? false,
-    );
+  DateTime parseDateTime(dynamic dateValue) {
+    if (dateValue is DateTime) {
+      return dateValue;
+    } else if (dateValue is Timestamp) {
+      return dateValue.toDate();
+    } else if (dateValue is String) {
+      try {
+        return DateTime.parse(dateValue);
+      } catch (e) {
+        print('Error parsing date string: $dateValue');
+        return DateTime.now();
+      }
+    } else {
+      print('Unknown date format: $dateValue (${dateValue.runtimeType})');
+      return DateTime.now();
+    }
   }
+
+  return Comment(
+    id: map['id'] ?? '',
+    postId: map['postId'] ?? '',
+    authorId: map['authorId'] ?? '',
+    authorName: map['authorName'] ?? 'Unknown',
+    authorAvatar: map['authorAvatar'] ?? '',
+    createdAt: map.containsKey('createdAt') 
+        ? parseDateTime(map['createdAt'])
+        : DateTime.now(),
+    content: map['content'] ?? 'No content',
+    isAnonymous: map['isAnonymous'] ?? false,
+  );
+}
 
   Map<String, dynamic> toMap() {
     return {

@@ -1,8 +1,8 @@
-// lib/screens/post_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/community-models.dart';
 import 'package:frontend/services/community-service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CommunityPost post;
@@ -24,33 +24,79 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadComments();
-    _checkIfUserLiked();
+    // Delay loading to ensure the widget is properly mounted
+    Future.delayed(Duration.zero, () {
+      if (mounted) {
+        _loadComments();
+        _checkIfUserLiked();
+      }
+    });
   }
 
   Future<void> _loadComments() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final comments = await _communityService.getCommentsForPost(
-        widget.post.id,
-      );
-      if (mounted) {
-        setState(() {
-          _comments = comments;
-          _isLoading = false;
-        });
-      }
+      print('Loading comments for post: ${widget.post.id}');
+      
+      // Get comments directly from Firestore to bypass any caching issues
+      final snapshot = await FirebaseFirestore.instance
+          .collection('comments')
+          .where('postId', isEqualTo: widget.post.id)
+          .get();
+      
+      print('Found ${snapshot.docs.length} comments');
+      
+      if (!mounted) return;
+      
+      final comments = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        
+        try {
+          return Comment.fromMap(data);
+        } catch (e) {
+          print('Error parsing comment: $e');
+          return Comment(
+            id: doc.id,
+            postId: widget.post.id,
+            authorId: 'error',
+            authorName: 'Error loading',
+            createdAt: DateTime.now(),
+            content: 'Error loading comment',
+          );
+        }
+      }).toList();
+      
+      // Sort manually
+      comments.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      
+      setState(() {
+        _comments = comments;
+        _isLoading = false;
+      });
     } catch (e) {
+      print('Error loading comments: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _comments = []; // Ensure we have an empty list rather than null
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load comments: $e')));
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load comments: $e'),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _loadComments,
+            ),
+          ),
+        );
       }
     }
   }
@@ -108,6 +154,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           widget.post.commentCount += 1;
         });
       }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Comment added successfully')),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -170,6 +220,76 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  // Helper debug method that can be called if problems persist
+  Future<void> _debugLoadComments() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Step 1: Try to get the raw comments collection data
+      final commentsSnapshot = await FirebaseFirestore.instance
+          .collection('comments')
+          .get();
+      
+      print('Debug: Total comments in database: ${commentsSnapshot.docs.length}');
+      
+      // Step 2: Check if any comments match our post ID
+      final matchingComments = commentsSnapshot.docs
+          .where((doc) => (doc.data() as Map<String, dynamic>)['postId'] == widget.post.id)
+          .toList();
+      
+      print('Debug: Comments matching this post: ${matchingComments.length}');
+      
+      if (matchingComments.isNotEmpty) {
+        print('Debug: First matching comment: ${matchingComments.first.data()}');
+      }
+      
+      // Step 3: Try the direct query
+      final directQuery = await FirebaseFirestore.instance
+          .collection('comments')
+          .where('postId', isEqualTo: widget.post.id)
+          .get();
+      
+      print('Debug: Direct query results: ${directQuery.docs.length}');
+      
+      // Continue with normal comment loading
+      final comments = directQuery.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id;
+        return Comment.fromMap(data);
+      }).toList();
+      
+      // Sort manually
+      comments.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      
+      if (mounted) {
+        setState(() {
+          _comments = comments;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Debug: Error fetching comments: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _comments = [];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: _debugLoadComments,
+            ),
+          ),
+        );
       }
     }
   }
@@ -450,31 +570,70 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  const Text(
-                    'Comments',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Comments section
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _comments.isEmpty
-                      ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'No comments yet. Be the first to comment!',
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
+                  
+                  // Comments section with improved UI
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Comments',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            if (_isLoading)
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.purple,
+                                ),
+                              ),
+                          ],
                         ),
-                      )
-                      : Column(
-                        children:
-                            _comments
-                                .map((comment) => _buildCommentCard(comment))
-                                .toList(),
-                      ),
+                        const SizedBox(height: 8),
+                        _isLoading
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: Text('Loading comments...'),
+                                ),
+                              )
+                            : _comments.isEmpty
+                                ? Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'No comments yet. Be the first to comment!',
+                                            style: TextStyle(color: Colors.grey[600]),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          TextButton.icon(
+                                            onPressed: _debugLoadComments,
+                                            icon: const Icon(Icons.refresh),
+                                            label: const Text('Debug Load Comments'),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Colors.purple,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                : Column(
+                                    children: _comments
+                                        .map((comment) => _buildCommentCard(comment))
+                                        .toList(),
+                                  ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
