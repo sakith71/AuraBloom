@@ -3,8 +3,9 @@ import '../widgets/navigation-buttons.dart';
 import 'period-length-screen.dart';
 
 class CycleLengthScreen extends StatefulWidget {
-  const CycleLengthScreen({super.key});
+  final String userId;
 
+  const CycleLengthScreen({super.key, required this.userId});
   @override
   State<CycleLengthScreen> createState() => _CycleLengthScreenState();
 }

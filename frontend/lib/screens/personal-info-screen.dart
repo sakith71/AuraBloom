@@ -59,7 +59,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MenstrualSymptomsScreen(),
+            builder: (context) => MenstrualSymptomsScreen(userId: widget.userId),
           ),
         );
       }
