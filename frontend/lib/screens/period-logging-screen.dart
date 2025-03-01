@@ -5,7 +5,9 @@ import '../utils/calendar.dart';
 import '../screens/home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
-  const PeriodLoggingScreen({super.key});
+  final String userId;
+  
+  const PeriodLoggingScreen({super.key, required this.userId});
 
   @override
   State<PeriodLoggingScreen> createState() => _PeriodLoggingScreenState();
