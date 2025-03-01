@@ -9,9 +9,10 @@ import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
 
 class HomeScreen extends StatefulWidget {
+  final String userId;
   final Set<String> selectedDates;
 
-  const HomeScreen({super.key, required this.selectedDates});
+  const HomeScreen({super.key, required this.userId, required this.selectedDates});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
