@@ -1,4 +1,3 @@
-// lib/models/user_model.dart
 class UserModel {
   final String uid;
   final String name;
@@ -11,6 +10,7 @@ class UserModel {
   final List<String> additionalSymptoms;
   final int cycleLength;
   final int periodLength;
+  final DateTime lastPeriodDate;
 
   UserModel({
     required this.uid,
@@ -24,6 +24,7 @@ class UserModel {
     required this.additionalSymptoms,
     required this.cycleLength,
     required this.periodLength,
+    required this.lastPeriodDate,
   });
 
   // Convert to a map for Firestore
@@ -40,6 +41,8 @@ class UserModel {
       'additionalSymptoms': additionalSymptoms,
       'cycleLength': cycleLength,
       'periodLength': periodLength,
+      'lastPeriodDate': lastPeriodDate.toIso8601String(),
+      'createdAt': DateTime.now().toIso8601String(),
     };
   }
 
@@ -57,6 +60,9 @@ class UserModel {
       additionalSymptoms: List<String>.from(map['additionalSymptoms'] ?? []),
       cycleLength: map['cycleLength'] ?? 28,
       periodLength: map['periodLength'] ?? 5,
+      lastPeriodDate: map['lastPeriodDate'] != null 
+          ? DateTime.parse(map['lastPeriodDate']) 
+          : DateTime.now(),
     );
   }
 }

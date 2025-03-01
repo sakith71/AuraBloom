@@ -10,9 +10,9 @@ import 'community/community-screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String userId;
-  final Set<String> selectedDates;
+  final String? selectedDate;
 
-  const HomeScreen({super.key, required this.userId, required this.selectedDates});
+  const HomeScreen({super.key, required this.userId, this.selectedDate});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _navigateToProfile() {
     setState(() {
-      _selectedIndex = 4; // Set to profile index (4) instead of 5
+      _selectedIndex = 4; // Set to profile index (4)
     });
   }
 
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHomePage();
       case 1:
-        // return CalendarPage(selectedDates: widget.selectedDates);
+        // Placeholder for Calendar Page
         return _buildHomePage();
       case 2:
         return const CommunityScreen();
@@ -57,11 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          WelcomeSection(selectedDates: widget.selectedDates),
+          WelcomeSection(selectedDate: widget.selectedDate),
           const SizedBox(height: 25),
           QuickActions(onItemTapped: _onItemTapped),
           const SizedBox(height: 25),
-          UpcomingCycle(selectedDates: widget.selectedDates),
+          UpcomingCycle(selectedDate: widget.selectedDate),
           const SizedBox(height: 25),
           const MoodTracker(),
         ],
@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomAppBar(
-                onProfileTap: _navigateToProfile, // Use the new method
+                onProfileTap: _navigateToProfile,
               ),
               Expanded(child: _getPage()),
             ],

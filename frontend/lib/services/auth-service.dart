@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/firestore_service.dart';
-import '../models/user_model.dart';
+import '../models/user-model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -65,6 +65,7 @@ class AuthService {
       additionalSymptoms: [],
       cycleLength: 28,
       periodLength: 5,
+      lastPeriodDate: DateTime.now(),
     );
     
     await _firestoreService.saveUserProfile(user);
@@ -77,7 +78,7 @@ class AuthService {
     try {
       final userData = await _firestoreService.getUserProfile(currentUserId!);
       // Consider onboarding complete if lastPeriodDate is set
-      return userData != null;
+      return userData != null && userData.lastPeriodDate.year > 2000;
     } catch (e) {
       print('Error checking onboarding status: $e');
       return false;

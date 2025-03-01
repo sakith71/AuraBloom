@@ -48,7 +48,6 @@ class _LoginFormState extends State<LoginForm> {
               builder:
                   (context) => HomeScreen(
                     userId: userCredential.user!.uid, // Pass the userId
-                    selectedDates: <String>{}, // Pass empty set for now
                   ),
             ),
           );
