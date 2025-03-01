@@ -3,10 +3,13 @@ import '../widgets/custom-text-field.dart';
 import '../utils/validators.dart';
 import '../widgets/personal-info-illustration.dart';
 import '../widgets/navigation-buttons.dart';
+import '../services/auth-service.dart';
 import 'menstrual-symptoms-screen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
-  const PersonalInfoScreen({super.key});
+  final String userId; // Pass the user ID from the previous screen
+  
+  const PersonalInfoScreen({super.key, required this.userId});
 
   @override
   State<PersonalInfoScreen> createState() => _PersonalInfoScreenState();
@@ -18,6 +21,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
+  final AuthService _authService = AuthService();
+  
+  bool _isLoading = false;
 
   bool get _isFormValid => _formKey.currentState?.validate() ?? false;
 
@@ -30,14 +36,46 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     super.dispose();
   }
 
-  void _handleNext() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const MenstrualSymptomsScreen(),
-        ),
+  // Save personal info and proceed
+  Future<void> _savePersonalInfoAndProceed() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Save the personal info to Firestore
+      await _authService.createUserProfile(
+        widget.userId,
+        _nameController.text,
+        int.parse(_ageController.text),
+        double.parse(_heightController.text),
+        double.parse(_weightController.text),
       );
+      
+      // Navigate to next screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MenstrualSymptomsScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving data: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -143,11 +181,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                NavigationButtonRow(
-                  onPrevious: _handlePrevious,
-                  onNext: _handleNext,
-                  isNextEnabled: _isFormValid,
-                ),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : NavigationButtonRow(
+                        onPrevious: _handlePrevious,
+                        onNext: _savePersonalInfoAndProceed,
+                        isNextEnabled: _isFormValid,
+                      ),
               ],
             ),
           ),

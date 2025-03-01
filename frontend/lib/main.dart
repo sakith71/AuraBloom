@@ -42,8 +42,8 @@ class MyApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const HomeScreen(selectedDates: {}),
-        '/personal-info': (context) => const PersonalInfoScreen(),
+        '/home': (context) => const HomeScreen(selectedDates: {}, userId: 'someUserId'),
+        '/personal-info': (context) => PersonalInfoScreen(userId: 'someUserId'),
         // We'll comment out this route until we have the file
         '/community': (context) => const CommunityScreen(),
       },

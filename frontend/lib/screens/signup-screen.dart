@@ -42,7 +42,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (user != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const PersonalInfoScreen()),
+          MaterialPageRoute(builder: (context) => PersonalInfoScreen(userId: user.uid)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

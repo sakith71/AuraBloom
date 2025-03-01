@@ -46,7 +46,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => HomeScreen(selectedDates: {_selectedDate!}),
+          builder: (context) => HomeScreen(selectedDates: {_selectedDate!}, userId: 'yourUserId'),
         ),
       );
     }
