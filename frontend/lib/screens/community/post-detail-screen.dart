@@ -192,17 +192,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBE9F6),
+      backgroundColor: const Color.fromARGB(255, 244, 189, 228),
       appBar: AppBar(
-        title: const Text('Post Details'),
-        backgroundColor: Colors.purple[300],
-        elevation: 0,
+        title: const Text(
+          'Post Details',
+          style: TextStyle(
+            color: Colors.black, // Change text color to black
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent, // Make background transparent
+        elevation: 0, // Remove shadow
+        iconTheme: const IconThemeData(
+          color: Colors.black,
+        ), // Make back button black
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(
+              Icons.more_vert,
+              color: Colors.black,
+            ), // Make menu icon black
             onPressed: () {
-              // Show options menu (delete post, report, etc.)
+              // Your existing code for showing options menu
               if (_communityService.currentUser?.uid == widget.post.authorId) {
+                // Keep your existing showDialog code here
                 showDialog(
                   context: context,
                   builder:
@@ -507,7 +520,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: const BoxDecoration(
-                      color: Colors.purple,
+                      color: Color.fromARGB(255, 228, 77, 173),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

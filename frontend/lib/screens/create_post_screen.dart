@@ -21,8 +21,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     'Exercises',
     'Diets',
     'Reproductive Health',
-    'Mental Health',
-    'General Discussion',
   ];
 
   final List<String> _selectedTags = [];
@@ -262,12 +260,41 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
+  // Get appropriate icon for category
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Pain Management':
+        return Icons.healing;
+      case 'Exercises':
+        return Icons.fitness_center;
+      case 'Diets':
+        return Icons.restaurant_menu;
+      case 'Reproductive Health':
+        return Icons.spa;
+      default:
+        return Icons.label;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Remove background color and elevation for appbar
       appBar: AppBar(
-        title: const Text('Create Post'),
-        backgroundColor: Colors.purple[300],
+        title: const Text(
+          'Create Post',
+          style: TextStyle(
+            color:
+                Colors
+                    .black, // Change text color to black for better visibility
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent, // Make background transparent
+        elevation: 0, // Remove shadow
+        iconTheme: IconThemeData(
+          color: Colors.black,
+        ), // Change back button color to black
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _submitPost,
@@ -277,14 +304,18 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color:
+                            Colors
+                                .pink, // Change loading indicator color to match theme
                         strokeWidth: 2,
                       ),
                     )
                     : const Text(
                       'Post',
                       style: TextStyle(
-                        color: Colors.white,
+                        color:
+                            Colors
+                                .pink, // Change button text color to pink to match theme
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -507,6 +538,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       return GestureDetector(
                         onTap: () => _toggleTag(tag),
                         child: Chip(
+                          avatar: Icon(
+                            _getCategoryIcon(tag),
+                            color: isSelected ? Colors.white : Colors.pink,
+                            size: 18,
+                          ),
                           label: Text(tag),
                           backgroundColor:
                               isSelected
