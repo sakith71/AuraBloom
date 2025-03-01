@@ -5,13 +5,13 @@ import '../models/user_model.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirestoreService _firestoreService = FirestoreService();
-
+  
   // Get the current user id
   String? get currentUserId => _auth.currentUser?.uid;
-
+  
   // Get current user
   User? get currentUser => _auth.currentUser;
-
+  
   // Check if user is signed in
   bool get isUserSignedIn => _auth.currentUser != null;
 
@@ -43,7 +43,7 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
-
+  
   // Create user profile in Firestore after registration
   Future<void> createUserProfile(
     String uid,
@@ -63,15 +63,17 @@ class AuthService {
       crampsExperience: 'No',
       symptomDuration: '1-3 days',
       additionalSymptoms: [],
+      cycleLength: 28,
+      periodLength: 5,
     );
-
+    
     await _firestoreService.saveUserProfile(user);
   }
-
+  
   // Check if the user has completed onboarding
   Future<bool> hasCompletedOnboarding() async {
     if (currentUserId == null) return false;
-
+    
     try {
       final userData = await _firestoreService.getUserProfile(currentUserId!);
       // Consider onboarding complete if lastPeriodDate is set
