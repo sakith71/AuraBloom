@@ -5,7 +5,10 @@ class UserModel {
   final int age;
   final double height;
   final double weight;
-
+  final bool isRegularPeriod;
+  final String crampsExperience;
+  final String symptomDuration;
+  final List<String> additionalSymptoms;
 
   UserModel({
     required this.uid,
@@ -13,7 +16,10 @@ class UserModel {
     required this.age,
     required this.height,
     required this.weight,
-
+    required this.isRegularPeriod,
+    required this.crampsExperience,
+    required this.symptomDuration,
+    required this.additionalSymptoms,
   });
 
   // Convert to a map for Firestore
@@ -24,6 +30,10 @@ class UserModel {
       'age': age,
       'height': height,
       'weight': weight,
+      'isRegularPeriod': isRegularPeriod,
+      'crampsExperience': crampsExperience,
+      'symptomDuration': symptomDuration,
+      'additionalSymptoms': additionalSymptoms,
     };
   }
 
@@ -35,6 +45,10 @@ class UserModel {
       age: map['age'] ?? 0,
       height: map['height'] ?? 0.0,
       weight: map['weight'] ?? 0.0,
+      isRegularPeriod: map['isRegularPeriod'] ?? false,
+      crampsExperience: map['crampsExperience'] ?? 'No',
+      symptomDuration: map['symptomDuration'] ?? '1-3 days',
+      additionalSymptoms: List<String>.from(map['additionalSymptoms'] ?? []),
     );
   }
 }
