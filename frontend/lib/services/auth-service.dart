@@ -11,7 +11,6 @@ class AuthService {
       return userCredential.user;
     } catch (e) {
       throw Exception('Failed to sign up: $e');
-      return null;
     }
   }
 
@@ -25,7 +24,6 @@ class AuthService {
       return userCredential.user;
     } catch (e) {
       throw Exception('Failed to sign in: $e');
-      return null;
     }
   }
 
