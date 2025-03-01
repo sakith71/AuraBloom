@@ -157,20 +157,54 @@ class CommunityService {
   }
 
   // Get comments for a post
-  Future<List<Comment>> getCommentsForPost(String postId) async {
-    final snapshot =
-        await _commentsCollection
-            .where('postId', isEqualTo: postId)
-            .orderBy('createdAt', descending: false)
-            .get();
-
-    return snapshot.docs.map((doc) {
+Future<List<Comment>> getCommentsForPost(String postId) async {
+  try {
+    print('Fetching comments for post: $postId');
+    
+    // Use the simplest possible query without ordering
+    final snapshot = await _commentsCollection
+        .where('postId', isEqualTo: postId)
+        .get();
+    
+    print('Found ${snapshot.docs.length} comments for post');
+    
+    // Debug what we got
+    for (var doc in snapshot.docs) {
+      print('Comment doc ID: ${doc.id}');
+      print('Comment data: ${doc.data()}');
+    }
+    
+    final comments = snapshot.docs.map((doc) {
       final data = doc.data() as Map<String, dynamic>;
       // Ensure id is included in the data
       data['id'] = doc.id;
-      return Comment.fromMap(data);
+      
+      try {
+        return Comment.fromMap(data);
+      } catch (e) {
+        print('Error parsing comment ${doc.id}: $e');
+        print('Data: $data');
+        // Return a placeholder comment instead of failing
+        return Comment(
+          id: doc.id,
+          postId: postId,
+          authorId: 'error-parsing',
+          authorName: 'Error',
+          createdAt: DateTime.now(),
+          content: 'Error loading comment: $e',
+        );
+      }
     }).toList();
+    
+    // Sort manually by createdAt
+    comments.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    
+    return comments;
+  } catch (e) {
+    print('Error fetching comments: $e');
+    return []; // Return empty list instead of throwing
   }
+}
 
   // Add a comment
   Future<void> addComment(Comment comment) async {
