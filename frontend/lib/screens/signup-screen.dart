@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/services/auth-service.dart';
 import '../widgets/custom-text-field.dart';
 import '../widgets/signup-illustration.dart';
 import '../widgets/signup-button.dart';
@@ -28,13 +30,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  void _handleSignUp() {
+  void _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
-      // Navigate to Personal Information Screen
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const PersonalInfoScreen()),
-      );
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
+
+      // Call the signUp method from the AuthService class
+      AuthService authService = AuthService();
+      User? user = await authService.signUp(email, password);
+
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const PersonalInfoScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to sign up. Please try again.'),
+          ),
+        );
+      }
     }
   }
 
@@ -64,10 +80,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 20),
                   const Text(
                     'Sign Up Page',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 30),
                   CustomTextField(
@@ -93,10 +106,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   CustomTextField(
                     controller: _confirmPasswordController,
                     hintText: 'Confirm Password',
-                    validator: (value) => Validators.validateConfirmPassword(
-                      value,
-                      _passwordController.text,
-                    ),
+                    validator:
+                        (value) => Validators.validateConfirmPassword(
+                          value,
+                          _passwordController.text,
+                        ),
                     isPassword: true,
                   ),
                   const SizedBox(height: 30),
