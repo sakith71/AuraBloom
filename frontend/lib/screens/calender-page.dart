@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import '../widgets/calendar-card.dart';
+import '../widgets/calendar-widgets/calendar-card.dart';
+import '../widgets/calendar-widgets/upcoming-events.dart';
 
 class CalendarPage extends StatefulWidget {
   final String? selectedDate;
   final Set<String> selectedDates; // Add this line
-  const CalendarPage({
-    super.key,
-    this.selectedDate,
-    required this.selectedDates,
-  });
+  const CalendarPage({super.key, this.selectedDate, required this.selectedDates});
   @override
   State<CalendarPage> createState() => _CalendarPageState();
 }
@@ -40,7 +37,7 @@ class _CalendarPageState extends State<CalendarPage> {
   void navigateMonth(int direction) {
     setState(() {
       currentMonthIndex += direction;
-
+      
       if (currentMonthIndex > 11) {
         currentMonthIndex = 0;
         currentYear++;
@@ -70,10 +67,7 @@ class _CalendarPageState extends State<CalendarPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: Text(
                   'Period Calendar',
                   style: const TextStyle(
@@ -95,6 +89,8 @@ class _CalendarPageState extends State<CalendarPage> {
                         onDateSelected: onDateSelected,
                         onNavigateMonth: navigateMonth,
                       ),
+                      const SizedBox(height: 20),
+                      UpcomingEvents(selectedDates: selectedDates),
                     ],
                   ),
                 ),
