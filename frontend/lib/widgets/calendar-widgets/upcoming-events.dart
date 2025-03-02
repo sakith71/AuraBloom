@@ -14,6 +14,8 @@ class UpcomingEvents extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculate next period date assuming 28-day cycle from the last selected date
     String nextPeriodDate = '';
+    String ovulationDate = '';
+    String fertilityWindow = '';
     
     if (selectedDates.isNotEmpty) {
       // Get the most recent date from selected dates
@@ -52,6 +54,14 @@ class UpcomingEvents extends StatelessWidget {
       final nextPeriod = CalendarUtils.calculateNextPeriod(lastPeriodDate);
       nextPeriodDate = CalendarUtils.formatDateForDisplay(nextPeriod);
       
+      // Calculate ovulation day (typically 14 days before next period or 14 days after period starts)
+      final ovulation = lastPeriodDate.add(const Duration(days: 14));
+      ovulationDate = CalendarUtils.formatDateForDisplay(ovulation);
+      
+      // Calculate fertility window (typically 5 days before ovulation and 1 day after)
+      final fertilityStart = ovulation.subtract(const Duration(days: 5));
+      final fertilityEnd = ovulation.add(const Duration(days: 1));
+      fertilityWindow = '${CalendarUtils.formatDateForDisplay(fertilityStart)} - ${CalendarUtils.formatDateForDisplay(fertilityEnd)}';
     }
 
     return Container(
@@ -88,6 +98,20 @@ class UpcomingEvents extends StatelessWidget {
                       date: nextPeriodDate,
                       icon: Icons.calendar_today,
                       color: Colors.pink,
+                    ),
+                    const SizedBox(height: 10),
+                    EventItem(
+                      title: 'Ovulation Day',
+                      date: ovulationDate,
+                      icon: Icons.favorite,
+                      color: Colors.purple,
+                    ),
+                    const SizedBox(height: 10),
+                    EventItem(
+                      title: 'Fertility Window',
+                      date: fertilityWindow,
+                      icon: Icons.star,
+                      color: Colors.blue,
                     ),
                   ],
                 ),
