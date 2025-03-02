@@ -21,7 +21,7 @@ class CalendarCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currentMonth = CalendarUtils.months[currentMonthIndex];
-
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
