@@ -1,4 +1,5 @@
-// lib/screens/post_detail_screen.dart
+// lib/screens/community/post-detail-screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/community-models.dart';
@@ -26,6 +27,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     super.initState();
     _loadComments();
     _checkIfUserLiked();
+
+    // Debug post data
+    if (kDebugMode) {
+      print('Post author name: ${widget.post.authorName}');
+      print('Post is anonymous: ${widget.post.isAnonymous}');
+    }
   }
 
   Future<void> _loadComments() async {
@@ -37,6 +44,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final comments = await _communityService.getCommentsForPost(
         widget.post.id,
       );
+
+      // Debug comments data
+      if (kDebugMode && comments.isNotEmpty) {
+        print('First comment author: ${comments.first.authorName}');
+      }
+
       if (mounted) {
         setState(() {
           _comments = comments;
@@ -86,15 +99,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return;
     }
 
+    // Get user display name with improved logic
+    String authorName;
+    bool isAnonymous =
+        false; // Set to true if you want anonymous comments as an option
+
+    if (isAnonymous) {
+      authorName = 'Anonymous';
+    } else {
+      // Use our robust getUserDisplayName method
+      authorName = _communityService.getUserDisplayName();
+
+      // Debug output of what name we're using
+      if (kDebugMode) {
+        print('Adding comment with author name: $authorName');
+        print('User display name: ${user.displayName}');
+        print('User email: ${user.email}');
+      }
+    }
+
     final newComment = Comment(
       id: '', // Will be updated by the service
       postId: widget.post.id,
       authorId: user.uid,
-      authorName: user.displayName ?? 'User',
+      authorName: authorName,
       authorAvatar: user.photoURL ?? '',
       createdAt: DateTime.now(),
       content: _commentController.text.trim(),
-      isAnonymous: false,
+      isAnonymous: isAnonymous,
     );
 
     try {
@@ -189,8 +221,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  // Get initial for avatar
+  String _getInitial(String name) {
+    if (name.isEmpty) return 'U';
+
+    // If it's an email address, get the first letter before the @ symbol
+    if (name.contains('@')) {
+      return name.split('@')[0][0].toUpperCase();
+    }
+
+    // Otherwise get the first letter of the name
+    return name[0].toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Extra debugging for post author name
+    if (kDebugMode) {
+      print('Building PostDetailScreen with author: ${widget.post.authorName}');
+    }
+
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 244, 189, 228),
       appBar: AppBar(
@@ -292,33 +342,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 child: Text(
                                   widget.post.isAnonymous
                                       ? 'A'
-                                      : (widget.post.authorName.isNotEmpty
-                                          ? widget.post.authorName[0]
-                                          : 'U'),
+                                      : _getInitial(widget.post.authorName),
                                   style: const TextStyle(color: Colors.white),
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.post.isAnonymous
-                                        ? 'Anonymous'
-                                        : widget.post.authorName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.post.isAnonymous
+                                          ? 'Anonymous'
+                                          : widget.post.authorName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ),
-                                  Text(
-                                    _formatDate(widget.post.createdAt),
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
+                                    Text(
+                                      _formatDate(widget.post.createdAt),
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -539,6 +590,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Widget _buildCommentCard(Comment comment) {
+    // Debug comment data
+    if (kDebugMode) {
+      print('Building comment card with author: ${comment.authorName}');
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -553,28 +609,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   backgroundColor: Colors.purple[200],
                   radius: 16,
                   child: Text(
-                    comment.authorName.isNotEmpty ? comment.authorName[0] : 'U',
+                    comment.isAnonymous ? 'A' : _getInitial(comment.authorName),
                     style: const TextStyle(color: Colors.white, fontSize: 12),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      comment.authorName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        comment.authorName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Text(
-                      _formatDate(comment.createdAt),
-                      style: TextStyle(color: Colors.grey[600], fontSize: 10),
-                    ),
-                  ],
+                      Text(
+                        _formatDate(comment.createdAt),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 // Delete option if user is the author
                 if (_communityService.currentUser?.uid == comment.authorId)
                   GestureDetector(
