@@ -21,6 +21,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLoading = true;
   bool _isLiking = false;
   bool _userHasLiked = false;
+  bool _isAnonymousComment = false; // Added for anonymous comment toggle
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       // Debug comments data
       if (kDebugMode && comments.isNotEmpty) {
         print('First comment author: ${comments.first.authorName}');
+        print('First comment anonymous: ${comments.first.isAnonymous}');
       }
 
       if (mounted) {
@@ -101,10 +103,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     // Get user display name with improved logic
     String authorName;
-    bool isAnonymous =
-        false; // Set to true if you want anonymous comments as an option
 
-    if (isAnonymous) {
+    if (_isAnonymousComment) {
       authorName = 'Anonymous';
     } else {
       // Use our robust getUserDisplayName method
@@ -115,6 +115,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         print('Adding comment with author name: $authorName');
         print('User display name: ${user.displayName}');
         print('User email: ${user.email}');
+        print('Comment is anonymous: $_isAnonymousComment');
       }
     }
 
@@ -126,7 +127,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       authorAvatar: user.photoURL ?? '',
       createdAt: DateTime.now(),
       content: _commentController.text.trim(),
-      isAnonymous: isAnonymous,
+      isAnonymous: _isAnonymousComment,
     );
 
     try {
@@ -544,42 +545,65 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _commentController,
-                    decoration: InputDecoration(
-                      hintText: 'Add a comment...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                // Anonymous comment toggle
+                Row(
+                  children: [
+                    Switch(
+                      value: _isAnonymousComment,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAnonymousComment = value;
+                        });
+                      },
+                      activeColor: Colors.pink,
                     ),
-                    maxLines: null,
-                  ),
+                    Text(
+                      'Post as anonymous',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: _addComment,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Color.fromARGB(255, 228, 77, 173),
-                      shape: BoxShape.circle,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _commentController,
+                        decoration: InputDecoration(
+                          hintText: 'Add a comment...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        maxLines: null,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 20,
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: _addComment,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: const BoxDecoration(
+                          color: Color.fromARGB(255, 228, 77, 173),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.send,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -593,6 +617,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     // Debug comment data
     if (kDebugMode) {
       print('Building comment card with author: ${comment.authorName}');
+      print('Comment is anonymous: ${comment.isAnonymous}');
     }
 
     return Card(
@@ -606,7 +631,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.purple[200],
+                  backgroundColor:
+                      comment.isAnonymous ? Colors.grey : Colors.purple[200],
                   radius: 16,
                   child: Text(
                     comment.isAnonymous ? 'A' : _getInitial(comment.authorName),
@@ -619,7 +645,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        comment.authorName,
+                        comment.isAnonymous ? 'Anonymous' : comment.authorName,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
