@@ -1,30 +1,28 @@
-// lib/models/comment.dart
+// lib/models/reply.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Comment {
+class Reply {
   final String id;
-  final String postId;
+  final String commentId;
   final String authorId;
   final String authorName;
   final String authorAvatar;
   final DateTime createdAt;
   final String content;
   final bool isAnonymous;
-  int replyCount;
 
-  Comment({
+  Reply({
     required this.id,
-    required this.postId,
+    required this.commentId,
     required this.authorId,
     required this.authorName,
     this.authorAvatar = '',
     required this.createdAt,
     required this.content,
     this.isAnonymous = false,
-    this.replyCount = 0,
   });
 
-  factory Comment.fromMap(Map<String, dynamic> map) {
+  factory Reply.fromMap(Map<String, dynamic> map) {
     DateTime parseDateTime(dynamic dateValue) {
       if (dateValue is DateTime) {
         return dateValue;
@@ -43,9 +41,9 @@ class Comment {
       }
     }
 
-    return Comment(
+    return Reply(
       id: map['id'] ?? '',
-      postId: map['postId'] ?? '',
+      commentId: map['commentId'] ?? '',
       authorId: map['authorId'] ?? '',
       authorName: map['authorName'] ?? 'Unknown',
       authorAvatar: map['authorAvatar'] ?? '',
@@ -54,21 +52,19 @@ class Comment {
           : DateTime.now(),
       content: map['content'] ?? 'No content',
       isAnonymous: map['isAnonymous'] ?? false,
-      replyCount: map['replyCount'] ?? 0,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'postId': postId,
+      'commentId': commentId,
       'authorId': authorId,
       'authorName': authorName,
       'authorAvatar': authorAvatar,
       'createdAt': createdAt.toIso8601String(),
       'content': content,
       'isAnonymous': isAnonymous,
-      'replyCount': replyCount,
     };
   }
 }

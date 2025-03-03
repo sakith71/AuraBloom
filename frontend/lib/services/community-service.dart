@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/community-models.dart';
+import 'package:frontend/models/reply.dart';
 
 class CommunityService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -197,6 +198,7 @@ class CommunityService {
     }
 
     commentData['createdAt'] = FieldValue.serverTimestamp();
+    commentData['replyCount'] = 0; // Initialize reply count
 
     // Log for debugging
     if (kDebugMode) {
@@ -241,18 +243,161 @@ class CommunityService {
       throw Exception('User not authenticated');
     }
 
-    // Delete the comment
-    await _firestore
+    // Delete all replies to the comment
+    final repliesSnapshot = await _firestore
         .collection('posts')
         .doc(postId)
         .collection('comments')
         .doc(commentId)
-        .delete();
+        .collection('replies')
+        .get();
+    
+    final batch = _firestore.batch();
+    
+    for (var doc in repliesSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    
+    // Delete the comment
+    batch.delete(_firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId));
+    
+    await batch.commit();
 
     // Decrement comment count
     await _firestore.collection('posts').doc(postId).update({
       'commentCount': FieldValue.increment(-1),
     });
+  }
+
+  // Add reply to a comment
+  Future<void> addReply(Reply reply) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Create reply data
+    Map<String, dynamic> replyData = reply.toMap();
+
+    // Override with current user info to ensure latest data
+    if (!reply.isAnonymous) {
+      String authorName;
+      if (user.displayName != null && user.displayName!.isNotEmpty) {
+        authorName = user.displayName!;
+      } else if (user.email != null && user.email!.isNotEmpty) {
+        authorName = user.email!;
+      } else {
+        authorName = 'User_${user.uid.substring(0, 5)}';
+      }
+      replyData['authorName'] = authorName;
+    }
+
+    replyData['createdAt'] = FieldValue.serverTimestamp();
+
+    // Log for debugging
+    if (kDebugMode) {
+      print('Adding reply with author name: ${replyData['authorName']}');
+    }
+
+    // Get the post ID for the comment
+    final commentSnapshot = await _firestore
+        .collection('posts')
+        .where('comments', arrayContains: reply.commentId)
+        .limit(1)
+        .get();
+    
+    String postId = '';
+    if (commentSnapshot.docs.isNotEmpty) {
+      postId = commentSnapshot.docs.first.id;
+    } else {
+      // Find the post ID by querying all posts
+      final allPostsSnapshot = await _firestore.collection('posts').get();
+      for (final doc in allPostsSnapshot.docs) {
+        final commentCheck = await doc.reference
+            .collection('comments')
+            .doc(reply.commentId)
+            .get();
+        if (commentCheck.exists) {
+          postId = doc.id;
+          break;
+        }
+      }
+    }
+
+    if (postId.isEmpty) {
+      throw Exception('Could not find post for this comment');
+    }
+
+    // Add to comment's replies collection
+    await _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(reply.commentId)
+        .collection('replies')
+        .add(replyData);
+
+    // Increment reply count on the comment
+    await _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(reply.commentId)
+        .update({
+          'replyCount': FieldValue.increment(1),
+        });
+  }
+
+  // Get replies for a comment
+  Future<List<Reply>> getRepliesForComment(String postId, String commentId) async {
+    final snapshot =
+        await _firestore
+            .collection('posts')
+            .doc(postId)
+            .collection('comments')
+            .doc(commentId)
+            .collection('replies')
+            .orderBy('createdAt', descending: false)
+            .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      data['commentId'] = commentId;
+      return Reply.fromMap(data);
+    }).toList();
+  }
+
+  // Delete a reply
+  Future<void> deleteReply(String postId, String commentId, String replyId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Delete the reply
+    await _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .collection('replies')
+        .doc(replyId)
+        .delete();
+
+    // Decrement reply count
+    await _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .update({
+          'replyCount': FieldValue.increment(-1),
+        });
   }
 
   // Delete a post
