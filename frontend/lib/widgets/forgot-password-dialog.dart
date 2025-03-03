@@ -1,6 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/validators.dart';
-import 'reset-password-dialog.dart';
 
 class ForgotPasswordDialog extends StatelessWidget {
   const ForgotPasswordDialog({super.key});
@@ -10,6 +10,29 @@ class ForgotPasswordDialog extends StatelessWidget {
     final emailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
+    Future<void> _resetPassword() async {
+      if (!formKey.currentState!.validate()) return;
+
+      try {
+        await FirebaseAuth.instance.sendPasswordResetEmail(
+          email: emailController.text.trim(),
+        );
+        Navigator.pop(context); // Close forgot password dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Password reset email sent")),
+        );
+        Navigator.pop(context); // Close forgot password dialog
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Failed to send password reset email: ${e.toString()}",
+            ),
+          ),
+        );
+      }
+    }
+
     return AlertDialog(
       title: const Text("Forgot your password?"),
       content: Form(
@@ -18,7 +41,8 @@ class ForgotPasswordDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-                "Please enter the account for which you want to reset the password."),
+              "Please enter the account for which you want to reset the password.",
+            ),
             const SizedBox(height: 10),
             TextFormField(
               controller: emailController,
@@ -26,7 +50,8 @@ class ForgotPasswordDialog extends StatelessWidget {
                 labelText: "Enter Email",
                 border: OutlineInputBorder(),
               ),
-              validator: (value) => Validators.validateEmail(value), // Validate email
+              validator:
+                  (value) => Validators.validateEmail(value), // Validate email
             ),
           ],
         ),
@@ -37,23 +62,10 @@ class ForgotPasswordDialog extends StatelessWidget {
           child: const Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed: () {
-            if (formKey.currentState!.validate()) {
-              Navigator.pop(context); // Close forgot password dialog
-              showDialog(
-                context: context,
-                builder: (context) => const ResetPasswordDialog(email: '',),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Please enter a valid email")),
-              );
-            }
-          },
-          child: const Text("Confirm"),
+          onPressed: _resetPassword,
+          child: const Text("Send Email"),
         ),
       ],
     );
   }
 }
-

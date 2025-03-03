@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import '../../utils/calendar.dart';
 
 class UpcomingCycle extends StatelessWidget {
-  final Set<String> selectedDates;
+  final String? selectedDate;
+  final List<String> selectedDates = [];
 
-  const UpcomingCycle({
-    super.key,
-    required this.selectedDates,
-  });
+  UpcomingCycle({Key? key, this.selectedDate}) : super(key: key);
 
   Widget _buildCycleInfo({
     required String label,
