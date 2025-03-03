@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildHomePage();
       case 1:
         return CalendarPage(
+          userId: widget.userId,
           selectedDates:
               widget.selectedDate != null ? {widget.selectedDate!} : {},
         );
