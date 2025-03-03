@@ -1,276 +1,278 @@
 // lib/services/community-service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/community-models.dart';
-import '../models/comment.dart';
 
 class CommunityService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Collection references
-  final CollectionReference _postsCollection = FirebaseFirestore.instance
-      .collection('posts');
-  final CollectionReference _commentsCollection = FirebaseFirestore.instance
-      .collection('comments');
-  final CollectionReference _likesCollection = FirebaseFirestore.instance
-      .collection('likes');
 
   // Get current user
   User? get currentUser => _auth.currentUser;
 
-  // Get all posts
+  // Get user display name or email - more robust implementation
+  String getUserDisplayName() {
+    final User? user = _auth.currentUser;
+
+    if (user == null) {
+      return 'Unknown';
+    }
+
+    // First try display name
+    if (user.displayName != null && user.displayName!.isNotEmpty) {
+      return user.displayName!;
+    }
+
+    // Then try email
+    if (user.email != null && user.email!.isNotEmpty) {
+      return user.email!;
+    }
+
+    // Finally fall back to UID if everything else is unavailable
+    return user.uid.substring(0, 8); // Use first part of UID as fallback
+  }
+
+  // Stream of posts
   Stream<List<CommunityPost>> getPosts() {
-    return _postsCollection
+    return _firestore
+        .collection('posts')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            // Ensure id is included in the data
+            final data = doc.data();
             data['id'] = doc.id;
             return CommunityPost.fromMap(data);
           }).toList();
         });
   }
 
-  // Get posts by tag
-  Stream<List<CommunityPost>> getPostsByTag(String tag) {
-    return _postsCollection
-        .where('tags', arrayContains: tag)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            // Ensure id is included in the data
-            data['id'] = doc.id;
-            return CommunityPost.fromMap(data);
-          }).toList();
-        });
-  }
-
-  // Get posts by user
-  Stream<List<CommunityPost>> getPostsByUser(String userId) {
-    return _postsCollection
-        .where('authorId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            // Ensure id is included in the data
-            data['id'] = doc.id;
-            return CommunityPost.fromMap(data);
-          }).toList();
-        });
-  }
-
-  // Add new post
-  Future<String> addPost({
+  // Add a new post with better logging and error handling
+  Future<void> addPost({
     required String content,
     required List<String> tags,
     List<String>? images,
     bool isAnonymous = false,
   }) async {
-    // Check if user is authenticated
-    final user = currentUser;
+    final user = _auth.currentUser;
     if (user == null) {
       throw Exception('User not authenticated');
     }
 
-    // Create post document
-    final newPost = CommunityPost(
-      id: '', // Will be updated with document ID
-      authorId: user.uid,
-      authorName: isAnonymous ? 'Anonymous' : user.displayName ?? 'User',
-      authorAvatar: user.photoURL ?? '',
-      createdAt: DateTime.now(),
-      content: content,
-      tags: tags,
-      likeCount: 0,
-      commentCount: 0,
-      imageUrls: images,
-      isAnonymous: isAnonymous,
-    );
+    // Log user info for debugging
+    if (kDebugMode) {
+      print('Current user: ${user.uid}');
+      print('Display name: ${user.displayName}');
+      print('Email: ${user.email}');
+    }
 
-    // Convert to map and update createdAt to Timestamp for Firestore
-    final Map<String, dynamic> postData = newPost.toMap();
-    postData['createdAt'] = Timestamp.fromDate(newPost.createdAt);
+    // Get user display name or email with improved logic
+    String authorName;
+    if (isAnonymous) {
+      authorName = 'Anonymous';
+    } else if (user.displayName != null && user.displayName!.isNotEmpty) {
+      authorName = user.displayName!;
+    } else if (user.email != null && user.email!.isNotEmpty) {
+      authorName = user.email!;
+    } else {
+      authorName =
+          'User_${user.uid.substring(0, 5)}'; // Fallback with part of UID
+    }
+
+    // Create post data
+    final post = {
+      'authorId': user.uid,
+      'authorName': authorName,
+      'authorAvatar': user.photoURL ?? '',
+      'createdAt': FieldValue.serverTimestamp(),
+      'content': content,
+      'tags': tags,
+      'likeCount': 0,
+      'commentCount': 0,
+      'imageUrls': images,
+      'isAnonymous': isAnonymous,
+    };
+
+    // Log post data for debugging
+    if (kDebugMode) {
+      print('Creating post with author name: ${post['authorName']}');
+    }
 
     // Add to Firestore
-    final docRef = await _postsCollection.add(postData);
-
-    // Update the post with the document ID
-    await docRef.update({'id': docRef.id});
-
-    return docRef.id;
+    await _firestore.collection('posts').add(post);
   }
 
-  // Check if user has liked a post
-  Future<bool> hasUserLikedPost(String postId, String userId) async {
-    if (userId == 'anonymous') return false;
-
-    final likeDoc =
-        await _likesCollection
-            .where('postId', isEqualTo: postId)
-            .where('userId', isEqualTo: userId)
-            .get();
-
-    return likeDoc.docs.isNotEmpty;
+  // Get a specific post
+  Future<CommunityPost?> getPost(String postId) async {
+    final doc = await _firestore.collection('posts').doc(postId).get();
+    if (!doc.exists) {
+      return null;
+    }
+    final data = doc.data();
+    data?['id'] = doc.id;
+    return CommunityPost.fromMap(data!);
   }
 
   // Like a post
   Future<void> likePost(String postId, String userId) async {
-    // Check if user is authenticated
-    if (userId == 'anonymous') {
-      throw Exception('You need to be logged in to like a post');
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
     }
 
-    // Check if user already liked this post
+    // Check if user already liked the post
     final likeDoc =
-        await _likesCollection
-            .where('postId', isEqualTo: postId)
-            .where('userId', isEqualTo: userId)
+        await _firestore
+            .collection('posts')
+            .doc(postId)
+            .collection('likes')
+            .doc(userId)
             .get();
 
-    if (likeDoc.docs.isEmpty) {
-      // User hasn't liked this post yet, add like
-      await _likesCollection.add({
-        'postId': postId,
-        'userId': userId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // Increment like count
-      await _postsCollection.doc(postId).update({
-        'likeCount': FieldValue.increment(1),
-      });
-    } else {
-      // User already liked this post, remove like
-      await _likesCollection.doc(likeDoc.docs.first.id).delete();
+    if (likeDoc.exists) {
+      // User already liked the post, so unlike it
+      await _firestore
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(userId)
+          .delete();
 
       // Decrement like count
-      await _postsCollection.doc(postId).update({
+      await _firestore.collection('posts').doc(postId).update({
         'likeCount': FieldValue.increment(-1),
       });
+    } else {
+      // User hasn't liked the post, so like it
+      await _firestore
+          .collection('posts')
+          .doc(postId)
+          .collection('likes')
+          .doc(userId)
+          .set({'userId': userId, 'timestamp': FieldValue.serverTimestamp()});
+
+      // Increment like count
+      await _firestore.collection('posts').doc(postId).update({
+        'likeCount': FieldValue.increment(1),
+      });
     }
+  }
+
+  // Check if user liked a post
+  Future<bool> hasUserLikedPost(String postId, String userId) async {
+    final likeDoc =
+        await _firestore
+            .collection('posts')
+            .doc(postId)
+            .collection('likes')
+            .doc(userId)
+            .get();
+
+    return likeDoc.exists;
+  }
+
+  // Add comment to post with improved user name handling
+  Future<void> addComment(Comment comment) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Create comment data with explicit author name handling
+    Map<String, dynamic> commentData = comment.toMap();
+
+    // Override with current user info to ensure latest data
+    if (!comment.isAnonymous) {
+      String authorName;
+      if (user.displayName != null && user.displayName!.isNotEmpty) {
+        authorName = user.displayName!;
+      } else if (user.email != null && user.email!.isNotEmpty) {
+        authorName = user.email!;
+      } else {
+        authorName = 'User_${user.uid.substring(0, 5)}';
+      }
+      commentData['authorName'] = authorName;
+    }
+
+    commentData['createdAt'] = FieldValue.serverTimestamp();
+
+    // Log for debugging
+    if (kDebugMode) {
+      print('Adding comment with author name: ${commentData['authorName']}');
+    }
+
+    // Add to post's comments collection
+    await _firestore
+        .collection('posts')
+        .doc(comment.postId)
+        .collection('comments')
+        .add(commentData);
+
+    // Increment comment count
+    await _firestore.collection('posts').doc(comment.postId).update({
+      'commentCount': FieldValue.increment(1),
+    });
   }
 
   // Get comments for a post
-Future<List<Comment>> getCommentsForPost(String postId) async {
-  try {
-    print('Fetching comments for post: $postId');
-    
-    // Use the simplest possible query without ordering
-    final snapshot = await _commentsCollection
-        .where('postId', isEqualTo: postId)
-        .get();
-    
-    print('Found ${snapshot.docs.length} comments for post');
-    
-    // Debug what we got
-    for (var doc in snapshot.docs) {
-      print('Comment doc ID: ${doc.id}');
-      print('Comment data: ${doc.data()}');
-    }
-    
-    final comments = snapshot.docs.map((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      // Ensure id is included in the data
+  Future<List<Comment>> getCommentsForPost(String postId) async {
+    final snapshot =
+        await _firestore
+            .collection('posts')
+            .doc(postId)
+            .collection('comments')
+            .orderBy('createdAt', descending: false)
+            .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
       data['id'] = doc.id;
-      
-      try {
-        return Comment.fromMap(data);
-      } catch (e) {
-        print('Error parsing comment ${doc.id}: $e');
-        print('Data: $data');
-        // Return a placeholder comment instead of failing
-        return Comment(
-          id: doc.id,
-          postId: postId,
-          authorId: 'error-parsing',
-          authorName: 'Error',
-          createdAt: DateTime.now(),
-          content: 'Error loading comment: $e',
-        );
-      }
+      data['postId'] = postId;
+      return Comment.fromMap(data);
     }).toList();
-    
-    // Sort manually by createdAt
-    comments.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-    
-    return comments;
-  } catch (e) {
-    print('Error fetching comments: $e');
-    return []; // Return empty list instead of throwing
   }
-}
 
-  // Add a comment
-  Future<void> addComment(Comment comment) async {
-    // Convert to map and update createdAt to Timestamp for Firestore
-    final Map<String, dynamic> commentData = comment.toMap();
-    commentData['createdAt'] = Timestamp.fromDate(comment.createdAt);
+  // Delete a comment
+  Future<void> deleteComment(String commentId, String postId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
 
-    // Add comment to Firestore
-    final docRef = await _commentsCollection.add(commentData);
+    // Delete the comment
+    await _firestore
+        .collection('posts')
+        .doc(postId)
+        .collection('comments')
+        .doc(commentId)
+        .delete();
 
-    // Update the comment with the document ID
-    await docRef.update({'id': docRef.id});
-
-    // Increment comment count on the post
-    await _postsCollection.doc(comment.postId).update({
-      'commentCount': FieldValue.increment(1),
+    // Decrement comment count
+    await _firestore.collection('posts').doc(postId).update({
+      'commentCount': FieldValue.increment(-1),
     });
   }
 
   // Delete a post
   Future<void> deletePost(String postId) async {
-    // Delete all comments for this post
-    final commentDocs =
-        await _commentsCollection.where('postId', isEqualTo: postId).get();
-
-    for (var doc in commentDocs.docs) {
-      await _commentsCollection.doc(doc.id).delete();
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
     }
 
-    // Delete all likes for this post
-    final likeDocs =
-        await _likesCollection.where('postId', isEqualTo: postId).get();
-
-    for (var doc in likeDocs.docs) {
-      await _likesCollection.doc(doc.id).delete();
+    // Check if the user is the author of the post
+    final post = await getPost(postId);
+    if (post == null) {
+      throw Exception('Post not found');
     }
 
-    // Delete the post itself
-    await _postsCollection.doc(postId).delete();
-  }
-
-  // Delete a comment
-  Future<void> deleteComment(String commentId, String postId) async {
-    // Delete the comment
-    await _commentsCollection.doc(commentId).delete();
-
-    // Decrement comment count on the post
-    await _postsCollection.doc(postId).update({
-      'commentCount': FieldValue.increment(-1),
-    });
-  }
-
-  // Get all available tags
-  Future<List<String>> getAllTags() async {
-    final snapshot = await _postsCollection.get();
-
-    // Collect all tags from all posts
-    final Set<String> allTags = {};
-    for (var doc in snapshot.docs) {
-      final data = doc.data() as Map<String, dynamic>;
-      if (data.containsKey('tags')) {
-        final tags = List<String>.from(data['tags']);
-        allTags.addAll(tags);
-      }
+    if (post.authorId != user.uid) {
+      throw Exception('User is not authorized to delete this post');
     }
 
-    return allTags.toList();
+    // Delete the post
+    await _firestore.collection('posts').doc(postId).delete();
   }
 }
