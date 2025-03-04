@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const HomeScreen(userId: 'someUserId'),
-        '/personal-info': (context) => PersonalInfoScreen(userId: 'someUserId'),
+        '/personal-info': (context) => PersonalInfoPage(userId: 'someUserId'),
         // We'll comment out this route until we have the file
         '/community': (context) => const CommunityScreen(),
       },

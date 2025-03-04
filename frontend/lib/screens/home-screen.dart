@@ -13,11 +13,11 @@ import 'community/community-screen.dart';
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String? selectedDate;
-  final Set<String> selectedDates; // Add this parameter
+  final Set<String> selectedDates;
 
   const HomeScreen({
-    super.key, 
-    required this.userId, 
+    super.key,
+    required this.userId,
     this.selectedDate,
     this.selectedDates = const {}, // Default to empty set
   });
@@ -36,15 +36,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     // Initialize with dates from constructor or empty set
-    _selectedDates = widget.selectedDates.isNotEmpty 
-        ? Set<String>.from(widget.selectedDates)
-        : {};
-    
+    _selectedDates =
+        widget.selectedDates.isNotEmpty
+            ? Set<String>.from(widget.selectedDates)
+            : {};
+
     // If no dates were passed but we have a single date, add it
     if (_selectedDates.isEmpty && widget.selectedDate != null) {
       _selectedDates.add(widget.selectedDate!);
     }
-    
+
     // If still empty, fetch from Firestore
     if (_selectedDates.isEmpty) {
       _fetchPeriodDates();
@@ -52,12 +53,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _isLoading = false;
     }
   }
-  
+
   Future<void> _fetchPeriodDates() async {
     try {
       // Get period dates from Firestore
       Set<String> dates = await _periodService.fetchPeriodDates(widget.userId);
-      
+
       setState(() {
         _selectedDates = dates;
         _isLoading = false;
@@ -86,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     switch (_selectedIndex) {
       case 0:
         return _buildHomePage();
@@ -114,14 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Pass all selected dates to components that need them
           WelcomeSection(
-            selectedDate: widget.selectedDate,
+            // selectedDate: widget.selectedDate,
             // selectedDates: _selectedDates,
           ),
           const SizedBox(height: 25),
           QuickActions(onItemTapped: _onItemTapped),
           const SizedBox(height: 25),
           UpcomingCycle(
-            selectedDate: widget.selectedDate,
+            // selectedDate: widget.selectedDate,
             // selectedDates: _selectedDates,
           ),
           const SizedBox(height: 25),
