@@ -29,12 +29,12 @@ class CalendarDay extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: isSelected 
-              ? const Color(0xFFE1F5FE) 
+              ? const Color.fromARGB(255, 255, 233, 242) 
               : isToday 
                   ? Colors.red.withOpacity(0.1)
                   : Colors.transparent,
           border: isSelected
-              ? Border.all(color: Colors.blue, width: 2)
+              ? Border.all(color: const Color.fromARGB(255, 240, 99, 153), width: 2)
               : isToday
                   ? Border.all(color: Colors.red, width: 1)
                   : null,
@@ -45,7 +45,7 @@ class CalendarDay extends StatelessWidget {
             color: !isEnabled || !isPastOrToday
                 ? Colors.grey.shade300
                 : isSelected
-                    ? Colors.blue
+                    ? const Color.fromARGB(255, 240, 99, 153)
                     : isToday
                         ? Colors.red
                         : Colors.black87,

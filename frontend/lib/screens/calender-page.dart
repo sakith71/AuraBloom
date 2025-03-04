@@ -270,7 +270,7 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
                       onPressed: isSaving ? null : savePeriodDates,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        backgroundColor: const Color(0xFFE57373),
+                        backgroundColor: const Color.fromARGB(255, 240, 99, 153),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -297,7 +297,7 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
                       onPressed: toggleEditMode,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        backgroundColor: const Color(0xFFE57373),
+                        backgroundColor: const Color.fromARGB(255, 240, 99, 153),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
