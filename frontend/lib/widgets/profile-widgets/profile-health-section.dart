@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/models/user-model.dart';
+import 'package:frontend/services/auth-service.dart';
+import 'package:frontend/services/firestore_service.dart';
 
 class ProfileHealthSection extends StatefulWidget {
   const ProfileHealthSection({super.key});
@@ -8,14 +11,73 @@ class ProfileHealthSection extends StatefulWidget {
 }
 
 class _ProfileHealthSectionState extends State<ProfileHealthSection> {
-  final Map<String, String> _healthInfo = {
-    'Age': '25 years',
-    'Height': '165 cm',
-    'Weight': '58 kg',
-    'Blood Type': 'A+',
-    'Cycle Length': '28 days',
-    'Period Length': '5 days',
-  };
+  final AuthService _authService = AuthService();
+  final FirestoreService _firestoreService = FirestoreService();
+  UserModel? _userModel;
+  bool _isLoading = true;
+  Map<String, String> _healthInfo = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (_authService.currentUserId != null) {
+        final userData = await _firestoreService.getUserProfile(
+          _authService.currentUserId!,
+        );
+
+        // Check if widget is still mounted after async operation
+        if (!mounted) return;
+
+        if (userData != null) {
+          setState(() {
+            _userModel = userData;
+            _healthInfo = {
+              'Age': '${userData.age} years',
+              'Height': '${userData.height} cm',
+              'Weight': '${userData.weight} kg',
+              'Blood Type': 'A+', // Not in UserModel, so using a default
+              'Cycle Length': '${userData.cycleLength} days',
+              'Period Length': '${userData.periodLength} days',
+            };
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+
+      // Check if widget is still mounted before updating state
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _healthInfo = {
+          'Age': '25 years',
+          'Height': '165 cm',
+          'Weight': '58 kg',
+          'Blood Type': 'A+',
+          'Cycle Length': '28 days',
+          'Period Length': '5 days',
+        };
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,29 +94,39 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Health Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      child:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Health Information',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          if (mounted) {
+                            _showEditDialog(context);
+                          }
+                        },
+                        color: Colors.pink,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  ..._healthInfo.entries.map(
+                    (entry) => _buildHealthItem(entry.key, entry.value),
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => _showEditDialog(context),
-                color: Colors.pink,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ..._healthInfo.entries.map(
-            (entry) => _buildHealthItem(entry.key, entry.value),
-          ),
-        ],
-      ),
     );
   }
 
@@ -78,22 +150,53 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
   }
 
   void _showEditDialog(BuildContext context) {
+    // Store local references to avoid lifecycle issues
+    final localHealthInfo = Map<String, String>.from(_healthInfo);
+    final localUserModel = _userModel;
+
     showDialog(
       context: context,
       builder:
-          (context) => EditHealthInfoScreen(
-            initialHealthInfo: _healthInfo,
-            onSave: (updatedInfo) {
-              setState(() {
-                _healthInfo.clear();
-                _healthInfo.addAll(updatedInfo);
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Health information updated'),
-                  backgroundColor: Colors.pink,
-                ),
-              );
+          (dialogContext) => EditHealthInfoScreen(
+            initialHealthInfo: localHealthInfo,
+            userModel: localUserModel,
+            onSave: (updatedInfo, updatedUserModel) async {
+              // Close dialog first to avoid lifecycle issues
+              Navigator.pop(dialogContext);
+
+              try {
+                // Save to Firestore
+                if (updatedUserModel != null) {
+                  await _firestoreService.saveUserProfile(updatedUserModel);
+
+                  // Check if widget is still mounted before updating state
+                  if (!mounted) return;
+
+                  setState(() {
+                    _healthInfo.clear();
+                    _healthInfo.addAll(updatedInfo);
+                    _userModel = updatedUserModel;
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Health information updated'),
+                      backgroundColor: Colors.pink,
+                    ),
+                  );
+                }
+              } catch (e) {
+                print('Error updating health info: $e');
+
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating health information: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
     );
@@ -102,11 +205,13 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
 
 class EditHealthInfoScreen extends StatefulWidget {
   final Map<String, String> initialHealthInfo;
-  final Function(Map<String, String>) onSave;
+  final UserModel? userModel;
+  final Function(Map<String, String>, UserModel?) onSave;
 
   const EditHealthInfoScreen({
     Key? key,
     required this.initialHealthInfo,
+    this.userModel,
     required this.onSave,
   }) : super(key: key);
 
@@ -117,6 +222,7 @@ class EditHealthInfoScreen extends StatefulWidget {
 class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
   late final Map<String, TextEditingController> _controllers;
   final _formKey = GlobalKey<FormState>();
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -218,7 +324,7 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _isUpdating ? null : () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -235,7 +341,7 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton(
-            onPressed: _saveChanges,
+            onPressed: _isUpdating ? null : _saveChanges,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: Colors.pink,
@@ -243,27 +349,106 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            child: const Text(
-              'Save',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            child:
+                _isUpdating
+                    ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : const Text(
+                      'Save',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
           ),
         ),
       ],
     );
   }
 
-  void _saveChanges() {
+  void _saveChanges() async {
+    if (!mounted) return;
+
     if (_formKey.currentState!.validate()) {
-      final updatedHealthInfo = _controllers.map(
-        (key, controller) => MapEntry(key, controller.text),
-      );
-      widget.onSave(updatedHealthInfo);
-      Navigator.pop(context);
+      setState(() {
+        _isUpdating = true;
+      });
+
+      try {
+        // Extract updated values from controllers
+        final updatedHealthInfo = _controllers.map(
+          (key, controller) => MapEntry(key, controller.text),
+        );
+
+        // Extract numeric values for UserModel update
+        int? age = int.tryParse(
+          updatedHealthInfo['Age']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '',
+        );
+        double? height = double.tryParse(
+          updatedHealthInfo['Height']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '',
+        );
+        double? weight = double.tryParse(
+          updatedHealthInfo['Weight']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '',
+        );
+        int? cycleLength = int.tryParse(
+          updatedHealthInfo['Cycle Length']?.replaceAll(
+                RegExp(r'[^0-9]'),
+                '',
+              ) ??
+              '',
+        );
+        int? periodLength = int.tryParse(
+          updatedHealthInfo['Period Length']?.replaceAll(
+                RegExp(r'[^0-9]'),
+                '',
+              ) ??
+              '',
+        );
+
+        // Create updated user model if original exists
+        UserModel? updatedUserModel;
+        if (widget.userModel != null) {
+          updatedUserModel = UserModel(
+            uid: widget.userModel!.uid,
+            name: widget.userModel!.name,
+            age: age ?? widget.userModel!.age,
+            height: height ?? widget.userModel!.height,
+            weight: weight ?? widget.userModel!.weight,
+            isRegularPeriod: widget.userModel!.isRegularPeriod,
+            crampsExperience: widget.userModel!.crampsExperience,
+            symptomDuration: widget.userModel!.symptomDuration,
+            additionalSymptoms: widget.userModel!.additionalSymptoms,
+            cycleLength: cycleLength ?? widget.userModel!.cycleLength,
+            periodLength: periodLength ?? widget.userModel!.periodLength,
+            lastPeriodDate: widget.userModel!.lastPeriodDate,
+          );
+        }
+
+        // Invoke callback with updated data
+        widget.onSave(updatedHealthInfo, updatedUserModel);
+      } catch (e) {
+        print('Error processing health info: $e');
+
+        if (!mounted) return;
+
+        setState(() {
+          _isUpdating = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing health information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
