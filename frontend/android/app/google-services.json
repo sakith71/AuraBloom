@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "823021447847",
+    "project_id": "aurabloom-c8b3f",
+    "storage_bucket": "aurabloom-c8b3f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:823021447847:android:8fcb8761822ad185ce4982",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6wDcRwXJ1QXJ-nPKR1hQkuJ-yMZaaGLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

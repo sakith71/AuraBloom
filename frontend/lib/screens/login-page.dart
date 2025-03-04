@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/login-form.dart';
-import '../widgets/social-login-buttons.dart';
-import '../widgets/custom-divider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -48,10 +46,6 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               const LoginForm(),
-              const SizedBox(height: 20),
-              const CustomDivider(text: 'OR, log in with'),
-              const SizedBox(height: 20),
-              const SocialLoginButtons(),
             ],
           ),
         ),

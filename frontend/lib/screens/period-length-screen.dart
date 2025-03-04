@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../widgets/navigation-buttons.dart';
+import '../services/firestore_service.dart';
 import 'period-logging-screen.dart';
 
 class PeriodLengthScreen extends StatefulWidget {
-  const PeriodLengthScreen({super.key});
+  final String userId;
+  
+  const PeriodLengthScreen({super.key, required this.userId});
 
   @override
   State<PeriodLengthScreen> createState() => _PeriodLengthScreenState();
@@ -11,16 +14,45 @@ class PeriodLengthScreen extends StatefulWidget {
 
 class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
   int? selectedLength; // Allow null for "I don't know"
-  final List<int> periodLengths = List.generate(15, (index) => index + 1); // 1 to 11 days
+  bool _isLoading = false;
+  final FirestoreService _firestoreService = FirestoreService();
+  
+  final List<int> periodLengths = List.generate(15, (index) => index + 1); // 1 to 15 days
 
-  void _handleNext() {
-    if (selectedLength != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const PeriodLoggingScreen(), // Navigate forward
-        ),
-      );
+  Future<void> _savePeriodLengthAndProceed() async {
+    if (selectedLength == null) return;
+    
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Update user document with period length
+      await _firestoreService.users.doc(widget.userId).update({
+        'periodLength': selectedLength,
+      });
+      
+      // Navigate to next screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PeriodLoggingScreen(userId: widget.userId),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving period length: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -28,14 +60,39 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
     Navigator.pop(context); // Navigate back to Cycle Length Screen
   }
 
-  void _handleIDontKnow() {
-    // Navigate directly without selecting a period length
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PeriodLoggingScreen(),
-      ),
-    );
+  Future<void> _handleIDontKnow() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Save default period length (5 days) if user doesn't know
+      await _firestoreService.users.doc(widget.userId).update({
+        'periodLength': 5, // Default value
+      });
+      
+      // Navigate to next screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PeriodLoggingScreen(userId: widget.userId),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving data: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -133,7 +190,7 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
 
                 // "I Don't Know" Button - Navigates Directly
                 TextButton(
-                  onPressed: _handleIDontKnow, // Navigates to the next screen
+                  onPressed: _isLoading ? null : _handleIDontKnow,
                   child: const Text(
                     "I don't remember",
                     style: TextStyle(
@@ -146,11 +203,13 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
                 const SizedBox(height: 10),
 
                 // Navigation Buttons (Previous & Next)
-                NavigationButtonRow(
-                  onPrevious: _handlePrevious,
-                  onNext: _handleNext,
-                  isNextEnabled: selectedLength != null, // Enable "Next" only if a selection is made
-                ),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : NavigationButtonRow(
+                        onPrevious: _handlePrevious,
+                        onNext: _savePeriodLengthAndProceed,
+                        isNextEnabled: selectedLength != null, // Enable "Next" only if a selection is made
+                      ),
 
                 const SizedBox(height: 20),
               ],

@@ -56,13 +56,13 @@ class CalendarMonth extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: const Color.fromARGB(255, 255, 233, 242),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
                       'Current',
                       style: TextStyle(
-                        color: Colors.blue,
+                        color: Color.fromARGB(255, 240, 99, 153),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),

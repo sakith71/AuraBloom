@@ -1,8 +1,12 @@
 import '../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 import 'cycle-length-screen.dart';
+
 class AdditionalSymptomsScreen extends StatefulWidget {
-  const AdditionalSymptomsScreen({super.key});
+  final String userId;
+  
+  const AdditionalSymptomsScreen({super.key, required this.userId});
 
   @override
   State<AdditionalSymptomsScreen> createState() => _AdditionalSymptomsScreenState();
@@ -19,15 +23,50 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
     {'name': 'Diarrhea', 'isSelected': false},
   ];
 
+  bool _isLoading = false;
+  final FirestoreService _firestoreService = FirestoreService();
+
   bool get hasSelectedSymptoms => _symptoms.any((symptom) => symptom['isSelected']);
 
-  void _handleNext() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CycleLengthScreen(),
-      ),
-    );
+  Future<void> _saveSymptomsThenProceed() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Extract selected symptoms
+      List<String> selectedSymptoms = _symptoms
+          .where((symptom) => symptom['isSelected'])
+          .map((symptom) => symptom['name'] as String)
+          .toList();
+      
+      // Update user document with selected symptoms
+      await _firestoreService.users.doc(widget.userId).update({
+        'additionalSymptoms': selectedSymptoms,
+      });
+      
+      // Navigate to next screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CycleLengthScreen(userId: widget.userId),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving symptoms: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _handlePrevious() {
@@ -136,12 +175,13 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                NavigationButtonRow(
-                  onPrevious: _handlePrevious,
-                  onNext: _handleNext,
-                  // Since this screen doesn't require selection, we can always enable the next button
-                  isNextEnabled: true,
-                ),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : NavigationButtonRow(
+                        onPrevious: _handlePrevious,
+                        onNext: _saveSymptomsThenProceed,
+                        isNextEnabled: true, // Symptoms selection is optional
+                      ),
               ],
             ),
           ),

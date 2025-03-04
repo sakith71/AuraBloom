@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import '../../utils/calendar.dart';
 
 class WelcomeSection extends StatelessWidget {
-  final Set<String> selectedDates;
+  final String? selectedDate;
+  final List<String> selectedDates = [];
 
-  const WelcomeSection({
-    super.key,
-    required this.selectedDates,
-  });
+  WelcomeSection({Key? key, this.selectedDate}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
