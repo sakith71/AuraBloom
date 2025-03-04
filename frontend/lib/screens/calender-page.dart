@@ -15,14 +15,16 @@ class CalendarPage extends StatefulWidget {
   });
 
   @override
-  State<CalendarPage> createState() => _ModifiedCalendarPageState();
+  State<CalendarPage> createState() => _CalendarPageState();
 }
 
-class _ModifiedCalendarPageState extends State<CalendarPage> {
+class _CalendarPageState extends State<CalendarPage> {
   late Set<String> selectedDates;
+  late Set<String> originalDates; // Store original dates before editing
   bool isEditing = false;
   bool isSaving = false;
   bool isLoading = true;
+  bool hasChanges = false; // Track if changes were made during editing
   final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
   final FirestoreService _firestoreService = FirestoreService();
@@ -33,6 +35,7 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
     super.initState();
     // Initialize with dates passed from parent
     selectedDates = Set<String>.from(widget.selectedDates);
+    originalDates = Set<String>.from(widget.selectedDates);
     _currentDate = DateTime.now();
     
     // Fetch period dates from Firestore
@@ -55,6 +58,7 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
       
       setState(() {
         selectedDates = dates;
+        originalDates = Set<String>.from(dates); // Make a copy of the original dates
         isLoading = false;
       });
     } catch (e) {
@@ -88,13 +92,133 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
       } else {
         selectedDates.add(dateKey);
       }
+      
+      // Check if the current selection is different from the original
+      hasChanges = !_areSetsEqual(selectedDates, originalDates);
     });
   }
 
-  void toggleEditMode() {
+  // Helper method to check if two sets are equal
+  bool _areSetsEqual(Set<String> a, Set<String> b) {
+    if (a.length != b.length) return false;
+    return a.every((element) => b.contains(element));
+  }
+
+  // Show confirmation dialog when exiting edit mode with unsaved changes
+  // Updated _showExitConfirmation method with white background and black text
+Future<void> _showExitConfirmation() async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      elevation: 8,
+      backgroundColor: Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            const Text(
+              'Discard Changes?',
+              style: TextStyle(
+                fontSize: 22, 
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'You have unsaved changes. Are you sure you want to exit without saving?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Cancel button
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      foregroundColor: Colors.black87,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Discard button
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 240, 99, 153),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Discard',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  // If user confirms exit, reset to original dates
+  if (result == true) {
     setState(() {
-      isEditing = !isEditing;
+      selectedDates = Set<String>.from(originalDates);
+      isEditing = false;
+      hasChanges = false;
     });
+  }
+}
+
+  // Handle toggling edit mode with confirmation if needed
+  void toggleEditMode() {
+    if (isEditing && hasChanges) {
+      _showExitConfirmation();
+    } else {
+      // If entering edit mode, store original dates
+      if (!isEditing) {
+        originalDates = Set<String>.from(selectedDates);
+      }
+      
+      setState(() {
+        isEditing = !isEditing;
+        hasChanges = false; // Reset change tracker when entering edit mode
+      });
+    }
   }
 
   Future<void> savePeriodDates() async {
@@ -137,9 +261,13 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
         await _periodService.deletePeriodDate(widget.userId, dateKey);
       }
       
+      // Update original dates to match the saved set
+      originalDates = Set<String>.from(selectedDates);
+      
       // Exit edit mode after saving
       setState(() {
         isEditing = false;
+        hasChanges = false;
       });
       
       if (mounted) {
@@ -267,20 +395,21 @@ class _ModifiedCalendarPageState extends State<CalendarPage> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: isSaving ? null : savePeriodDates,
+                      onPressed: isSaving || !hasChanges ? null : savePeriodDates,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         backgroundColor: const Color.fromARGB(255, 240, 99, 153),
                         foregroundColor: Colors.white,
+                        disabledBackgroundColor: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
                       child: isSaving
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              'Save Period Dates',
-                              style: TextStyle(
+                          : Text(
+                              hasChanges ? 'Save Period Dates' : 'No Changes to Save',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
