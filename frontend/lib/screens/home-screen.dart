@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/calender-page.dart';
 import 'package:frontend/screens/chat-screen.dart';
+import '../widgets/home-widgets/daily-insights.dart';
+import '../widgets/home-widgets/tip-of-the-day.dart';
+import '../widgets/home-widgets/my-cycles.dart';
+import '../widgets/home-widgets/app-bar.dart';
 import '../services/period-service.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
@@ -35,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ? Set<String>.from(widget.selectedDates)
             : {};
 
-    // If a single date was passed in, add it
+    // If no dates were passed but we have a single date, add it
     if (_selectedDates.isEmpty && widget.selectedDate != null) {
       _selectedDates.add(widget.selectedDate!);
     }
@@ -69,18 +73,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Navigate to profile (used by custom app bar if needed)
   void _navigateToProfile() {
     setState(() {
       _selectedIndex = 4;
     });
   }
 
-  // Decides which page to display based on bottom nav index
   Widget _getPage() {
+    // Show a loading spinner until we fetch the user's dates
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
+    // Return the page matching the selected nav index
     switch (_selectedIndex) {
       case 0:
         return _buildHomePage();
@@ -100,165 +104,159 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // The new home page layout in one method (basic placeholders).
   Widget _buildHomePage() {
+    // Use a SingleChildScrollView so the screen scrolls only if needed
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1) Welcome Section placeholder
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Welcome back, Sarah!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Today, 4 Mar, TUE',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-
-          // 2) Week Calendar placeholder
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: const Text(
-              'Week Calendar Placeholder',
-              style: TextStyle(fontSize: 16),
-            ),
-          ),
-
-          // 3) Period Status placeholder with WavePainter
-          SizedBox(
-            height: 140,
-            child: Stack(
-              children: [
-                Positioned.fill(child: CustomPaint(painter: _WavePainter())),
-                Positioned.fill(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Text(
-                        'Period:',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Day 1',
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
+          _buildWelcomeSection(),
+          _buildWeekCalendar(),
+          _buildPeriodStatus(),
           const SizedBox(height: 20),
-
-          // 4) My daily insights placeholder
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Text(
-              'My daily insights placeholder',
-              style: TextStyle(fontSize: 18),
-            ),
-          ),
-
+          const DailyInsights(),
           const SizedBox(height: 20),
-
-          // 5) Tip of the day placeholder
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Text(
-              'Tip of the day placeholder',
-              style: TextStyle(fontSize: 18),
-            ),
-          ),
-
+          const TipOfTheDay(),
           const SizedBox(height: 20),
-
-          // 6) My cycles placeholder
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 24),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Text(
-              'My cycles placeholder',
-              style: TextStyle(fontSize: 18),
-            ),
-          ),
-
-          const SizedBox(height: 20),
+          const MyCycles(),
         ],
       ),
+    );
+  }
+
+  Widget _buildWelcomeSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Welcome back, Sarah!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Today, 4 Mar, TUE',
+            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeekCalendar() {
+    final days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    final dates = [9, 10, 11, 12, 13, 14, 15];
+    final selectedIndex = 1; // Example: "Day 10" is selected
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(
+              7,
+              (index) => SizedBox(
+                width: 40,
+                child: Text(
+                  days[index],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(
+              7,
+              (index) => Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                      index == selectedIndex
+                          ? const Color(0xFFE6E9FF)
+                          : Colors.white,
+                ),
+                child: Center(
+                  child: Text(
+                    '${dates[index]}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight:
+                          index == selectedIndex
+                              ? FontWeight.w500
+                              : FontWeight.w400,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodStatus() {
+    return Stack(
+      children: [
+        CustomPaint(
+          size: const Size(double.infinity, 140),
+          painter: _WavePainter(),
+        ),
+        Positioned.fill(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Period:',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[800],
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Day 1',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // New background color
+      // New background color from updated UI
       backgroundColor: const Color(0xFFFCF0F7),
       body: SafeArea(
         child: Column(
           children: [
-            // Replace this with your custom app bar if needed
-            // Or remove if you don't have a custom app bar method
-            Container(
-              height: 60,
-              color: Colors.pink[100],
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.menu),
-                    onPressed: () {
-                      // Example placeholder for menu or profile
-                      _navigateToProfile();
-                    },
-                  ),
-                  const Spacer(),
-                  const Text(
-                    'AuraBloom',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
-
-            // The main page content
+            // Keep your custom app bar at the top
+            CustomAppBar(onProfileTap: _navigateToProfile),
+            // Expand so the child can fill remaining space
             Expanded(child: _getPage()),
           ],
         ),
@@ -267,47 +265,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Basic bottom nav with 5 items
   Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-          backgroundColor: Colors.white,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Calendar',
-          backgroundColor: Colors.white,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group),
-          label: 'Community',
-          backgroundColor: Colors.white,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_outline),
-          label: 'Chat Bot',
-          backgroundColor: Colors.white,
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'Profile',
-          backgroundColor: Colors.white,
-        ),
-      ],
-      currentIndex: _selectedIndex,
-      onTap: _onItemTapped,
-      selectedItemColor: const Color.fromARGB(255, 238, 107, 209),
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-      type: BottomNavigationBarType.fixed,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+            backgroundColor: Colors.white,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_today),
+            label: 'Calendar',
+            backgroundColor: Colors.white,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.group),
+            label: 'Community',
+            backgroundColor: Colors.white,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            label: 'Chat Bot',
+            backgroundColor: Colors.white,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Profile',
+            backgroundColor: Colors.white,
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: const Color.fromARGB(255, 238, 107, 209),
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+      ),
     );
   }
 }
 
-// A private wave painter for the "Period Status" placeholder
 class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -338,5 +346,7 @@ class _WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
 }
