@@ -5,8 +5,6 @@ import '../services/period-service.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
 
-// This HomeScreen has the new background color and layout
-// in a single file, without separate widget classes.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String? selectedDate;
