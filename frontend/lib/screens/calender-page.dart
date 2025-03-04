@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
-import '../services/firestore_service.dart';
 import '../services/period-service.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -27,7 +26,6 @@ class _CalendarPageState extends State<CalendarPage> {
   bool hasChanges = false; // Track if changes were made during editing
   final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
-  final FirestoreService _firestoreService = FirestoreService();
   final PeriodService _periodService = PeriodService();
 
   @override
@@ -105,104 +103,103 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   // Show confirmation dialog when exiting edit mode with unsaved changes
-  // Updated _showExitConfirmation method with white background and black text
-Future<void> _showExitConfirmation() async {
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      elevation: 8,
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            const Text(
-              'Discard Changes?',
-              style: TextStyle(
-                fontSize: 22, 
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+  Future<void> _showExitConfirmation() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        elevation: 8,
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              const Text(
+                'Discard Changes?',
+                style: TextStyle(
+                  fontSize: 22, 
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'You have unsaved changes. Are you sure you want to exit without saving?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
+              const SizedBox(height: 20),
+              const Text(
+                'You have unsaved changes. Are you sure you want to exit without saving?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            const SizedBox(height: 30),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Cancel button
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey.withOpacity(0.2),
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Cancel button
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.grey.withOpacity(0.2),
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                // Discard button
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: TextButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 240, 99, 153),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                  const SizedBox(width: 10),
+                  // Discard button
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 240, 99, 153),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'Discard',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                      child: const Text(
+                        'Discard',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
 
-  // If user confirms exit, reset to original dates
-  if (result == true) {
-    setState(() {
-      selectedDates = Set<String>.from(originalDates);
-      isEditing = false;
-      hasChanges = false;
-    });
+    // If user confirms exit, reset to original dates
+    if (result == true) {
+      setState(() {
+        selectedDates = Set<String>.from(originalDates);
+        isEditing = false;
+        hasChanges = false;
+      });
+    }
   }
-}
 
   // Handle toggling edit mode with confirmation if needed
   void toggleEditMode() {
@@ -239,24 +236,13 @@ Future<void> _showExitConfirmation() async {
         ..removeAll(selectedDates);
       
       // Add new dates
-      for (String dateKey in datesToAdd) {
-        final dateParts = dateKey.split('-');
-        if (dateParts.length == 3) {
-          final month = dateParts[0];
-          final day = dateParts[1];
-          final year = dateParts[2];
-          
-          // Convert to DateTime
-          final periodDate = CalendarUtils.parseDisplayDate(
-            '$month $day, $year'
-          ) ?? DateTime.now();
-          
-          // Save the period date
-          await _firestoreService.savePeriodData(widget.userId, periodDate);
-        }
+      if (datesToAdd.isNotEmpty) {
+        // Use the enhanced savePeriodDates method to save multiple dates at once
+        // This will also update the lastPeriodDate field
+        await _periodService.savePeriodDates(widget.userId, datesToAdd);
       }
       
-      // Remove deleted dates
+      // Remove deleted dates individually
       for (String dateKey in datesToRemove) {
         await _periodService.deletePeriodDate(widget.userId, dateKey);
       }
