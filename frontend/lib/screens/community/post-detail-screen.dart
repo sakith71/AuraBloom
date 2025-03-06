@@ -22,6 +22,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLiking = false;
   bool _userHasLiked = false;
   bool _isAnonymousComment = false; // Added for anonymous comment toggle
+  late ScaffoldMessengerState _scaffoldMessenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
+  }
 
   @override
   void initState() {
@@ -63,9 +70,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load comments: $e')));
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to load comments: $e')),
+        );
       }
     }
   }
@@ -95,7 +102,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     final user = _communityService.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      _scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('You need to be logged in to comment')),
       );
       return;
@@ -143,9 +150,57 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to add comment: $e')));
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to add comment: $e')),
+        );
+      }
+    }
+  }
+
+  // New method for handling post deletion with proper context management
+  Future<void> _deletePost() async {
+    bool isDeleting = true;
+
+    // Show a loading dialog that we'll manage carefully
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return WillPopScope(
+            onWillPop:
+                () async => !isDeleting, // Prevent dismissal while deleting
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    }
+
+    try {
+      // Delete the post
+      await _communityService.deletePost(widget.post.id);
+      isDeleting = false;
+
+      // Navigate back safely
+      if (mounted) {
+        // Pop the loading dialog first
+        Navigator.pop(context);
+
+        // Then pop the screen with result
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      isDeleting = false;
+
+      // Handle errors
+      if (mounted) {
+        // Pop the loading dialog
+        Navigator.pop(context);
+
+        // Show error message
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to delete post: $e')),
+        );
       }
     }
   }
@@ -163,9 +218,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to delete comment: $e')));
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to delete comment: $e')),
+        );
       }
     }
   }
@@ -200,9 +255,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         setState(() {
           _isLiking = false;
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        _scaffoldMessenger.showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -266,7 +319,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             onPressed: () {
               // Your existing code for showing options menu
               if (_communityService.currentUser?.uid == widget.post.authorId) {
-                // Keep your existing showDialog code here
+                // Updated dialog with improved delete functionality
                 showDialog(
                   context: context,
                   builder:
@@ -281,26 +334,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 color: Colors.red,
                               ),
                               title: const Text('Delete Post'),
-                              onTap: () async {
+                              onTap: () {
+                                // First, close the options dialog
                                 Navigator.pop(context);
-                                try {
-                                  await _communityService.deletePost(
-                                    widget.post.id,
-                                  );
-                                  if (mounted) {
-                                    Navigator.pop(context, true);
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Failed to delete post: $e',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
+
+                                // Then delete the post with careful context management
+                                _deletePost();
                               },
                             ),
                           ],
