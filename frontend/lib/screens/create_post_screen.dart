@@ -7,7 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as path;
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({Key? key}) : super(key: key);
+  const CreatePostScreen({super.key});
 
   @override
   _CreatePostScreenState createState() => _CreatePostScreenState();
@@ -29,8 +29,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   // For image upload
   final ImagePicker _picker = ImagePicker();
-  List<File> _selectedImages = [];
-  bool _isUploadingImages = false;
+  final List<File> _selectedImages = [];
 
   void _toggleTag(String tag) {
     setState(() {
@@ -171,7 +170,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     if (_selectedImages.isEmpty) return [];
 
     setState(() {
-      _isUploadingImages = true;
     });
 
     try {
@@ -202,7 +200,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          _isUploadingImages = false;
         });
       }
     }

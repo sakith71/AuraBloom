@@ -5,7 +5,7 @@ class UpcomingCycle extends StatelessWidget {
   final String? selectedDate;
   final List<String> selectedDates = [];
 
-  UpcomingCycle({Key? key, this.selectedDate}) : super(key: key);
+  UpcomingCycle({super.key, this.selectedDate});
 
   Widget _buildCycleInfo({
     required String label,
