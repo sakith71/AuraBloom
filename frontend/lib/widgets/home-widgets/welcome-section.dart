@@ -5,7 +5,7 @@ class WelcomeSection extends StatelessWidget {
   final String? selectedDate;
   final List<String> selectedDates = [];
 
-  WelcomeSection({Key? key, this.selectedDate}) : super(key: key);
+  WelcomeSection({super.key, this.selectedDate});
 
   @override
   Widget build(BuildContext context) {
