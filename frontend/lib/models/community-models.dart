@@ -1,4 +1,3 @@
-// lib/models/community_models.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CommunityPost {
@@ -40,7 +39,9 @@ class CommunityPost {
               ? map['createdAt']
               : (map['createdAt'] is Timestamp
                   ? (map['createdAt'] as Timestamp).toDate()
-                  : DateTime.parse(map['createdAt'].toString())),
+                  : (map['createdAt'] != null
+                      ? DateTime.parse(map['createdAt'].toString())
+                      : DateTime.now())),
       content: map['content'] ?? '',
       tags: List<String>.from(map['tags'] ?? []),
       likeCount: map['likeCount'] ?? 0,
