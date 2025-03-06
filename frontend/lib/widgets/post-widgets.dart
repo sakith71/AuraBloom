@@ -4,7 +4,7 @@ import '../providers/community-provider.dart';
 class PostWidget extends StatelessWidget {
   final PostModel post;
 
-  const PostWidget({Key? key, required this.post}) : super(key: key);
+  const PostWidget({super.key, required this.post});
 
   @override
   Widget build(BuildContext context) {

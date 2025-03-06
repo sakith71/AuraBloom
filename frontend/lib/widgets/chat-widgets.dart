@@ -5,7 +5,7 @@ class ChatMessageList extends StatelessWidget {
   final List<ChatMessage> messages;
   final ScrollController scrollController;
 
-  const ChatMessageList({
+  const ChatMessageList({super.key, 
     required this.messages,
     required this.scrollController,
   });
@@ -27,7 +27,7 @@ class ChatMessageList extends StatelessWidget {
 class ChatMessageBubble extends StatelessWidget {
   final ChatMessage message;
 
-  const ChatMessageBubble({required this.message});
+  const ChatMessageBubble({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +60,7 @@ class ChatInputField extends StatelessWidget {
   final TextEditingController controller;
   final Function(String) onSubmitted;
 
-  const ChatInputField({required this.controller, required this.onSubmitted});
+  const ChatInputField({super.key, required this.controller, required this.onSubmitted});
 
   @override
   Widget build(BuildContext context) {

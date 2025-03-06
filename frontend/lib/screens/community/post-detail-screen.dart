@@ -8,7 +8,7 @@ import 'package:frontend/services/community-service.dart';
 class PostDetailScreen extends StatefulWidget {
   final CommunityPost post;
 
-  const PostDetailScreen({Key? key, required this.post}) : super(key: key);
+  const PostDetailScreen({super.key, required this.post});
 
   @override
   _PostDetailScreenState createState() => _PostDetailScreenState();

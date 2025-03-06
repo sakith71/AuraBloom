@@ -4,6 +4,8 @@ import '../models/chat-message.dart';
 import '../services/chatbot-service.dart';
 
 class PeriodPainChatScreen extends StatefulWidget {
+  const PeriodPainChatScreen({super.key});
+
   @override
   _PeriodPainChatScreenState createState() => _PeriodPainChatScreenState();
 }

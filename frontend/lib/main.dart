@@ -6,8 +6,6 @@ import 'screens/splash-screen.dart';
 import 'screens/login-page.dart';
 import 'screens/signup-screen.dart';
 import 'screens/home-screen.dart';
-import 'screens/personal-info-screen.dart';
-// We'll comment out this import until we fix the file location
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,8 +41,6 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const HomeScreen(userId: 'someUserId'),
-        '/personal-info': (context) => PersonalInfoScreen(userId: 'someUserId'),
-        // We'll comment out this route until we have the file
         '/community': (context) => const CommunityScreen(),
       },
     );
