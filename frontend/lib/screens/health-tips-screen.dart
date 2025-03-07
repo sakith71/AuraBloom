@@ -3,6 +3,7 @@ import './stay-active-detail.dart'; // Import the detail screen
 import './eat-well-detail.dart';// Import the detail screen
 import './apply-heat.dart'; //Import the detail screen
 import './get-rest.dart'; //Import the detail screen
+import './practice-mindfulness.dart';//Import the detail screen
 
 class HealthTipsScreen extends StatelessWidget {
   const HealthTipsScreen({super.key});
@@ -231,6 +232,14 @@ class HealthTipsScreen extends StatelessWidget {
                       title: 'Practice\nMindfulness',
                       cardColor: const Color(0xFFFFF0E6),
                       iconColor: Colors.green,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PracticeMindfulnessDetailScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
