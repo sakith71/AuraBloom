@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import './stay-active-detail.dart'; // Import the detail screen
 import './eat-well-detail.dart';// Import the detail screen
 import './apply-heat.dart'; //Import the detail screen
+import './get-rest.dart'; //Import the detail screen
 
 class HealthTipsScreen extends StatelessWidget {
   const HealthTipsScreen({super.key});
@@ -202,7 +203,7 @@ class HealthTipsScreen extends StatelessWidget {
                       title: 'Apply\nHeat',
                       cardColor: const Color(0xFFE5F8FF),
                       iconColor: Colors.red,
-                    onTap: () {
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -216,6 +217,14 @@ class HealthTipsScreen extends StatelessWidget {
                       title: 'Get\nRest',
                       cardColor: const Color(0xFFE6FFE6),
                       iconColor: Colors.purple,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const GetRestDetailScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildTipCard(
                       icon: Icons.spa,
