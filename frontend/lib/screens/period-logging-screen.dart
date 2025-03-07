@@ -3,6 +3,7 @@ import '../widgets/navigation-buttons.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
+import '../services/period-stats-service.dart';
 import 'home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
@@ -15,12 +16,12 @@ class PeriodLoggingScreen extends StatefulWidget {
 }
 
 class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
-  final Set<String> _selectedDates = {}; // Changed to Set for multiple dates
+  final Set<String> _selectedDates = {};
   final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
   bool _isLoading = false;
   final PeriodService _periodService = PeriodService();
-
+  final PeriodStatsService _periodStatsService = PeriodStatsService();
   @override
   void initState() {
     super.initState();
@@ -65,11 +66,20 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
         _isLoading = true;
       });
       
-      // Use the enhanced savePeriodDates method from PeriodService to save all dates at once
-      // This will automatically update the lastPeriodDate field with the most recent date
+      // Save the period dates
       await _periodService.savePeriodDates(widget.userId, _selectedDates);
       
-      // Navigate to home screen
+      // Calculate and update period stats for the last 3 cycles
+      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 3);
+      
+      // Log to confirm stats are being saved
+      print('Stats calculated and saved to database:');
+      print('Mean Period Length: ${stats['meanPeriodLength']} days');
+      print('Mean Cycle Length: ${stats['meanCycleLength']} days');
+      
+      // Verify that the stats were saved to the database
+      await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
+      
       if (mounted) {
         // Find the most recent date for display purposes
         String? mostRecentDateKey;
@@ -99,6 +109,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
               userId: widget.userId,
               selectedDate: mostRecentDateKey,
               selectedDates: _selectedDates,
+              // periodStats: stats, // Pass the calculated stats to the home screen
             ),
           ),
         );
@@ -120,6 +131,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Rest of the build method remains the same
     List<Widget> monthWidgets = [];
     DateTime currentMonth = DateTime(_currentDate.year, _currentDate.month);
 
@@ -133,7 +145,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
           month: CalendarUtils.months[targetMonth.month - 1],
           monthIndex: targetMonth.month - 1,
           year: targetMonth.year,
-          selectedDates: _selectedDates, // Pass the set of selected dates
+          selectedDates: _selectedDates,
           onDateSelected: _handleDateSelection,
         ),
       );
@@ -164,7 +176,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Please select all days of your period', // Updated instruction
+                  'Please select all days of your period',
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 30),
