@@ -8,7 +8,7 @@ import 'menstrual-symptoms-screen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   final String userId; // Pass the user ID from the previous screen
-  
+
   const PersonalInfoScreen({super.key, required this.userId});
 
   @override
@@ -22,8 +22,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final AuthService _authService = AuthService();
-  
+
   bool _isLoading = false;
+  double? _bmi;
 
   bool get _isFormValid => _formKey.currentState?.validate() ?? false;
 
@@ -36,39 +37,53 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     super.dispose();
   }
 
+  // Calculate BMI
+  double _calculateBMI(double heightInCm, double weightInKg) {
+    // BMI formula: weight (kg) / (height (m))²
+    double heightInMeters = heightInCm / 100;
+    return weightInKg / (heightInMeters * heightInMeters);
+  }
+
   // Save personal info and proceed
   Future<void> _savePersonalInfoAndProceed() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     try {
       setState(() {
         _isLoading = true;
       });
-      
-      // Save the personal info to Firestore
+
+      // Calculate BMI before saving
+      double height = double.parse(_heightController.text);
+      double weight = double.parse(_weightController.text);
+      _bmi = _calculateBMI(height, weight);
+
+      // Save the personal info with BMI to Firestore
       await _authService.createUserProfile(
         widget.userId,
         _nameController.text,
         int.parse(_ageController.text),
-        double.parse(_heightController.text),
-        double.parse(_weightController.text),
+        height,
+        weight,
+        _bmi!,
       );
-      
+
       // Navigate to next screen
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MenstrualSymptomsScreen(userId: widget.userId),
+            builder:
+                (context) => MenstrualSymptomsScreen(userId: widget.userId),
           ),
         );
       }
     } catch (e) {
       // Show error snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
       }
     } finally {
       if (mounted) {
@@ -153,7 +168,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                                 return 'Please enter your height';
                               }
                               final height = double.tryParse(value);
-                              if (height == null || height < 50 || height > 250) {
+                              if (height == null ||
+                                  height < 50 ||
+                                  height > 250) {
                                 return 'Please enter a valid height';
                               }
                               return null;
@@ -169,7 +186,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                                 return 'Please enter your weight';
                               }
                               final weight = double.tryParse(value);
-                              if (weight == null || weight < 20 || weight > 300) {
+                              if (weight == null ||
+                                  weight < 20 ||
+                                  weight > 300) {
                                 return 'Please enter a valid weight';
                               }
                               return null;
@@ -184,10 +203,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : NavigationButtonRow(
-                        onPrevious: _handlePrevious,
-                        onNext: _savePersonalInfoAndProceed,
-                        isNextEnabled: _isFormValid,
-                      ),
+                      onPrevious: _handlePrevious,
+                      onNext: _savePersonalInfoAndProceed,
+                      isNextEnabled: _isFormValid,
+                    ),
               ],
             ),
           ),

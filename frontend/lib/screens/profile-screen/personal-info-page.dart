@@ -419,6 +419,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
           age: age,
           height: currentUserModel.height,
           weight: currentUserModel.weight,
+          bmi: currentUserModel.bmi,
           isRegularPeriod: currentUserModel.isRegularPeriod,
           crampsExperience: currentUserModel.crampsExperience,
           symptomDuration: currentUserModel.symptomDuration,

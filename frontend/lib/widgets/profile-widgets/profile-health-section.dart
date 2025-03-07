@@ -23,6 +23,26 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
     _loadUserData();
   }
 
+  // Get BMI category based on BMI value
+  String _getBmiCategory(double bmi) {
+    if (bmi < 18.5) {
+      return 'Underweight';
+    } else if (bmi < 25) {
+      return 'Normal weight';
+    } else if (bmi < 30) {
+      return 'Overweight';
+    } else {
+      return 'Obesity';
+    }
+  }
+
+  // Format BMI to one decimal place and add category
+  String _formatBmi(double bmi) {
+    final formattedBmi = bmi.toStringAsFixed(1);
+    final category = _getBmiCategory(bmi);
+    return '$formattedBmi - $category';
+  }
+
   Future<void> _loadUserData() async {
     if (!mounted) return;
     
@@ -44,6 +64,7 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
               'Age': '${userData.age} years',
               'Height': '${userData.height} cm',
               'Weight': '${userData.weight} kg',
+              'BMI': _formatBmi(userData.bmi),
               'Blood Type': 'A+', // Not in UserModel, so using a default
               'Cycle Length': '${userData.cycleLength} days',
               'Period Length': '${userData.periodLength} days',
@@ -69,6 +90,7 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
           'Age': '25 years',
           'Height': '165 cm',
           'Weight': '58 kg',
+          'BMI': '21.3 - Normal weight',
           'Blood Type': 'A+',
           'Cycle Length': '28 days',
           'Period Length': '5 days',
@@ -125,6 +147,22 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
   }
 
   Widget _buildHealthItem(String label, String value) {
+      // Add special styling for BMI based on category
+    bool isBmi = label == 'BMI';
+    Color valueColor = Colors.black;
+    
+    if (isBmi) {
+      if (value.contains('Underweight')) {
+        valueColor = Colors.blue;
+      } else if (value.contains('Normal')) {
+        valueColor = Colors.green;
+      } else if (value.contains('Overweight')) {
+        valueColor = Colors.orange;
+      } else if (value.contains('Obesity')) {
+        valueColor = Colors.red;
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -220,8 +258,11 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
   @override
   void initState() {
     super.initState();
-    _controllers = widget.initialHealthInfo.map(
-      (key, value) => MapEntry(key, TextEditingController(text: value)),
+    // Exclude BMI from editable fields as it's calculated
+    _controllers = Map.fromEntries(
+      widget.initialHealthInfo.entries.where((entry) => entry.key != 'BMI').map(
+        (entry) => MapEntry(entry.key, TextEditingController(text: entry.value)),
+      ),
     );
   }
 
@@ -229,6 +270,12 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
   void dispose() {
     _controllers.values.forEach((controller) => controller.dispose());
     super.dispose();
+  }
+
+   double _calculateBMI(double heightInCm, double weightInKg) {
+    // BMI formula: weight (kg) / (height (m))²
+    double heightInMeters = heightInCm / 100;
+    return weightInKg / (heightInMeters * heightInMeters);
   }
 
   @override
@@ -385,6 +432,13 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
         double? weight = double.tryParse(updatedHealthInfo['Weight']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
         int? cycleLength = int.tryParse(updatedHealthInfo['Cycle Length']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
         int? periodLength = int.tryParse(updatedHealthInfo['Period Length']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+
+        double? bmi;
+        if (height != null && weight != null) {
+          bmi = _calculateBMI(height, weight);
+          // Add BMI to updated health info
+          updatedHealthInfo['BMI'] = '${bmi.toStringAsFixed(1)} - ${_getBmiCategory(bmi)}';
+        }
         
         // Create updated user model if original exists
         UserModel? updatedUserModel;
@@ -395,6 +449,7 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
             age: age ?? widget.userModel!.age,
             height: height ?? widget.userModel!.height,
             weight: weight ?? widget.userModel!.weight,
+            bmi: bmi ?? widget.userModel!.bmi,
             isRegularPeriod: widget.userModel!.isRegularPeriod,
             crampsExperience: widget.userModel!.crampsExperience,
             symptomDuration: widget.userModel!.symptomDuration,
@@ -484,5 +539,18 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
         break;
     }
     return null;
+  }
+
+  // Get BMI category based on BMI value
+  String _getBmiCategory(double bmi) {
+    if (bmi < 18.5) {
+      return 'Underweight';
+    } else if (bmi < 25) {
+      return 'Normal weight';
+    } else if (bmi < 30) {
+      return 'Overweight';
+    } else {
+      return 'Obesity';
+    }
   }
 }

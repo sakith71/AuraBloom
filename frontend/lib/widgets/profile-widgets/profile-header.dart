@@ -145,6 +145,13 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     return nameParts[0][0];
   }
 
+  // Calculate BMI
+  double _calculateBMI(double heightInCm, double weightInKg) {
+    // BMI formula: weight (kg) / (height (m))²
+    double heightInMeters = heightInCm / 100;
+    return weightInKg / (heightInMeters * heightInMeters);
+  }
+
   void _showEditProfileDialog(BuildContext context) {
     // Store a local reference to the current user model to avoid issues 
     // if _userModel changes during dialog display
@@ -339,6 +346,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                   age: currentUserModel.age,
                                   height: currentUserModel.height,
                                   weight: currentUserModel.weight,
+                                  bmi: currentUserModel.bmi,
                                   isRegularPeriod: currentUserModel.isRegularPeriod,
                                   crampsExperience: currentUserModel.crampsExperience,
                                   symptomDuration: currentUserModel.symptomDuration,
