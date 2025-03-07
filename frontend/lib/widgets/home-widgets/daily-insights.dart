@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/health-tips-screen.dart';
+// Make sure the path is correct
 
 class DailyInsights extends StatelessWidget {
   const DailyInsights({super.key});
@@ -11,25 +13,29 @@ class DailyInsights extends StatelessWidget {
     required Widget icon,
     required String title,
     required Color color,
+    required VoidCallback onTap,
   }) {
     return Expanded(
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            icon,
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ],
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 100,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              icon,
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -53,12 +59,18 @@ class DailyInsights extends StatelessWidget {
                 icon: _buildCustomIcon(Icons.calendar_today, Colors.pink[300]!),
                 title: 'Mark period',
                 color: const Color(0xFFFAD4E4),
+                onTap: () {
+                  // Add navigation for Mark period
+                },
               ),
               const SizedBox(width: 12),
               _buildInsightCard(
                 icon: _buildCustomIcon(Icons.add, Colors.blue[300]!),
                 title: 'How you feel today',
                 color: const Color(0xFFE6E9FF),
+                onTap: () {
+                  // Add navigation for How you feel today
+                },
               ),
               const SizedBox(width: 12),
               _buildInsightCard(
@@ -68,6 +80,15 @@ class DailyInsights extends StatelessWidget {
                 ),
                 title: 'Health tips',
                 color: const Color(0xFFFAD4E4),
+                onTap: () {
+                  // Navigate to Health Tips screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HealthTipsScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
