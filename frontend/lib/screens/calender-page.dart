@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
+import '../services/period-stats-service.dart';
+import '../utils/stats-verification.dart';
 
 class CalendarPage extends StatefulWidget {
   final String userId;
@@ -24,9 +26,17 @@ class _CalendarPageState extends State<CalendarPage> {
   bool isSaving = false;
   bool isLoading = true;
   bool hasChanges = false; // Track if changes were made during editing
+  bool isCalculatingStats = false;
   final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
   final PeriodService _periodService = PeriodService();
+  final PeriodStatsService _periodStatsService = PeriodStatsService();
+  final StatsVerificationUtil _verificationUtil = StatsVerificationUtil();
+  
+  // Stats information
+  int _averageCycleLength = 28;
+  int _averagePeriodLength = 5;
+  bool _showStats = false;
 
   @override
   void initState() {
@@ -38,6 +48,9 @@ class _CalendarPageState extends State<CalendarPage> {
     
     // Fetch period dates from Firestore
     _fetchPeriodDates();
+    
+    // Fetch period stats
+    _fetchPeriodStats();
     
     // Scroll to current month initially
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -64,6 +77,22 @@ class _CalendarPageState extends State<CalendarPage> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+  
+  Future<void> _fetchPeriodStats() async {
+    try {
+      // Calculate period stats
+      final stats = await _periodStatsService.calculatePeriodStats(widget.userId);
+      
+      // Update UI with stats
+      setState(() {
+        _averageCycleLength = stats['meanCycleLength'] ?? 28;
+        _averagePeriodLength = stats['meanPeriodLength'] ?? 5;
+        _showStats = true;
+      });
+    } catch (e) {
+      print('Error fetching period stats: $e');
     }
   }
 
@@ -250,6 +279,36 @@ class _CalendarPageState extends State<CalendarPage> {
       // Update original dates to match the saved set
       originalDates = Set<String>.from(selectedDates);
       
+      // Calculate and update period stats after changes
+      setState(() {
+        isCalculatingStats = true;
+      });
+      
+      // Calculate and save period stats based on the last 3 cycles
+      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 3);
+      
+      print('Updated stats calculated and saved to database:');
+      print('Mean Period Length: ${stats['meanPeriodLength']} days');
+      print('Mean Cycle Length: ${stats['meanCycleLength']} days');
+      
+      // Verify that the stats were saved to the database
+      await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
+      final verificationResult = await _verificationUtil.verifyPeriodStats(widget.userId);
+      
+      print('Database verification result: ${verificationResult['success'] ? 'Success' : 'Failed'}');
+      if (verificationResult['success']) {
+        print('Saved periodLength: ${verificationResult['data']['periodLength']}');
+        print('Saved cycleLength: ${verificationResult['data']['cycleLength']}');
+      }
+      
+      // Update UI with new stats
+      setState(() {
+        _averageCycleLength = stats['meanCycleLength'];
+        _averagePeriodLength = stats['meanPeriodLength'];
+        isCalculatingStats = false;
+        _showStats = true;
+      });
+      
       // Exit edit mode after saving
       setState(() {
         isEditing = false;
@@ -258,7 +317,7 @@ class _CalendarPageState extends State<CalendarPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Period dates saved successfully')),
+          const SnackBar(content: Text('Period dates and stats saved successfully')),
         );
       }
     } catch (e) {
@@ -267,6 +326,9 @@ class _CalendarPageState extends State<CalendarPage> {
           SnackBar(content: Text('Error saving period dates: $e')),
         );
       }
+      setState(() {
+        isCalculatingStats = false;
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -274,6 +336,75 @@ class _CalendarPageState extends State<CalendarPage> {
         });
       }
     }
+  }
+  
+  Widget _buildStatsCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Cycle Statistics',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem(
+                  'Cycle Length',
+                  '$_averageCycleLength days',
+                  Icons.calendar_month,
+                ),
+                _buildStatItem(
+                  'Period Length',
+                  '$_averagePeriodLength days',
+                  Icons.water_drop,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Based on your last 3 cycles',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: const Color(0xFFD64C7F),
+          size: 30,
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -354,6 +485,25 @@ class _CalendarPageState extends State<CalendarPage> {
                   ],
                 ),
               ),
+              // Show stats card if available and not in editing mode
+              if (_showStats && !isEditing)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: _buildStatsCard(),
+                ),
+              if (isCalculatingStats && !isEditing)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 8),
+                        Text("Calculating cycle statistics...")
+                      ],
+                    ),
+                  ),
+                ),
               if (isEditing)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
