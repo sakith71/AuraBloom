@@ -39,8 +39,66 @@ class HealthTipsScreen extends StatelessWidget {
             title,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuoteCard({
+    required String quote,
+    required String doctor,
+    required String specialty,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.format_quote,
+                color: Colors.pink[300],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  quote,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "$doctor, $specialty",
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
@@ -66,7 +124,7 @@ class HealthTipsScreen extends StatelessWidget {
               style: TextStyle(
                 color: Colors.pink[300],
                 fontWeight: FontWeight.bold,
-                fontSize: 22,
+                fontSize: 24,
               ),
             ),
           ],
@@ -92,53 +150,85 @@ class HealthTipsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            // Horizontal row of tip cards
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildTipCard(
-                    icon: Icons.bolt,
-                    title: 'Stay\nActive',
-                    cardColor: const Color(0xFFFFE6F1),
-                    iconColor: Colors.orange,
-                  ),
-                  _buildTipCard(
-                    icon: Icons.restaurant,
-                    title: 'Hydrate &\nEat Well',
-                    cardColor: const Color(0xFFE6EEFF),
-                    iconColor: Colors.blue[700]!,
-                  ),
-                  _buildTipCard(
-                    icon: Icons.hot_tub,
-                    title: 'Apply\nHeat',
-                    cardColor: const Color(0xFFE5F8FF),
-                    iconColor: Colors.red,
-                  ),
-                  _buildTipCard(
-                    icon: Icons.hotel,
-                    title: 'Get\nRest',
-                    cardColor: const Color(0xFFE6FFE6),
-                    iconColor: Colors.purple,
-                  ),
-                  _buildTipCard(
-                    icon: Icons.spa,
-                    title: 'Practice\nMindfulness',
-                    cardColor: const Color(0xFFFFF0E6),
-                    iconColor: Colors.green,
-                  ),
-                ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Horizontal row of tip cards
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildTipCard(
+                      icon: Icons.bolt,
+                      title: 'Stay\nActive',
+                      cardColor: const Color(0xFFFFE6F1),
+                      iconColor: Colors.orange,
+                    ),
+                    _buildTipCard(
+                      icon: Icons.restaurant,
+                      title: 'Hydrate &\nEat Well',
+                      cardColor: const Color(0xFFE6EEFF),
+                      iconColor: Colors.blue[700]!,
+                    ),
+                    _buildTipCard(
+                      icon: Icons.hot_tub,
+                      title: 'Apply\nHeat',
+                      cardColor: const Color(0xFFE5F8FF),
+                      iconColor: Colors.red,
+                    ),
+                    _buildTipCard(
+                      icon: Icons.hotel,
+                      title: 'Get\nRest',
+                      cardColor: const Color(0xFFE6FFE6),
+                      iconColor: Colors.purple,
+                    ),
+                    _buildTipCard(
+                      icon: Icons.spa,
+                      title: 'Practice\nMindfulness',
+                      cardColor: const Color(0xFFFFF0E6),
+                      iconColor: Colors.green,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-            // Additional content could go here
-          ],
+              
+              const SizedBox(height: 24),
+              
+              // Quote cards
+              _buildQuoteCard(
+                quote: "Menstrual cramps are not just 'part of being a woman.' Severe pain should be taken seriously and evaluated by a doctor.",
+                doctor: "Dr. Tamer Seckin",
+                specialty: "Endometriosis Specialist",
+              ),
+              
+              _buildQuoteCard(
+                quote: "Pain is not a normal part of the menstrual cycle when it disrupts your daily life. If that happens, it's time to seek medical advice.",
+                doctor: "Dr. Jessica Shepherd",
+                specialty: "OB-GYN",
+              ),
+              
+              _buildQuoteCard(
+                quote: "Heat therapy can be as effective as ibuprofen in reducing menstrual pain. A heating pad or warm water bottle can work wonders.",
+                doctor: "Dr. Penelope Law",
+                specialty: "Consultant Gynecologist",
+              ),
+              
+              _buildQuoteCard(
+                quote: "Regular exercise, even simple stretching or yoga, helps improve circulation and reduce cramping.",
+                doctor: "Dr. Lisa Masterson",
+                specialty: "OB-GYN",
+              ),
+              
+              _buildQuoteCard(
+                quote: "Your period is a vital sign, like your pulse or blood pressure. If something feels wrong, listen to your body.",
+                doctor: "Dr. Lara Briden",
+                specialty: "Naturopathic Doctor",
+              ),
+            ],
+          ),
         ),
       ),
     );
