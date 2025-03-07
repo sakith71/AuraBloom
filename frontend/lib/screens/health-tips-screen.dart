@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import './stay-active-detail.dart'; // Import the detail screen
 
 class HealthTipsScreen extends StatelessWidget {
   const HealthTipsScreen({super.key});
@@ -8,42 +9,46 @@ class HealthTipsScreen extends StatelessWidget {
     required String title,
     required Color cardColor,
     required Color iconColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      width: 110,
-      height: 110,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            icon, 
-            color: iconColor, 
-            size: 28,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w500,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 110,
+        height: 110,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              icon, 
+              color: iconColor, 
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -84,7 +89,7 @@ class HealthTipsScreen extends StatelessWidget {
                 child: Text(
                   quote,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -95,7 +100,7 @@ class HealthTipsScreen extends StatelessWidget {
           Text(
             "$doctor, $specialty",
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 12,
               fontWeight: FontWeight.w400,
               color: Colors.grey[600],
               fontStyle: FontStyle.italic,
@@ -124,7 +129,7 @@ class HealthTipsScreen extends StatelessWidget {
               style: TextStyle(
                 color: Colors.pink[300],
                 fontWeight: FontWeight.bold,
-                fontSize: 24,
+                fontSize: 20,
               ),
             ),
           ],
@@ -132,18 +137,18 @@ class HealthTipsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: Colors.pink[300],),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: Colors.black87),
+            icon: Icon(Icons.notifications_outlined, color: Colors.pink[300],),
             onPressed: () {
               // Notification functionality
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person_outline, color: Colors.black87),
+            icon: Icon(Icons.person_outline, color: Colors.pink[300],),
             onPressed: () {
               // Profile functionality
             },
@@ -166,6 +171,14 @@ class HealthTipsScreen extends StatelessWidget {
                       title: 'Stay\nActive',
                       cardColor: const Color(0xFFFFE6F1),
                       iconColor: Colors.orange,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StayActiveDetailScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildTipCard(
                       icon: Icons.restaurant,
