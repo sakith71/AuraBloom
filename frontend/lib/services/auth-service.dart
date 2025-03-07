@@ -5,13 +5,13 @@ import '../models/user-model.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   // Get the current user id
   String? get currentUserId => _auth.currentUser?.uid;
-  
+
   // Get current user
   User? get currentUser => _auth.currentUser;
-  
+
   // Check if user is signed in
   bool get isUserSignedIn => _auth.currentUser != null;
 
@@ -43,7 +43,7 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
-  
+
   // Create user profile in Firestore after registration
   Future<void> createUserProfile(
     String uid,
@@ -51,30 +51,39 @@ class AuthService {
     int age,
     double height,
     double weight,
+    double bmi,
   ) async {
-    // Create initial user model
-    UserModel user = UserModel(
-      uid: uid,
-      name: name,
-      age: age,
-      height: height,
-      weight: weight,
-      isRegularPeriod: false, // Default values
-      crampsExperience: 'No',
-      symptomDuration: '1-3 days',
-      additionalSymptoms: [],
-      cycleLength: 28,
-      periodLength: 5,
-      lastPeriodDate: DateTime.now(),
-    );
-    
-    await _firestoreService.saveUserProfile(user);
+    try {
+      // Create a temporary user model with just the personal info
+      // Other fields will be filled out in subsequent screens
+      UserModel userModel = UserModel(
+        uid: uid,
+        name: name,
+        age: age,
+        height: height,
+        weight: weight,
+        bmi: bmi,
+        isRegularPeriod: false, // Default values
+        crampsExperience: 'No', // These will be updated
+        symptomDuration: '1-3 days', // in subsequent screens
+        additionalSymptoms: [],
+        cycleLength: 28,
+        periodLength: 5,
+        lastPeriodDate: DateTime.now(),
+      );
+
+      // Save to Firestore
+      await _firestoreService.saveUserProfile(userModel);
+    } catch (e) {
+      print('Error creating user profile: $e');
+      rethrow; // Re-throw to handle in UI
+    }
   }
-  
+
   // Check if the user has completed onboarding
   Future<bool> hasCompletedOnboarding() async {
     if (currentUserId == null) return false;
-    
+
     try {
       final userData = await _firestoreService.getUserProfile(currentUserId!);
       // Consider onboarding complete if lastPeriodDate is set
