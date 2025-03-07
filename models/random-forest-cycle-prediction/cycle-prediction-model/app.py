@@ -2,40 +2,34 @@ from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
 
-# Load the trained Random Forest model
+# Load the saved Random Forest model
 model = joblib.load("random_forest_model.pkl")
 
 # Initialize Flask app
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/", methods=["GET"])
 def home():
-    return "Menstrual Cycle Prediction API is running!"
+    return "Random Forest Prediction API is running!"
 
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
-        # Get JSON input from request
+        # Get JSON data from request
         data = request.get_json()
 
-        # Validate input fields
-        required_fields = ["MeanCycleLength", "LengthofMenses", "BMI"]
-        if not all(field in data for field in required_fields):
-            return jsonify({'error': 'Missing required fields!'}), 400
+        # Convert JSON to DataFrame
+        input_data = pd.DataFrame([data])
 
-        # Convert input data into DataFrame
-        input_df = pd.DataFrame([data])
+        # Make a prediction
+        prediction = model.predict(input_data)[0]
 
-        # Make prediction
-        prediction = model.predict(input_df)
-
-        # Return the predicted cycle length
-        return jsonify({
-            'predicted_next_cycle_length': round(prediction[0], 2)
-        })
+        # Return the result
+        return jsonify({"prediction": prediction})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)})
 
-if __name__ == '__main__':
+# Run the Flask app
+if __name__ == "__main__":
     app.run(debug=True)
