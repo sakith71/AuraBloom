@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class StayActiveDetailScreen extends StatelessWidget {
-  const StayActiveDetailScreen({super.key});
+class EatWellDetailScreen extends StatelessWidget {
+  const EatWellDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -9,7 +9,7 @@ class StayActiveDetailScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFCF0F7),
       appBar: AppBar(
         title: Text(
-          'Stay Active',
+          'Hydrate & Eat Well',
           style: TextStyle(
             color: Colors.pink[300],
             fontWeight: FontWeight.bold,
@@ -49,7 +49,7 @@ class StayActiveDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: const DecorationImage(
-                  image: AssetImage('assets/stay_active.png'),
+                  image: AssetImage('assets/hydrate-and-eat-well.png'),
                   fit: BoxFit.cover,
                 ),
                 boxShadow: [
@@ -66,7 +66,7 @@ class StayActiveDetailScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Exercise Helps Relieve Pain',
+                'Nutrition Matters',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -79,7 +79,7 @@ class StayActiveDetailScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Engaging in physical activity during your period may seem difficult, but it can actually help relieve menstrual cramps. Exercise increases blood circulation, reducing muscle tension and helping the uterus contract more efficiently. It also boosts the release of endorphins, the body\'s natural painkillers, which improve mood and reduce discomfort. Low-impact exercises such as walking, swimming, cycling, or yoga can be especially beneficial. Stretching exercises that focus on the pelvic region can also help relax tight muscles and alleviate cramps.',
+                'Staying hydrated and maintaining a balanced diet can significantly impact period pain. Dehydration can make cramps worse, as it causes the body to retain water, leading to bloating and discomfort. Drinking warm water or herbal teas can help reduce bloating and relax muscles.\nEating anti-inflammatory foods can also help manage period pain. Magnesium-rich foods (such as spinach, almonds, and bananas) help relax muscles and reduce cramps. Omega-3 fatty acids found in fish and flaxseeds help reduce inflammation, while foods high in iron (like leafy greens and red meat) help replenish lost blood and combat fatigue. ',
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.5,
@@ -113,7 +113,7 @@ class StayActiveDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '"Even light exercises like stretching or gentle yoga can improve blood flow and help reduce menstrual cramps by relaxing the pelvic muscles." – Dr. Lisa Masterson, OB-GYN',
+                    '"A healthy diet rich in omega-3s, magnesium, and iron can help reduce period cramps by decreasing inflammation and muscle tension." – Dr. Lara Briden, Naturopathic Doctor',
                     style: TextStyle(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
@@ -137,7 +137,7 @@ class StayActiveDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Recommended Exercises',
+                    'Foods to Eat for Period Pain Relief:',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -145,10 +145,8 @@ class StayActiveDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildExerciseTile('Walking', '20-30 minutes daily'),
-                  _buildExerciseTile('Yoga', 'Focus on hip-opening poses'),
-                  _buildExerciseTile('Swimming', 'Gentle laps, 15-20 minutes'),
-                  _buildExerciseTile('Stretching', 'Pelvic and lower back focus'),
+                  _buildExerciseTile('Good', 'Bananas, nuts, spinach, fish, dark chocolate, ginger, turmeric, and yogurt.'),
+                  _buildExerciseTile('Avoid', 'Processed foods, caffeine, excess salt, alcohol, and sugary snacks, which can trigger inflammation and worsen pain.'),
                 ],
               ),
             ),

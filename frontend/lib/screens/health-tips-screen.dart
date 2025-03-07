@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import './stay-active-detail.dart'; // Import the detail screen
+import './eat-well-detail.dart';
 
 class HealthTipsScreen extends StatelessWidget {
   const HealthTipsScreen({super.key});
@@ -185,7 +186,16 @@ class HealthTipsScreen extends StatelessWidget {
                       title: 'Hydrate &\nEat Well',
                       cardColor: const Color(0xFFE6EEFF),
                       iconColor: Colors.blue[700]!,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EatWellDetailScreen(),
+                          ),
+                        );
+                      },
                     ),
+                    
                     _buildTipCard(
                       icon: Icons.hot_tub,
                       title: 'Apply\nHeat',
