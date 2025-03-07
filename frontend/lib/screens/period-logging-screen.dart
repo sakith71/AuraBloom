@@ -4,6 +4,7 @@ import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
 import '../services/period-stats-service.dart';
+import '../utils/stats-verification.dart';
 import 'home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
@@ -22,6 +23,8 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
   bool _isLoading = false;
   final PeriodService _periodService = PeriodService();
   final PeriodStatsService _periodStatsService = PeriodStatsService();
+  final StatsVerificationUtil _verificationUtil = StatsVerificationUtil();
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +82,15 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
       
       // Verify that the stats were saved to the database
       await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
+      final verificationResult = await _verificationUtil.verifyPeriodStats(widget.userId);
+      
+      print('stats verification result: ${verificationResult['success'] ? 'Success' : 'Failed'}');
+      print('stats message: ${verificationResult['message']}');
+      if (verificationResult['success']) {
+        print('Saved periodLength: ${verificationResult['data']['periodLength']}');
+        print('Saved cycleLength: ${verificationResult['data']['cycleLength']}');
+        print('Last updated: ${verificationResult['data']['statsLastUpdated']}');
+      }
       
       if (mounted) {
         // Find the most recent date for display purposes
