@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/health-tips-screen.dart';
-// Make sure the path is correct
+import 'package:frontend/screens/services/feeling-today-screen.dart'; // Updated path// Import the new screen
 
 class DailyInsights extends StatelessWidget {
   const DailyInsights({super.key});
@@ -32,7 +32,10 @@ class DailyInsights extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -69,7 +72,13 @@ class DailyInsights extends StatelessWidget {
                 title: 'How you feel today',
                 color: const Color(0xFFE6E9FF),
                 onTap: () {
-                  // Add navigation for How you feel today
+                  // Navigate to the How You Feel Today screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FeelingTodayScreen(),
+                    ),
+                  );
                 },
               ),
               const SizedBox(width: 12),
