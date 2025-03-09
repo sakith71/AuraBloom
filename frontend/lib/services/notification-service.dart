@@ -2,10 +2,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/models/notification.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Preference keys
+  static const String _prefPeriodReminders = 'pref_period_reminders';
+  static const String _prefCycleUpdates = 'pref_cycle_updates';
+  static const String _prefHealthTips = 'pref_health_tips';
+  static const String _prefCommunityUpdates = 'pref_community_updates';
+  static const String _prefAppUpdates = 'pref_app_updates';
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -37,6 +45,19 @@ class NotificationService {
         print('Skipping self-notification');
       }
       return;
+    }
+
+    // Check if community notifications are enabled for this notification type
+    if (type == NotificationType.like ||
+        type == NotificationType.comment ||
+        type == NotificationType.reply) {
+      final enabled = await isCommunityNotificationsEnabled();
+      if (!enabled) {
+        if (kDebugMode) {
+          print('Community notifications are disabled, skipping');
+        }
+        return;
+      }
     }
 
     try {
@@ -351,32 +372,110 @@ class NotificationService {
       return Stream.value(0);
     }
 
-    try {
-      return _firestore
-          .collection('notifications')
-          .where('userId', isEqualTo: user.uid)
-          .where('isRead', isEqualTo: false)
-          .snapshots()
-          .map((snapshot) {
-            final count = snapshot.docs.length;
-            if (kDebugMode) {
-              print('Unread notifications count: $count');
-            }
-            return count;
-          })
-          .handleError((error) {
-            if (kDebugMode) {
-              print('Error in unread count stream: $error');
-            }
-            // Return 0 on error instead of crashing
-            return 0;
-          });
-    } catch (e) {
-      if (kDebugMode) {
-        print('Exception setting up unread count stream: $e');
+    // Check if community notifications are enabled
+    return Stream.fromFuture(isCommunityNotificationsEnabled()).asyncExpand((
+      enabled,
+    ) {
+      if (!enabled) {
+        // If notifications are disabled, return 0
+        return Stream.value(0);
       }
-      // Return 0 on exception
-      return Stream.value(0);
+
+      try {
+        return _firestore
+            .collection('notifications')
+            .where('userId', isEqualTo: user.uid)
+            .where('isRead', isEqualTo: false)
+            .snapshots()
+            .map((snapshot) {
+              final count = snapshot.docs.length;
+              if (kDebugMode) {
+                print('Unread notifications count: $count');
+              }
+              return count;
+            })
+            .handleError((error) {
+              if (kDebugMode) {
+                print('Error in unread count stream: $error');
+              }
+              // Return 0 on error instead of crashing
+              return 0;
+            });
+      } catch (e) {
+        if (kDebugMode) {
+          print('Exception setting up unread count stream: $e');
+        }
+        // Return 0 on exception
+        return Stream.value(0);
+      }
+    });
+  }
+
+  // Notification preferences methods
+  Future<void> setNotificationPreference(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+
+    if (kDebugMode) {
+      print('Set notification preference $key to $value');
     }
+  }
+
+  Future<bool> getNotificationPreference(
+    String key, {
+    bool defaultValue = true,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getBool(key) ?? defaultValue;
+
+    if (kDebugMode) {
+      print('Get notification preference $key: $value');
+    }
+
+    return value;
+  }
+
+  // Specific preference setters/getters
+  Future<void> setPeriodRemindersEnabled(bool value) async {
+    await setNotificationPreference(_prefPeriodReminders, value);
+  }
+
+  Future<bool> isPeriodRemindersEnabled() async {
+    return getNotificationPreference(_prefPeriodReminders);
+  }
+
+  Future<void> setCycleUpdatesEnabled(bool value) async {
+    await setNotificationPreference(_prefCycleUpdates, value);
+  }
+
+  Future<bool> isCycleUpdatesEnabled() async {
+    return getNotificationPreference(_prefCycleUpdates);
+  }
+
+  Future<void> setHealthTipsEnabled(bool value) async {
+    await setNotificationPreference(_prefHealthTips, value);
+  }
+
+  Future<bool> isHealthTipsEnabled() async {
+    return getNotificationPreference(_prefHealthTips);
+  }
+
+  Future<void> setCommunityNotificationsEnabled(bool value) async {
+    await setNotificationPreference(_prefCommunityUpdates, value);
+  }
+
+  Future<bool> isCommunityNotificationsEnabled() async {
+    return getNotificationPreference(
+      _prefCommunityUpdates,
+      defaultValue: false,
+    );
+  }
+
+  Future<void> setAppUpdatesEnabled(bool value) async {
+    await setNotificationPreference(_prefAppUpdates, value);
+  }
+
+  Future<bool> isAppUpdatesEnabled() async {
+    return getNotificationPreference(_prefAppUpdates);
   }
 }
