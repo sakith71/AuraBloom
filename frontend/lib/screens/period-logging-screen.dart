@@ -4,7 +4,7 @@ import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
 import '../services/period-stats-service.dart';
-import '../utils/stats-verification.dart';
+import '../utils/stats-verification.dart'; // Import the verification utility
 import 'home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
@@ -72,8 +72,8 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
       // Save the period dates
       await _periodService.savePeriodDates(widget.userId, _selectedDates);
       
-      // Calculate and update period stats for the last 3 cycles
-      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 3);
+      // Calculate and update period stats for the last 6 cycles
+      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 6);
       
       // Log to confirm stats are being saved
       print('Stats calculated and saved to database:');
@@ -84,8 +84,8 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
       await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
       final verificationResult = await _verificationUtil.verifyPeriodStats(widget.userId);
       
-      print('stats verification result: ${verificationResult['success'] ? 'Success' : 'Failed'}');
-      print('stats message: ${verificationResult['message']}');
+      print('Database verification result: ${verificationResult['success'] ? 'Success' : 'Failed'}');
+      print('Database message: ${verificationResult['message']}');
       if (verificationResult['success']) {
         print('Saved periodLength: ${verificationResult['data']['periodLength']}');
         print('Saved cycleLength: ${verificationResult['data']['cycleLength']}');

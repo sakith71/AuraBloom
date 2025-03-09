@@ -284,8 +284,8 @@ class _CalendarPageState extends State<CalendarPage> {
         isCalculatingStats = true;
       });
       
-      // Calculate and save period stats based on the last 3 cycles
-      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 3);
+      // Calculate and save period stats based on the last 6 cycles
+      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 6);
       
       print('Updated stats calculated and saved to database:');
       print('Mean Period Length: ${stats['meanPeriodLength']} days');
@@ -369,7 +369,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             const SizedBox(height: 10),
             const Text(
-              'Based on your last 3 cycles',
+              'Based on your last 6 cycles',
               style: TextStyle(fontSize: 12, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
