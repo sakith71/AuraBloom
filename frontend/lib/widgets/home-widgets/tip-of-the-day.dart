@@ -3,7 +3,7 @@ import 'package:frontend/services/tips-services.dart';
 //import '../services/tips-service.dart';
 
 class TipOfTheDay extends StatefulWidget {
-  const TipOfTheDay({Key? key}) : super(key: key);
+  const TipOfTheDay({super.key});
 
   @override
   State<TipOfTheDay> createState() => _TipOfTheDayState();
