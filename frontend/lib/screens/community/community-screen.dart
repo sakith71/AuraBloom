@@ -345,8 +345,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
 class EnhancedCommunityPostCard extends StatelessWidget {
   final CommunityPost post;
-  const EnhancedCommunityPostCard({Key? key, required this.post})
-    : super(key: key);
+  const EnhancedCommunityPostCard({super.key, required this.post});
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();

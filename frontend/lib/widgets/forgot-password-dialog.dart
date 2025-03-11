@@ -10,7 +10,7 @@ class ForgotPasswordDialog extends StatelessWidget {
     final emailController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
-    Future<void> _resetPassword() async {
+    Future<void> resetPassword() async {
       if (!formKey.currentState!.validate()) return;
 
       try {
@@ -62,7 +62,7 @@ class ForgotPasswordDialog extends StatelessWidget {
           child: const Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed: _resetPassword,
+          onPressed: resetPassword,
           child: const Text("Send Email"),
         ),
       ],
