@@ -3,7 +3,6 @@ import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
 import '../services/period-stats-service.dart';
-import '../utils/stats-verification.dart';
 
 class CalendarPage extends StatefulWidget {
   final String userId;
@@ -31,7 +30,6 @@ class _CalendarPageState extends State<CalendarPage> {
   late DateTime _currentDate;
   final PeriodService _periodService = PeriodService();
   final PeriodStatsService _periodStatsService = PeriodStatsService();
-  final StatsVerificationUtil _verificationUtil = StatsVerificationUtil();
   
   // Stats information
   int _averageCycleLength = 28;
@@ -73,7 +71,6 @@ class _CalendarPageState extends State<CalendarPage> {
         isLoading = false;
       });
     } catch (e) {
-      print('Error fetching period dates: $e');
       setState(() {
         isLoading = false;
       });
@@ -81,7 +78,6 @@ class _CalendarPageState extends State<CalendarPage> {
   }
   
   Future<void> _fetchPeriodStats() async {
-    try {
       // Calculate period stats
       final stats = await _periodStatsService.calculatePeriodStats(widget.userId);
       
@@ -91,9 +87,6 @@ class _CalendarPageState extends State<CalendarPage> {
         _averagePeriodLength = stats['meanPeriodLength'] ?? 5;
         _showStats = true;
       });
-    } catch (e) {
-      print('Error fetching period stats: $e');
-    }
   }
 
   void _scrollToCurrentMonth() {
@@ -287,19 +280,8 @@ class _CalendarPageState extends State<CalendarPage> {
       // Calculate and save period stats based on the last 6 cycles
       final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 6);
       
-      print('Updated stats calculated and saved to database:');
-      print('Mean Period Length: ${stats['meanPeriodLength']} days');
-      print('Mean Cycle Length: ${stats['meanCycleLength']} days');
-      
       // Verify that the stats were saved to the database
       await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
-      final verificationResult = await _verificationUtil.verifyPeriodStats(widget.userId);
-      
-      print('Database verification result: ${verificationResult['success'] ? 'Success' : 'Failed'}');
-      if (verificationResult['success']) {
-        print('Saved periodLength: ${verificationResult['data']['periodLength']}');
-        print('Saved cycleLength: ${verificationResult['data']['cycleLength']}');
-      }
       
       // Update UI with new stats
       setState(() {
