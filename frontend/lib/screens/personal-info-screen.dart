@@ -25,6 +25,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   bool _isLoading = false;
   double? _bmi;
+  bool _showErrorMessage = false; // Flag to control error visibility
 
   bool get _isFormValid => _formKey.currentState?.validate() ?? false;
 
@@ -46,11 +47,18 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
   // Save personal info and proceed
   Future<void> _savePersonalInfoAndProceed() async {
-    if (!_formKey.currentState!.validate()) return;
+    // Force validate and show error message if invalid
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _showErrorMessage = true;
+      });
+      return;
+    }
 
     try {
       setState(() {
         _isLoading = true;
+        _showErrorMessage = false; // Hide error when proceeding
       });
 
       // Calculate BMI before saving
@@ -118,12 +126,16 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Form(
                       key: _formKey,
-                      onChanged: () => setState(() {}),
+                      onChanged: () => setState(() {
+                        // Hide error message when form is valid
+                        if (_showErrorMessage && _isFormValid) {
+                          _showErrorMessage = false;
+                        }
+                      }),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -205,7 +217,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                     : NavigationButtonRow(
                       onPrevious: _handlePrevious,
                       onNext: _savePersonalInfoAndProceed,
-                      isNextEnabled: _isFormValid,
+                      isNextEnabled: true,
                     ),
               ],
             ),

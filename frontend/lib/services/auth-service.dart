@@ -15,14 +15,62 @@ class AuthService {
   // Check if user is signed in
   bool get isUserSignedIn => _auth.currentUser != null;
 
-  // Sign up with email and password
-  Future<User?> signUp(String email, String password) async {
+  // Check if email already exists
+  Future<bool> emailExists(String email) async {
     try {
+      // Firebase has no direct method to check if an email exists
+      // We'll use fetchSignInMethodsForEmail which returns a list of providers
+      // If the list is empty, the email doesn't exist
+      final List<String> methods = await _auth.fetchSignInMethodsForEmail(email);
+      return methods.isNotEmpty;
+    } catch (e) {
+      print('Error checking email existence: $e');
+      return false;
+    }
+  }
+
+  // Sign up with email and password
+  Future<Map<String, dynamic>> signUp(String email, String password) async {
+    try {
+      // First check if the email already exists
+      bool exists = await emailExists(email);
+      if (exists) {
+        return {
+          'success': false,
+          'message': 'This email is already registered. Please sign in or use a different email.',
+          'user': null
+        };
+      }
+      
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
-      return userCredential.user;
+      return {
+        'success': true,
+        'message': 'Registration successful',
+        'user': userCredential.user
+      };
+    } on FirebaseAuthException catch (e) {
+      String message;
+      if (e.code == 'email-already-in-use') {
+        message = 'This email is already registered. Please sign in or use a different email.';
+      } else if (e.code == 'weak-password') {
+        message = 'The password is too weak. Please use a stronger password.';
+      } else if (e.code == 'invalid-email') {
+        message = 'The email address is not valid.';
+      } else {
+        message = e.message ?? 'An error occurred during sign up.';
+      }
+      return {
+        'success': false,
+        'message': message,
+        'user': null
+      };
     } catch (e) {
-      throw Exception('Failed to sign up: $e');
+      return {
+        'success': false,
+        'message': 'Failed to sign up: $e',
+        'user': null
+      };
     }
   }
 
@@ -75,7 +123,6 @@ class AuthService {
       // Save to Firestore
       await _firestoreService.saveUserProfile(userModel);
     } catch (e) {
-      print('Error creating user profile: $e');
       rethrow; // Re-throw to handle in UI
     }
   }
@@ -89,7 +136,6 @@ class AuthService {
       // Consider onboarding complete if lastPeriodDate is set
       return userData != null && userData.lastPeriodDate.year > 2000;
     } catch (e) {
-      print('Error checking onboarding status: $e');
       return false;
     }
   }
