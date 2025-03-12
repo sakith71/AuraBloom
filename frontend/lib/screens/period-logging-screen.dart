@@ -3,8 +3,6 @@ import '../widgets/navigation-buttons.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
-import '../services/period-stats-service.dart';
-import '../utils/stats-verification.dart'; // Import the verification utility
 import 'home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
@@ -22,8 +20,6 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
   late DateTime _currentDate;
   bool _isLoading = false;
   final PeriodService _periodService = PeriodService();
-  final PeriodStatsService _periodStatsService = PeriodStatsService();
-  final StatsVerificationUtil _verificationUtil = StatsVerificationUtil();
 
   @override
   void initState() {
@@ -72,25 +68,9 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
       // Save the period dates
       await _periodService.savePeriodDates(widget.userId, _selectedDates);
       
-      // Calculate and update period stats for the last 6 cycles
-      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 6);
-      
-      // Log to confirm stats are being saved
-      print('Stats calculated and saved to database:');
-      print('Mean Period Length: ${stats['meanPeriodLength']} days');
-      print('Mean Cycle Length: ${stats['meanCycleLength']} days');
       
       // Verify that the stats were saved to the database
       await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
-      final verificationResult = await _verificationUtil.verifyPeriodStats(widget.userId);
-      
-      print('Database verification result: ${verificationResult['success'] ? 'Success' : 'Failed'}');
-      print('Database message: ${verificationResult['message']}');
-      if (verificationResult['success']) {
-        print('Saved periodLength: ${verificationResult['data']['periodLength']}');
-        print('Saved cycleLength: ${verificationResult['data']['cycleLength']}');
-        print('Last updated: ${verificationResult['data']['statsLastUpdated']}');
-      }
       
       if (mounted) {
         // Find the most recent date for display purposes
@@ -121,7 +101,6 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
               userId: widget.userId,
               selectedDate: mostRecentDateKey,
               selectedDates: _selectedDates,
-              // periodStats: stats, // Pass the calculated stats to the home screen
             ),
           ),
         );
