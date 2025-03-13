@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class FeelingTodayScreen extends StatefulWidget {
   const FeelingTodayScreen({super.key});
@@ -21,6 +23,9 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
   int _waterAmount = 0;
   final int _waterGoal = 72;
 
+  // Submit button state
+  bool _isSubmitting = false;
+
   // Search functionality
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
@@ -41,6 +46,104 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
     super.dispose();
   }
 
+  // Function to save data to Firestore
+  Future<void> _saveDataToFirestore() async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Get current user
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('User not logged in');
+      }
+
+      // Reference to Firestore
+      final firestore = FirebaseFirestore.instance;
+
+      // Create a document reference for today's entry
+      final dailyEntryRef = firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('dailyEntries')
+          .doc(
+            DateTime.now().toIso8601String().split('T')[0],
+          ); // Use date as document ID
+
+      // Get selected items from each category
+      final selectedMoods =
+          _selectedMoods.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
+
+      final selectedSymptoms =
+          _selectedSymptoms.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
+
+      final selectedDischarge =
+          _selectedDischarge.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
+
+      final selectedOther =
+          _selectedOther.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
+
+      final selectedPhysicalActivity =
+          _selectedPhysicalActivity.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
+
+      // Save data to Firestore
+      await dailyEntryRef.set({
+        'timestamp': FieldValue.serverTimestamp(),
+        'mood': selectedMoods,
+        'symptoms': selectedSymptoms,
+        'discharge': selectedDischarge,
+        'other': selectedOther,
+        'physicalActivity': selectedPhysicalActivity,
+        'contraceptives': {
+          'pillTakenOnTime': _pillTakenOnTime,
+          'yesterdaysPill': _yesterdaysPill,
+        },
+        'water': {'amount': _waterAmount, 'goal': _waterGoal},
+      }, SetOptions(merge: true));
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Daily entry saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Navigate back
+      Navigator.pop(context);
+    } catch (error) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving entry: ${error.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,10 +152,7 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
         backgroundColor: Color.fromARGB(255, 255, 216, 238),
         title: const Text(
           'Today',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 25, // Optional: you can also increase the font size
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -66,20 +166,58 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSearchBar(),
-            _buildMoodSection(),
-            _buildSymptomsSection(),
-            _buildDischargeSection(),
-            _buildOtherSection(),
-            _buildPhysicalActivitySection(),
-            _buildContraceptivesSection(),
-            _buildWaterTracking(),
-            const SizedBox(height: 20),
-          ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSearchBar(),
+                _buildMoodSection(),
+                _buildSymptomsSection(),
+                _buildDischargeSection(),
+                _buildOtherSection(),
+                _buildPhysicalActivitySection(),
+                _buildContraceptivesSection(),
+                _buildWaterTracking(),
+                _buildSubmitButton(),
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+          if (_isSubmitting)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      width: double.infinity,
+      height: 55,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _saveDataToFirestore,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.pink,
+          foregroundColor: Colors.white,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        child: Text(
+          _isSubmitting ? 'Saving...' : 'Save Daily Entry',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
     );
