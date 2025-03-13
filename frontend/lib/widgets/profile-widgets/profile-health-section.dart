@@ -149,17 +149,12 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
   Widget _buildHealthItem(String label, String value) {
       // Add special styling for BMI based on category
     bool isBmi = label == 'BMI';
-    Color valueColor = Colors.black;
     
     if (isBmi) {
       if (value.contains('Underweight')) {
-        valueColor = Colors.blue;
       } else if (value.contains('Normal')) {
-        valueColor = Colors.green;
       } else if (value.contains('Overweight')) {
-        valueColor = Colors.orange;
       } else if (value.contains('Obesity')) {
-        valueColor = Colors.red;
       }
     }
 
@@ -240,11 +235,11 @@ class EditHealthInfoScreen extends StatefulWidget {
   final Function(Map<String, String>, UserModel?) onSave;
 
   const EditHealthInfoScreen({
-    Key? key,
+    super.key,
     required this.initialHealthInfo,
     this.userModel,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<EditHealthInfoScreen> createState() => _EditHealthInfoScreenState();
@@ -268,7 +263,9 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 

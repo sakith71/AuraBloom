@@ -17,7 +17,6 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _rememberMe = false;
   bool _isLoading = false;
 
   @override
@@ -61,29 +60,6 @@ class _LoginFormState extends State<LoginForm> {
           _isLoading = false;
         });
       }
-      // // Show loading indicator
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text(
-      //       _rememberMe ? "Logging In with Remember Me..." : "Logging In...",
-      //     ),
-      //     duration: const Duration(seconds: 1), // Shorter duration
-      //   ),
-      // );
-
-      // // Navigate to HomeScreen after brief delay to show loading
-      // Future.delayed(const Duration(seconds: 1), () {
-      //   Navigator.pushReplacement(
-      //     // Use pushReplacement to prevent going back to login
-      //     context,
-      //     MaterialPageRoute(
-      //       builder:
-      //           (context) => HomeScreen(
-      //             selectedDates: <String>{}, // Pass empty set for now
-      //           ),
-      //     ),
-      //   );
-      // });
     }
   }
 
@@ -133,22 +109,6 @@ class _LoginFormState extends State<LoginForm> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                    ),
-                    const Text(
-                      'Remember Me',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                  ],
-                ),
                 TextButton(
                   onPressed: () {
                     showDialog(
@@ -159,7 +119,7 @@ class _LoginFormState extends State<LoginForm> {
                   child: const Text(
                     'Forget Password?',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color:Color.fromARGB(255, 240, 99, 153),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -176,7 +136,7 @@ class _LoginFormState extends State<LoginForm> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : () => _handleLogin(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor:Color.fromARGB(255, 240, 99, 153),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -205,7 +165,7 @@ class _LoginFormState extends State<LoginForm> {
             },
             child: const Text(
               'Sign up',
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              style: TextStyle(color:Color.fromARGB(255, 240, 99, 153), fontWeight: FontWeight.bold),
             ),
           ),
         ],

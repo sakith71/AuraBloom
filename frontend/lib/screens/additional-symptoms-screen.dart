@@ -89,19 +89,19 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
           ),
           decoration: BoxDecoration(
             color: symptom['isSelected']
-                ? const Color(0xFFE1F5FE)
+                ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
                 : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: symptom['isSelected']
-                  ? Colors.blue
+                  ? const Color.fromARGB(255, 240, 99, 153)
                   : Colors.grey.shade300,
               width: 2,
             ),
             boxShadow: symptom['isSelected']
                 ? [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.1),
                       spreadRadius: 1,
                       blurRadius: 4,
                       offset: const Offset(0, 2),
@@ -117,7 +117,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: symptom['isSelected']
-                        ? Colors.blue.shade700
+                        ? const Color.fromARGB(255, 240, 99, 153)
                         : Colors.black87,
                     fontWeight: symptom['isSelected']
                         ? FontWeight.w600
@@ -128,7 +128,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
               if (symptom['isSelected'])
                 Icon(
                   Icons.check_circle,
-                  color: Colors.blue.shade700,
+                  color: const Color.fromARGB(255, 240, 99, 153),
                 ),
             ],
           ),

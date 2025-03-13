@@ -39,10 +39,10 @@ class PeriodService {
     }
   }
   
-  // Fetch the most recent period date
-  Future<DateTime?> fetchLastPeriodDate(String userId) async {
+  // Fetch the first date of the most recent period cycle
+  Future<DateTime?> fetchLastCycleStartDate(String userId) async {
     try {
-      // Get the user document which should have the lastPeriodDate field
+      // Get the user document which should have the lastCycleStartDate field
       DocumentSnapshot userDoc = await _firestore
           .collection('users')
           .doc(userId)
@@ -50,36 +50,58 @@ class PeriodService {
       
       if (userDoc.exists) {
         Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-        if (userData['lastPeriodDate'] != null) {
-          return DateTime.parse(userData['lastPeriodDate']);
+        if (userData['lastCycleStartDate'] != null) {
+          return DateTime.parse(userData['lastCycleStartDate']);
         }
       }
       
-      // If not found in user doc, try to find the most recent from period collection
+      // If not found in user doc, find the most recent cycle start date
       QuerySnapshot periodSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('periods')
           .orderBy('periodStartDate', descending: true)
-          .limit(1)
           .get();
       
       if (periodSnapshot.docs.isNotEmpty) {
-        Map<String, dynamic> data = periodSnapshot.docs.first.data() as Map<String, dynamic>;
-        if (data['periodStartDate'] != null) {
-          return DateTime.parse(data['periodStartDate']);
+        // Convert all dates to DateTime objects
+        List<DateTime> allDates = [];
+        for (var doc in periodSnapshot.docs) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          if (data['periodStartDate'] != null) {
+            allDates.add(DateTime.parse(data['periodStartDate']));
+          }
+        }
+        
+        // Sort dates
+        allDates.sort((a, b) => a.compareTo(b));
+        
+        // Find cycle start dates (dates that don't have a previous date exactly 1 day before)
+        List<DateTime> cycleStartDates = [];
+        DateTime? previousDate;
+        
+        for (DateTime date in allDates) {
+          if (previousDate == null || date.difference(previousDate).inDays > 1) {
+            cycleStartDates.add(date);
+          }
+          previousDate = date;
+        }
+        
+        // Get the most recent cycle start date
+        if (cycleStartDates.isNotEmpty) {
+          cycleStartDates.sort((a, b) => b.compareTo(a)); // descending order
+          return cycleStartDates.first;
         }
       }
       
       return null;
     } catch (e) {
-      print('Error fetching last period date: $e');
+      print('Error fetching last cycle start date: $e');
       return null;
     }
   }
   
   // Delete a period date
-
   Future<void> deletePeriodDate(String userId, String dateKey) async {
     try {
       // Convert date key to DateTime
@@ -110,8 +132,8 @@ class PeriodService {
             await doc.reference.delete();
           }
           
-          // After deletion, update the lastPeriodDate field if needed
-          await updateLastPeriodDate(userId);
+          // After deletion, update the lastCycleStartDate field
+          await updateLastCycleStartDate(userId);
         }
       }
     } catch (e) {
@@ -120,7 +142,7 @@ class PeriodService {
     }
   }
   
-  // Save multiple period dates and update the lastPeriodDate field
+  // Save multiple period dates and update the lastCycleStartDate field
   Future<void> savePeriodDates(String userId, Set<String> dateKeys) async {
     try {
       // Convert all dateKeys to DateTime objects for comparison
@@ -149,56 +171,70 @@ class PeriodService {
         }
       }
       
-      // Find the most recent date and update lastPeriodDate in user document
-      if (periodDates.isNotEmpty) {
-        // Sort dates to find the most recent
-        periodDates.sort((a, b) => b.compareTo(a)); // descending order
-        DateTime mostRecentDate = periodDates.first;
-        
-        // Update the lastPeriodDate field in the user document
-        await _firestore.collection('users').doc(userId).update({
-          'lastPeriodDate': mostRecentDate.toIso8601String(),
-        });
-      }
+      // After saving all dates, determine the cycle start dates and update lastCycleStartDate
+      await updateLastCycleStartDate(userId);
     } catch (e) {
       print('Error saving period dates: $e');
       rethrow;
     }
   }
   
-  // Update the lastPeriodDate field based on existing period entries
-  Future<void> updateLastPeriodDate(String userId) async {
+  // Update the lastCycleStartDate field based on existing period entries
+  Future<void> updateLastCycleStartDate(String userId) async {
     try {
-      // Get the most recent period date from the periods collection
+      // Get all period dates
       QuerySnapshot periodSnapshot = await _firestore
           .collection('users')
           .doc(userId)
           .collection('periods')
-          .orderBy('periodStartDate', descending: true)
-          .limit(1)
+          .orderBy('periodStartDate')
           .get();
       
       if (periodSnapshot.docs.isNotEmpty) {
-        Map<String, dynamic> data = periodSnapshot.docs.first.data() as Map<String, dynamic>;
-        if (data['periodStartDate'] != null) {
-          // Update the lastPeriodDate field in the user document
+        // Convert all dates to DateTime objects
+        List<DateTime> allDates = [];
+        for (var doc in periodSnapshot.docs) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          if (data['periodStartDate'] != null) {
+            allDates.add(DateTime.parse(data['periodStartDate']));
+          }
+        }
+        
+        // Find cycle start dates (dates that don't have a previous date exactly 1 day before)
+        List<DateTime> cycleStartDates = [];
+        DateTime? previousDate;
+        
+        for (DateTime date in allDates) {
+          if (previousDate == null || date.difference(previousDate).inDays > 1) {
+            cycleStartDates.add(date);
+          }
+          previousDate = date;
+        }
+        
+        // If we found cycle start dates, update the user document with the most recent one
+        if (cycleStartDates.isNotEmpty) {
+          // Sort to find the most recent
+          cycleStartDates.sort((a, b) => b.compareTo(a)); // descending order
+          DateTime mostRecentCycleStart = cycleStartDates.first;
+          
+          // Update the lastCycleStartDate field in the user document
           await _firestore.collection('users').doc(userId).update({
-            'lastPeriodDate': data['periodStartDate'],
+            'lastCycleStartDate': mostRecentCycleStart.toIso8601String(),
           });
         } else {
-          // If there are no more period entries, set lastPeriodDate to null or a default value
+          // If no cycle start dates found, set to null
           await _firestore.collection('users').doc(userId).update({
-            'lastPeriodDate': null,
+            'lastCycleStartDate': null,
           });
         }
       } else {
-        // If there are no period entries, set lastPeriodDate to null or a default value
+        // If no period entries, set to null
         await _firestore.collection('users').doc(userId).update({
-            'lastPeriodDate': null,
+          'lastCycleStartDate': null,
         });
       }
     } catch (e) {
-      print('Error updating last period date: $e');
+      print('Error updating last cycle start date: $e');
       rethrow;
     }
   }
