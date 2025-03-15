@@ -43,11 +43,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
 
     try {
-      // First try to get notifications using Future to check for index issues
+      // First try to get notifications
       final result = await _notificationService.getNotificationsWithIndexInfo();
 
       if (result['success'] == true) {
-        // Success - we have notifications
+        // Success
         if (mounted) {
           setState(() {
             _notifications = result['notifications'];
@@ -77,7 +77,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       if (kDebugMode) {
         print('Exception in _loadNotifications: $e');
       }
-
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -136,9 +135,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
       // Get the post
       final post = await _communityService.getPost(notification.postId);
       if (post == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Post not found')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Post not found')),
+        );
         return;
       }
 
@@ -151,7 +150,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       if (kDebugMode) {
         print('Error navigating to post: $e');
       }
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -215,7 +213,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 244, 189, 228),
+      // Use the global color instead of a local pink/purple color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -234,29 +233,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color.fromARGB(255, 255, 115, 166),
-                      ),
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color.fromARGB(255, 255, 115, 166),
                     ),
-                    SizedBox(height: 16),
-                    Text('Loading notifications...'),
-                  ],
-                ),
-              )
-              : _needsIndex
+                  ),
+                  SizedBox(height: 16),
+                  Text('Loading notifications...'),
+                ],
+              ),
+            )
+          : _needsIndex
               ? _buildIndexNeededUI()
               : _errorMessage != null && !_needsIndex
-              ? _buildErrorUI()
-              : _notifications.isEmpty
-              ? _buildEmptyUI()
-              : _buildNotificationsList(),
+                  ? _buildErrorUI()
+                  : _notifications.isEmpty
+                      ? _buildEmptyUI()
+                      : _buildNotificationsList(),
     );
   }
 
@@ -451,15 +449,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          color:
-              notification.isRead
-                  ? Colors.white
-                  : Colors.white.withOpacity(0.9),
+          color: notification.isRead
+              ? Colors.white
+              : Colors.white.withOpacity(0.9),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: _getNotificationColor(
-                notification.type,
-              ).withOpacity(0.2),
+              backgroundColor: _getNotificationColor(notification.type).withOpacity(0.2),
               child: Icon(
                 _getNotificationIcon(notification.type),
                 color: _getNotificationColor(notification.type),
@@ -468,23 +463,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
             title: Text(
               _getNotificationText(notification),
               style: TextStyle(
-                fontWeight:
-                    notification.isRead ? FontWeight.normal : FontWeight.bold,
+                fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
                 fontSize: 14,
               ),
             ),
-            subtitle:
-                notification.content != null
-                    ? Text(
-                      notification.content!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    )
-                    : Text(
-                      _formatDate(notification.createdAt),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
+            subtitle: notification.content != null
+                ? Text(
+                    notification.content!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  )
+                : Text(
+                    _formatDate(notification.createdAt),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
             trailing: Text(
               _formatDate(notification.createdAt),
               style: TextStyle(fontSize: 11, color: Colors.grey[500]),

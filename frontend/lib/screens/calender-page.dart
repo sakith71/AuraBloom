@@ -7,7 +7,7 @@ import '../services/period-stats-service.dart';
 class CalendarPage extends StatefulWidget {
   final String userId;
   final Set<String> selectedDates;
-  
+
   const CalendarPage({
     super.key,
     required this.userId,
@@ -26,15 +26,16 @@ class _CalendarPageState extends State<CalendarPage> {
   bool isLoading = true;
   bool hasChanges = false; // Track if changes were made during editing
   bool isCalculatingStats = false;
-  final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
   final PeriodService _periodService = PeriodService();
   final PeriodStatsService _periodStatsService = PeriodStatsService();
-  
+
   // Stats information
   int _averageCycleLength = 28;
   int _averagePeriodLength = 5;
   bool _showStats = false;
+
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -43,31 +44,31 @@ class _CalendarPageState extends State<CalendarPage> {
     selectedDates = Set<String>.from(widget.selectedDates);
     originalDates = Set<String>.from(widget.selectedDates);
     _currentDate = DateTime.now();
-    
+
     // Fetch period dates from Firestore
     _fetchPeriodDates();
-    
+
     // Fetch period stats
     _fetchPeriodStats();
-    
+
     // Scroll to current month initially
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentMonth();
     });
   }
-  
+
   Future<void> _fetchPeriodDates() async {
     try {
       setState(() {
         isLoading = true;
       });
-      
+
       // Get period dates from Firestore
       Set<String> dates = await _periodService.fetchPeriodDates(widget.userId);
-      
+
       setState(() {
         selectedDates = dates;
-        originalDates = Set<String>.from(dates); // Make a copy of the original dates
+        originalDates = Set<String>.from(dates); // Make a copy
         isLoading = false;
       });
     } catch (e) {
@@ -76,24 +77,26 @@ class _CalendarPageState extends State<CalendarPage> {
       });
     }
   }
-  
+
   Future<void> _fetchPeriodStats() async {
-      // Calculate period stats
-      final stats = await _periodStatsService.calculatePeriodStats(widget.userId);
-      
-      // Update UI with stats
-      setState(() {
-        _averageCycleLength = stats['meanCycleLength'] ?? 28;
-        _averagePeriodLength = stats['meanPeriodLength'] ?? 5;
-        _showStats = true;
-      });
+    // Calculate period stats
+    final stats = await _periodStatsService.calculatePeriodStats(widget.userId);
+
+    // Update UI with stats
+    setState(() {
+      _averageCycleLength = stats['meanCycleLength'] ?? 28;
+      _averagePeriodLength = stats['meanPeriodLength'] ?? 5;
+      _showStats = true;
+    });
   }
 
   void _scrollToCurrentMonth() {
     // Calculate approximate position to scroll to current month
     double itemHeight = 300; // Estimated height of a month widget
-    double targetPosition = (_currentDate.month - 3) * itemHeight; // Show current month after 3 months
-    
+    double targetPosition =
+        (_currentDate.month - 3) *
+        itemHeight; // Show current month after 3 months
+
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         targetPosition.clamp(0, _scrollController.position.maxScrollExtent),
@@ -104,113 +107,109 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void onDateSelected(String dateKey) {
+    // Only allow selecting/deselecting if in editing mode
     if (!isEditing) return;
-    
+
     setState(() {
       if (selectedDates.contains(dateKey)) {
         selectedDates.remove(dateKey);
       } else {
         selectedDates.add(dateKey);
       }
-      
-      // Check if the current selection is different from the original
+      // Check if the current selection differs from the original
       hasChanges = !_areSetsEqual(selectedDates, originalDates);
     });
   }
 
-  // Helper method to check if two sets are equal
   bool _areSetsEqual(Set<String> a, Set<String> b) {
     if (a.length != b.length) return false;
     return a.every((element) => b.contains(element));
   }
 
-  // Show confirmation dialog when exiting edit mode with unsaved changes
   Future<void> _showExitConfirmation() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        elevation: 8,
-        backgroundColor: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              const Text(
-                'Discard Changes?',
-                style: TextStyle(
-                  fontSize: 22, 
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'You have unsaved changes. Are you sure you want to exit without saving?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            elevation: 8,
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Cancel button
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.grey.withOpacity(0.2),
-                        foregroundColor: Colors.black87,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Discard Changes?',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  // Discard button
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      style: TextButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 240, 99, 153),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Discard',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'You have unsaved changes. Are you sure you want to exit without saving?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
                   ),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      // Cancel button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          style: TextButton.styleFrom(
+                            backgroundColor: Colors.grey.withOpacity(0.2),
+                            foregroundColor: Colors.black87,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Discard button
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: TextButton.styleFrom(
+                            backgroundColor: Color.fromARGB(255, 240, 99, 153),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          child: const Text(
+                            'Discard',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                 ],
               ),
-              const SizedBox(height: 10),
-            ],
+            ),
           ),
-        ),
-      ),
     );
 
     // If user confirms exit, reset to original dates
@@ -223,7 +222,6 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  // Handle toggling edit mode with confirmation if needed
   void toggleEditMode() {
     if (isEditing && hasChanges) {
       _showExitConfirmation();
@@ -232,10 +230,9 @@ class _CalendarPageState extends State<CalendarPage> {
       if (!isEditing) {
         originalDates = Set<String>.from(selectedDates);
       }
-      
       setState(() {
         isEditing = !isEditing;
-        hasChanges = false; // Reset change tracker when entering edit mode
+        hasChanges = false;
       });
     }
   }
@@ -245,44 +242,47 @@ class _CalendarPageState extends State<CalendarPage> {
       setState(() {
         isSaving = true;
       });
-      
-      // First, fetch current period dates to compare
-      Set<String> currentDates = await _periodService.fetchPeriodDates(widget.userId);
-      
+
+      // Fetch current period dates to compare
+      Set<String> currentDates = await _periodService.fetchPeriodDates(
+        widget.userId,
+      );
+
       // Find dates to add (in selectedDates but not in currentDates)
       Set<String> datesToAdd = Set<String>.from(selectedDates)
         ..removeAll(currentDates);
-      
+
       // Find dates to remove (in currentDates but not in selectedDates)
       Set<String> datesToRemove = Set<String>.from(currentDates)
         ..removeAll(selectedDates);
-      
+
       // Add new dates
       if (datesToAdd.isNotEmpty) {
         // Use the enhanced savePeriodDates method to save multiple dates at once
-        // This will also update the lastPeriodDate field
         await _periodService.savePeriodDates(widget.userId, datesToAdd);
       }
-      
+
       // Remove deleted dates individually
       for (String dateKey in datesToRemove) {
         await _periodService.deletePeriodDate(widget.userId, dateKey);
       }
-      
+
       // Update original dates to match the saved set
       originalDates = Set<String>.from(selectedDates);
-      
+
       // Calculate and update period stats after changes
       setState(() {
         isCalculatingStats = true;
       });
-      
-      // Calculate and save period stats based on the last 6 cycles
-      final stats = await _periodStatsService.updatePeriodStats(widget.userId, cycleLimit: 6);
-      
-      // Verify that the stats were saved to the database
-      await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
-      
+
+      final stats = await _periodStatsService.updatePeriodStats(
+        widget.userId,
+        cycleLimit: 6,
+      );
+
+      // Wait briefly to ensure data is written
+      await Future.delayed(const Duration(seconds: 1));
+
       // Update UI with new stats
       setState(() {
         _averageCycleLength = stats['meanCycleLength'];
@@ -290,16 +290,18 @@ class _CalendarPageState extends State<CalendarPage> {
         isCalculatingStats = false;
         _showStats = true;
       });
-      
-      // Exit edit mode after saving
+
+      // Exit edit mode
       setState(() {
         isEditing = false;
         hasChanges = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Period dates and stats saved successfully')),
+          const SnackBar(
+            content: Text('Period dates and stats saved successfully'),
+          ),
         );
       }
     } catch (e) {
@@ -319,7 +321,7 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     }
   }
-  
+
   Widget _buildStatsCard() {
     return Card(
       elevation: 4,
@@ -364,26 +366,13 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: const Color(0xFFD64C7F),
-          size: 30,
-        ),
+        Icon(icon, color: const Color(0xFFD64C7F), size: 30),
         const SizedBox(height: 5),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -391,30 +380,19 @@ class _CalendarPageState extends State<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading screen
     if (isLoading) {
       return Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFFF4C2CA), // Light Pink
-                Color(0xFFD4C0D6), // Light Purple
-              ],
-            ),
-          ),
-          child: const Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
+        // Use the global background color instead of a gradient
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
-    
+
+    // Build list of months (6 months in the past and 6 months in the future)
     List<Widget> monthWidgets = [];
     DateTime currentMonth = DateTime(_currentDate.year, _currentDate.month);
 
-    // Generate 6 months in the past and 6 months in the future
     for (int i = -6; i <= 6; i++) {
       DateTime targetMonth = DateTime(
         currentMonth.year,
@@ -432,136 +410,149 @@ class _CalendarPageState extends State<CalendarPage> {
     }
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      // Use the global scaffold background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEditing ? 'Edit Period Dates' : 'Period Calendar',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (isEditing)
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: toggleEditMode,
+                    ),
+                ],
+              ),
+            ),
+
+            // Show stats card if available and not editing
+            if (_showStats && !isEditing)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Period Calendar',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (isEditing)
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: toggleEditMode,
-                      ),
-                  ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
                 ),
+                child: _buildStatsCard(),
               ),
-              // Show stats card if available and not in editing mode
-              if (_showStats && !isEditing)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: _buildStatsCard(),
-                ),
-              if (isCalculatingStats && !isEditing)
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 8),
-                        Text("Calculating cycle statistics...")
-                      ],
-                    ),
-                  ),
-                ),
-              if (isEditing)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Select your period days',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(20),
+
+            // Show spinner if recalculating stats
+            if (isCalculatingStats && !isEditing)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Center(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: monthWidgets,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 8),
+                      Text("Calculating cycle statistics..."),
+                    ],
                   ),
                 ),
               ),
-              if (isEditing)
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: isSaving || !hasChanges ? null : savePeriodDates,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        backgroundColor: const Color.fromARGB(255, 240, 99, 153),
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
+
+            // Editing hint
+            if (isEditing)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Select your period days',
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
+                ),
+              ),
+
+            // Calendar months
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: monthWidgets,
+                ),
+              ),
+            ),
+
+            // Bottom button area
+            if (isEditing)
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isSaving || !hasChanges ? null : savePeriodDates,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      backgroundColor: const Color.fromARGB(255, 240, 99, 153),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: const Color.fromARGB(
+                        255,
+                        240,
+                        99,
+                        153,
+                      ).withOpacity(0.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      child: isSaving
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              hasChanges ? 'Save Period Dates' : 'No Changes to Save',
+                    ),
+                    child:
+                        isSaving
+                            ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                            : Text(
+                              hasChanges
+                                  ? 'Save Period Dates'
+                                  : 'No Changes to Save',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                    ),
                   ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: toggleEditMode,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        backgroundColor: const Color.fromARGB(255, 240, 99, 153),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: toggleEditMode,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      backgroundColor: const Color.fromARGB(255, 240, 99, 153),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      child: const Text(
-                        'Edit Period Dates',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    child: const Text(
+                      'Edit Period Dates',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
