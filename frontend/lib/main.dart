@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       title: 'AuraBloom',
       theme: ThemeData(
         primarySwatch: Colors.pink,
-        scaffoldBackgroundColor: const Color(0xFFD4C0D6),
+        scaffoldBackgroundColor: const Color(0xFFFCF0F7),
       ),
       initialRoute: '/',
       routes: {
