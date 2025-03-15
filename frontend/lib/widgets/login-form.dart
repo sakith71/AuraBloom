@@ -9,7 +9,6 @@ class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _LoginFormState createState() => _LoginFormState();
 }
 
@@ -18,6 +17,7 @@ class _LoginFormState extends State<LoginForm> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _passwordVisible = false; // Toggle for password visibility
 
   @override
   void dispose() {
@@ -41,13 +41,10 @@ class _LoginFormState extends State<LoginForm> {
 
         if (userCredential.user != null) {
           Navigator.pushReplacement(
-            // Use pushReplacement to prevent going back to login
             context,
             MaterialPageRoute(
               builder:
-                  (context) => HomeScreen(
-                    userId: userCredential.user!.uid, // Pass the userId
-                  ),
+                  (context) => HomeScreen(userId: userCredential.user!.uid),
             ),
           );
         }
@@ -69,6 +66,7 @@ class _LoginFormState extends State<LoginForm> {
       key: _formKey,
       child: Column(
         children: [
+          // Email Field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -102,7 +100,10 @@ class _LoginFormState extends State<LoginForm> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 15,
+                  ),
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.never,
                 ),
@@ -111,6 +112,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 15),
+          // Password Field with Toggle Visibility
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -128,7 +130,7 @@ class _LoginFormState extends State<LoginForm> {
               ),
               child: TextFormField(
                 controller: _passwordController,
-                obscureText: true,
+                obscureText: !_passwordVisible, // Updated to use toggle
                 decoration: InputDecoration(
                   hintText: 'Enter Password',
                   filled: true,
@@ -145,15 +147,31 @@ class _LoginFormState extends State<LoginForm> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 15,
+                  ),
                   isDense: true,
                   floatingLabelBehavior: FloatingLabelBehavior.never,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
+                  ),
                 ),
                 validator: Validators.validatePassword,
               ),
             ),
           ),
           const SizedBox(height: 10),
+          // Forgot Password
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -169,7 +187,7 @@ class _LoginFormState extends State<LoginForm> {
                   child: const Text(
                     'Forget Password?',
                     style: TextStyle(
-                      color:Color.fromARGB(255, 240, 99, 153),
+                      color: Color.fromARGB(255, 240, 99, 153),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -178,6 +196,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 20),
+          // Login Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -186,7 +205,7 @@ class _LoginFormState extends State<LoginForm> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : () => _handleLogin(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:Color.fromARGB(255, 240, 99, 153),
+                  backgroundColor: Color.fromARGB(255, 240, 99, 153),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -202,6 +221,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 10),
+          // Sign Up Link
           const Text(
             "Don't have an account?",
             style: TextStyle(color: Colors.black45),
@@ -215,7 +235,10 @@ class _LoginFormState extends State<LoginForm> {
             },
             child: const Text(
               'Sign up',
-              style: TextStyle(color:Color.fromARGB(255, 240, 99, 153), fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color.fromARGB(255, 240, 99, 153),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
