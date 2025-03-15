@@ -248,15 +248,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // After: Only display the app bar on the home page (index 0)
     return Scaffold(
-      // New background color from updated UI
       backgroundColor: const Color(0xFFFCF0F7),
       body: SafeArea(
         child: Column(
           children: [
-            // Keep your custom app bar at the top
-            CustomAppBar(onProfileTap: _navigateToProfile),
-            // Expand so the child can fill remaining space
+            if (_selectedIndex == 0)
+              CustomAppBar(onProfileTap: _navigateToProfile),
             Expanded(child: _getPage()),
           ],
         ),
