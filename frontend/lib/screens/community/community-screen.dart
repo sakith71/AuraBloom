@@ -133,157 +133,139 @@ class _CommunityScreenState extends State<CommunityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFF4C2CA).withOpacity(0.9), // Light Pink
-              Color(0xFFD4C0D6).withOpacity(0.8), // Light Purple
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Community',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+      // Remove gradient and let the global scaffold background show
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 15, 20, 5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Community',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _navigateToCreatePost,
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.pink.withOpacity(0.8),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 22,
                       ),
                     ),
-                    IconButton(
-                      onPressed: _navigateToCreatePost,
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.pink.withOpacity(0.8),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 5,
-                              offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+
+            // Filter grid
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              child: GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3, // 3 items per row
+                childAspectRatio: 2.5, // Width to height ratio
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                children: filterOptions.map((filter) {
+                  final isSelected = selectedFilter == filter;
+                  final color = _getCategoryColor(filter);
+
+                  return GestureDetector(
+                    onTap: () {
+                      if (filter == 'Create Post') {
+                        _navigateToCreatePost();
+                      } else {
+                        setState(() {
+                          selectedFilter = filter;
+                        });
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? color.withOpacity(0.9)
+                            : Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: color.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _getCategoryIcon(filter),
+                            color: isSelected ? Colors.white : color,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              filter,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black87,
+                                fontWeight:
+                                    isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 12,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 22,
-                        ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
+            ),
 
-              // Replace the existing horizontal ListView.builder with this 2-row grid layout
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  crossAxisCount: 3, // 3 items per row
-                  childAspectRatio: 2.5, // Width to height ratio
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  children:
-                      filterOptions.map((filter) {
-                        final isSelected = selectedFilter == filter;
-                        final color = _getCategoryColor(filter);
+            const SizedBox(height: 10),
 
-                        return GestureDetector(
-                          onTap: () {
-                            if (filter == 'Create Post') {
-                              _navigateToCreatePost();
-                            } else {
-                              setState(() {
-                                selectedFilter = filter;
-                              });
-                            }
-                          },
-                          child: AnimatedContainer(
-                            duration: Duration(milliseconds: 200),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? color.withOpacity(0.9)
-                                      : Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow:
-                                  isSelected
-                                      ? [
-                                        BoxShadow(
-                                          color: color.withOpacity(0.4),
-                                          blurRadius: 8,
-                                          offset: Offset(0, 3),
-                                        ),
-                                      ]
-                                      : [],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _getCategoryIcon(filter),
-                                  color: isSelected ? Colors.white : color,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    filter,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color:
-                                          isSelected
-                                              ? Colors.white
-                                              : Colors.black87,
-                                      fontWeight:
-                                          isSelected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // Posts section
-              Expanded(
-                child:
-                    isLoading
-                        ? Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.pink,
-                            ),
-                          ),
-                        )
-                        : _getFilteredPosts().isEmpty
-                        ? Center(
+            // Posts section
+            Expanded(
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.pink,
+                        ),
+                      ),
+                    )
+                  : _getFilteredPosts().isEmpty
+                      ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -323,7 +305,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             ],
                           ),
                         )
-                        : ListView.builder(
+                      : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           itemCount: _getFilteredPosts().length,
                           itemBuilder: (context, index) {
@@ -334,9 +316,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             );
                           },
                         ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -391,7 +372,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 15,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -414,7 +395,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 5,
-                        offset: Offset(0, 2),
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -454,7 +435,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                 const Spacer(),
                 // More options button
                 IconButton(
-                  icon: Icon(Icons.more_horiz, color: Colors.grey),
+                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
                   onPressed: () {
                     // Show post options
                   },
@@ -500,31 +481,30 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children:
-                      post.tags.map((tag) {
-                        final tagColor = _getTagColor(tag);
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: tagColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: tagColor.withOpacity(0.5),
-                            ),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: tagColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                  children: post.tags.map((tag) {
+                    final tagColor = _getTagColor(tag);
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: tagColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: tagColor.withOpacity(0.5),
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: tagColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
 
                 const SizedBox(height: 16),
@@ -534,7 +514,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.favorite_border,
                           size: 20,
                           color: Colors.redAccent,
@@ -552,7 +532,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                     const SizedBox(width: 20),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.chat_bubble_outline,
                           size: 20,
                           color: Colors.blueAccent,
@@ -569,10 +549,10 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     // Share button
-                    Icon(
+                    const Icon(
                       Icons.share_outlined,
                       size: 20,
-                      color: Colors.grey[700],
+                      color: Colors.grey,
                     ),
                   ],
                 ),
