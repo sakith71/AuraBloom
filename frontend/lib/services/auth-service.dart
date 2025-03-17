@@ -21,7 +21,9 @@ class AuthService {
       // Firebase has no direct method to check if an email exists
       // We'll use fetchSignInMethodsForEmail which returns a list of providers
       // If the list is empty, the email doesn't exist
-      final List<String> methods = await _auth.fetchSignInMethodsForEmail(email);
+      final List<String> methods = await _auth.fetchSignInMethodsForEmail(
+        email,
+      );
       return methods.isNotEmpty;
     } catch (e) {
       print('Error checking email existence: $e');
@@ -30,29 +32,49 @@ class AuthService {
   }
 
   // Sign up with email and password
-  Future<Map<String, dynamic>> signUp(String email, String password) async {
+  Future<Map<String, dynamic>> signUp(
+    String email,
+    String password, {
+    String? username,
+  }) async {
     try {
       // First check if the email already exists
       bool exists = await emailExists(email);
       if (exists) {
         return {
           'success': false,
-          'message': 'This email is already registered. Please sign in or use a different email.',
-          'user': null
+          'message':
+              'This email is already registered. Please sign in or use a different email.',
+          'user': null,
         };
       }
-      
+
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
+
+      // Store the username from the signup form if provided
+      if (userCredential.user != null &&
+          username != null &&
+          username.isNotEmpty) {
+        print(
+          'Saving username: $username for user: ${userCredential.user!.uid}',
+        );
+        await _firestoreService.saveUserName(
+          userCredential.user!.uid,
+          username,
+        );
+      }
+
       return {
         'success': true,
         'message': 'Registration successful',
-        'user': userCredential.user
+        'user': userCredential.user,
       };
     } on FirebaseAuthException catch (e) {
       String message;
       if (e.code == 'email-already-in-use') {
-        message = 'This email is already registered. Please sign in or use a different email.';
+        message =
+            'This email is already registered. Please sign in or use a different email.';
       } else if (e.code == 'weak-password') {
         message = 'The password is too weak. Please use a stronger password.';
       } else if (e.code == 'invalid-email') {
@@ -60,16 +82,12 @@ class AuthService {
       } else {
         message = e.message ?? 'An error occurred during sign up.';
       }
-      return {
-        'success': false,
-        'message': message,
-        'user': null
-      };
+      return {'success': false, 'message': message, 'user': null};
     } catch (e) {
       return {
         'success': false,
         'message': 'Failed to sign up: $e',
-        'user': null
+        'user': null,
       };
     }
   }
