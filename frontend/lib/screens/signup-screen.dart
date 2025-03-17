@@ -25,7 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  // New state variable to control password visibility
+  // State variable to control password visibility
   bool _passwordVisible = false;
 
   @override
@@ -48,12 +48,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
 
       try {
+        String username = _usernameController.text.trim();
         String email = _emailController.text.trim();
         String password = _passwordController.text.trim();
 
-        // Call the updated signUp method from the AuthService class
+        print('SignUpScreen: Username: $username');
+
+        // Call the updated signUp method with username
         AuthService authService = AuthService();
-        final result = await authService.signUp(email, password);
+        final result = await authService.signUp(
+          email,
+          password,
+          username: username,
+        );
 
         if (result['success']) {
           User? user = result['user'];
@@ -95,9 +102,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -166,7 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Email TextField with box shadow
                     Container(
                       decoration: BoxDecoration(
@@ -187,7 +192,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Password field with box shadow
                     Container(
                       decoration: BoxDecoration(
@@ -220,7 +225,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Confirm Password field with box shadow
                     Container(
                       decoration: BoxDecoration(
@@ -238,9 +243,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         hintText: 'Confirm Password',
                         validator:
                             (value) => Validators.validateConfirmPassword(
-                          value,
-                          _passwordController.text,
-                        ),
+                              value,
+                              _passwordController.text,
+                            ),
                         isPassword: !_passwordVisible,
                         suffixIcon: IconButton(
                           icon: Icon(
