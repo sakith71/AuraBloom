@@ -43,30 +43,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   // Open emoji picker
   void _openEmojiPicker() {
-    // This is a simplified representation
-    // You would implement an emoji picker here based on your needs
     showModalBottomSheet(
       context: context,
       builder: (context) {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
               child: Text(
                 'Emoji Picker',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            // Sample emoji grid - in a real app, you'd use an emoji picker package
             Expanded(
               child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 8,
                 ),
                 itemCount: 20,
                 itemBuilder: (context, index) {
-                  // Sample emojis
                   List<String> sampleEmojis = [
                     '😊',
                     '😂',
@@ -91,7 +87,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ];
                   return GestureDetector(
                     onTap: () {
-                      // Insert emoji at current cursor position
                       final text = _contentController.text;
                       final selection = _contentController.selection;
                       final newText = text.replaceRange(
@@ -102,8 +97,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       _contentController.value = TextEditingValue(
                         text: newText,
                         selection: TextSelection.collapsed(
-                          offset:
-                              selection.start + 2, // Emoji length is usually 2
+                          offset: selection.start + 2,
                         ),
                       );
                       Navigator.pop(context);
@@ -111,7 +105,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     child: Center(
                       child: Text(
                         sampleEmojis[index % sampleEmojis.length],
-                        style: TextStyle(fontSize: 24),
+                        style: const TextStyle(fontSize: 24),
                       ),
                     ),
                   );
@@ -169,9 +163,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<List<String>> _uploadImages() async {
     if (_selectedImages.isEmpty) return [];
 
-    setState(() {
-    });
-
     try {
       final List<String> imageUrls = [];
       final user = _communityService.currentUser;
@@ -197,11 +188,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error uploading images: $e')));
       return [];
-    } finally {
-      if (mounted) {
-        setState(() {
-        });
-      }
     }
   }
 
@@ -225,13 +211,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
 
     try {
-      // First upload images if any
       List<String> imageUrls = [];
       if (_selectedImages.isNotEmpty) {
         imageUrls = await _uploadImages();
       }
 
-      // Create post with image URLs
       await _communityService.addPost(
         content: _contentController.text.trim(),
         tags: _selectedTags,
@@ -240,7 +224,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       );
 
       if (mounted) {
-        Navigator.pop(context, true); // Return true to indicate success
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -257,7 +241,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  // Get appropriate icon for category
   IconData _getCategoryIcon(String category) {
     switch (category) {
       case 'Pain Management':
@@ -276,22 +259,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Remove background color and elevation for appbar
       appBar: AppBar(
         title: const Text(
           'Create Post',
-          style: TextStyle(
-            color:
-                Colors
-                    .black, // Change text color to black for better visibility
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.transparent, // Make background transparent
-        elevation: 0, // Remove shadow
-        iconTheme: IconThemeData(
-          color: Colors.black,
-        ), // Change back button color to black
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _submitPost,
@@ -301,35 +276,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color:
-                            Colors
-                                .pink, // Change loading indicator color to match theme
+                        color: Colors.pink,
                         strokeWidth: 2,
                       ),
                     )
                     : const Text(
                       'Post',
                       style: TextStyle(
-                        color:
-                            Colors
-                                .pink, // Change button text color to pink to match theme
+                        color: Colors.pink,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
           ),
         ],
       ),
+      // Update background to use global background color
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -371,9 +334,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // Selected Images Preview
               if (_selectedImages.isNotEmpty) ...[
                 Card(
@@ -445,7 +406,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-
               // Image Upload Options
               Card(
                 shape: RoundedRectangleBorder(
@@ -486,9 +446,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // Post Options
               Card(
                 shape: RoundedRectangleBorder(
@@ -517,9 +475,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               // Tags Section
               const Text(
                 'Select Tags (Required)',
@@ -556,8 +512,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       );
                     }).toList(),
               ),
-
-              const SizedBox(height: 100), // Bottom padding for scrolling
+              const SizedBox(height: 100),
             ],
           ),
         ),
