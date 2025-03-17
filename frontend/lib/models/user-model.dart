@@ -2,6 +2,7 @@ class UserModel {
   final String uid;
   final String name;
   final int age;
+  final DateTime? birthday; // Added birthday field
   final double height;
   final double weight;
   final double bmi;
@@ -17,6 +18,7 @@ class UserModel {
     required this.uid,
     required this.name,
     required this.age,
+    this.birthday, // Made optional with default value
     required this.height,
     required this.weight,
     required this.bmi,
@@ -35,6 +37,7 @@ class UserModel {
       'uid': uid,
       'name': name,
       'age': age,
+      'birthday': birthday?.toIso8601String(), // Store birthday in Firestore
       'height': height,
       'weight': weight,
       'bmi': bmi,
@@ -55,6 +58,10 @@ class UserModel {
       uid: map['uid'] ?? '',
       name: map['name'] ?? '',
       age: map['age'] ?? 0,
+      birthday:
+          map['birthday'] != null
+              ? DateTime.parse(map['birthday'])
+              : null, // Parse birthday from Firestore
       height: map['height'] ?? 0.0,
       weight: map['weight'] ?? 0.0,
       bmi: map['bmi'] ?? 0.0,
@@ -64,9 +71,10 @@ class UserModel {
       additionalSymptoms: List<String>.from(map['additionalSymptoms'] ?? []),
       cycleLength: map['cycleLength'] ?? 28,
       periodLength: map['periodLength'] ?? 5,
-      lastPeriodDate: map['lastPeriodDate'] != null 
-          ? DateTime.parse(map['lastPeriodDate']) 
-          : DateTime.now(),
+      lastPeriodDate:
+          map['lastPeriodDate'] != null
+              ? DateTime.parse(map['lastPeriodDate'])
+              : DateTime.now(),
     );
   }
 }
