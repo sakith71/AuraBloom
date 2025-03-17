@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildWeekCalendar(),
           _buildPeriodStatus(),
           const SizedBox(height: 20),
-          const DailyInsights(),
+          DailyInsights(userId: widget.userId),
           const SizedBox(height: 20),
           const TipOfTheDay(),
           const SizedBox(height: 20),
