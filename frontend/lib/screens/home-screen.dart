@@ -5,16 +5,10 @@ import '../widgets/home-widgets/daily-insights.dart';
 import '../widgets/home-widgets/tip-of-the-day.dart';
 import '../widgets/home-widgets/my-cycles.dart';
 import '../widgets/home-widgets/app-bar.dart';
+import '../widgets/home-widgets/welcome-section.dart'; // Import the WelcomeSection widget
 import '../services/period-service.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
-
-// Import your AnimatedWaveSection from wherever you save it
-// import '../widgets/home-widgets/animated-wave-section.dart';
-
-// You can copy the AnimatedWaveSection class directly here for simplicity
-// or move it to a separate file and import it
-
 import 'dart:math' as math;
 
 class AnimatedWaveSection extends StatefulWidget {
@@ -165,6 +159,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    print('HomeScreen initialized with userId: ${widget.userId}');
+
     _selectedDates =
         widget.selectedDates.isNotEmpty
             ? Set<String>.from(widget.selectedDates)
@@ -241,9 +237,14 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildWelcomeSection(),
+          // Use WelcomeSection with user ID
+          WelcomeSection(
+            userId: widget.userId,
+            selectedDate: widget.selectedDate,
+            selectedDates: _selectedDates.toList(),
+          ),
           _buildWeekCalendar(),
-          // Replace the static wave with the animated one
+          // Animated wave section
           const AnimatedWaveSection(periodDay: 'Day 1'),
           const SizedBox(height: 20),
           DailyInsights(userId: widget.userId),
@@ -251,30 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
           const TipOfTheDay(),
           const SizedBox(height: 20),
           const MyCycles(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWelcomeSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Welcome back, Sarah!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Today, 4 Mar, TUE',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
         ],
       ),
     );
@@ -342,8 +319,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  // The old _buildPeriodStatus method is no longer needed as we're using AnimatedWaveSection
 
   @override
   Widget build(BuildContext context) {
