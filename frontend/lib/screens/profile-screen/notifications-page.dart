@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/notification-service.dart';
+import 'package:frontend/services/simplified-health-tips-service.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -10,6 +11,7 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   final NotificationService _notificationService = NotificationService();
+  final HealthTipsService _healthTipsService = HealthTipsService();
   bool _periodReminders = true;
   bool _cycleUpdates = true;
   bool _healthTips = true;
@@ -21,6 +23,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void initState() {
     super.initState();
     _loadPreferences();
+    _initializeHealthTipsService(); // Call without await
+  }
+
+  // Separate async method
+  Future<void> _initializeHealthTipsService() async {
+    await _healthTipsService.initialize();
   }
 
   Future<void> _loadPreferences() async {
@@ -67,6 +75,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         setState(() {
           _healthTips = value;
         });
+        // Send an immediate health tip if enabled
+        if (value) {
+          await _healthTipsService.sendHealthTip();
+        }
         break;
       case 'community':
         await _notificationService.setCommunityNotificationsEnabled(value);
