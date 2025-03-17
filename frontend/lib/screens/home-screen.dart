@@ -9,6 +9,137 @@ import '../services/period-service.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
 
+// Import your AnimatedWaveSection from wherever you save it
+// import '../widgets/home-widgets/animated-wave-section.dart';
+
+// You can copy the AnimatedWaveSection class directly here for simplicity
+// or move it to a separate file and import it
+
+import 'dart:math' as math;
+
+class AnimatedWaveSection extends StatefulWidget {
+  final String periodDay;
+
+  const AnimatedWaveSection({Key? key, required this.periodDay})
+    : super(key: key);
+
+  @override
+  State<AnimatedWaveSection> createState() => _AnimatedWaveSectionState();
+}
+
+class _AnimatedWaveSectionState extends State<AnimatedWaveSection>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return CustomPaint(
+              size: const Size(double.infinity, 140),
+              painter: _AnimatedWavePainter(
+                animationValue: _animationController.value,
+              ),
+            );
+          },
+        ),
+        Positioned.fill(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Period:',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[800],
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.periodDay,
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AnimatedWavePainter extends CustomPainter {
+  final double animationValue;
+
+  _AnimatedWavePainter({required this.animationValue});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = const Color(0xFFF8D7E8)
+          ..style = PaintingStyle.fill;
+
+    const waveCount = 2; // Number of complete sine waves
+    const amplitude = 10.0; // Height of the waves
+    final path = Path();
+
+    // Starting position (bottom left)
+    path.moveTo(0, size.height);
+
+    // Go to the starting wave position
+    path.lineTo(0, size.height * 0.5);
+
+    // Draw the animated wave
+    for (var i = 0; i <= size.width; i++) {
+      // Calculate the y-offset with a sine wave that moves with the animation
+      final wavePhase = animationValue * 2 * math.pi;
+      final normalizedX = i / size.width;
+      final waveY = math.sin(
+        (normalizedX * waveCount * 2 * math.pi) + wavePhase,
+      );
+
+      // Adjust the y position and scale the amplitude
+      final y = size.height * 0.5 + (waveY * amplitude);
+
+      path.lineTo(i.toDouble(), y);
+    }
+
+    // Complete the path to form a closed shape
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _AnimatedWavePainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue;
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String? selectedDate;
@@ -112,7 +243,8 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildWelcomeSection(),
           _buildWeekCalendar(),
-          _buildPeriodStatus(),
+          // Replace the static wave with the animated one
+          const AnimatedWaveSection(periodDay: 'Day 1'),
           const SizedBox(height: 20),
           DailyInsights(userId: widget.userId),
           const SizedBox(height: 20),
@@ -211,40 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPeriodStatus() {
-    return Stack(
-      children: [
-        CustomPaint(
-          size: const Size(double.infinity, 140),
-          painter: _WavePainter(),
-        ),
-        Positioned.fill(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Period:',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[800],
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Day 1',
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+  // The old _buildPeriodStatus method is no longer needed as we're using AnimatedWaveSection
 
   @override
   Widget build(BuildContext context) {
@@ -312,40 +411,5 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
       ),
     );
-  }
-}
-
-class _WavePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = const Color(0xFFF8D7E8)
-          ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, size.height);
-    path.lineTo(0, size.height * 0.5);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.25,
-      size.width * 0.5,
-      size.height * 0.5,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.75,
-      size.width,
-      size.height * 0.5,
-    );
-    path.lineTo(size.width, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
   }
 }
