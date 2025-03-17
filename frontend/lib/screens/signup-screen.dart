@@ -21,9 +21,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isLoading = false;
   String? _errorMessage;
+
+  // New state variable to control password visibility
+  bool _passwordVisible = false;
 
   @override
   void dispose() {
@@ -37,7 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void _handleSignUp() async {
     // Hide keyboard when sign up is pressed
     FocusScope.of(context).unfocus();
-    
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -58,7 +61,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             // Navigate to personal info screen
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => PersonalInfoScreen(userId: user.uid)),
+              MaterialPageRoute(
+                builder: (context) => PersonalInfoScreen(userId: user.uid),
+              ),
             );
           }
         } else {
@@ -113,7 +118,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 20),
                     const Text(
                       'Create Account',
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     const Text(
@@ -121,7 +129,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.black54),
                     ),
                     const SizedBox(height: 30),
-                    
+
                     // Error message display
                     if (_errorMessage != null)
                       Container(
@@ -145,7 +153,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ],
                         ),
                       ),
-                    
+
                     CustomTextField(
                       controller: _usernameController,
                       hintText: 'Enter User Name',
@@ -159,31 +167,58 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
+                    // Password field with visibility toggle
                     CustomTextField(
                       controller: _passwordController,
                       hintText: 'Enter Password',
                       validator: Validators.validatePassword,
-                      isPassword: true,
+                      isPassword: !_passwordVisible,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
+                      ),
                     ),
                     const SizedBox(height: 16),
+                    // Confirm Password field with same visibility toggle
                     CustomTextField(
                       controller: _confirmPasswordController,
                       hintText: 'Confirm Password',
-                      validator: (value) => Validators.validateConfirmPassword(
-                        value,
-                        _passwordController.text,
+                      validator:
+                          (value) => Validators.validateConfirmPassword(
+                            value,
+                            _passwordController.text,
+                          ),
+                      isPassword: !_passwordVisible,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _passwordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _passwordVisible = !_passwordVisible;
+                          });
+                        },
                       ),
-                      isPassword: true,
                     ),
                     const SizedBox(height: 30),
-                    
+
                     // Loading state handling with sign up button
                     _isLoading
                         ? const CircularProgressIndicator()
                         : SignUpButton(onPressed: _handleSignUp),
-                    
+
                     const SizedBox(height: 20),
-                    
+
                     // Login redirect row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
