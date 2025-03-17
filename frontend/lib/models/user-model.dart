@@ -4,6 +4,7 @@ class UserModel {
   final int age;
   final double height;
   final double weight;
+  final double bmi;
   final bool isRegularPeriod;
   final String crampsExperience;
   final String symptomDuration;
@@ -18,6 +19,7 @@ class UserModel {
     required this.age,
     required this.height,
     required this.weight,
+    required this.bmi,
     required this.isRegularPeriod,
     required this.crampsExperience,
     required this.symptomDuration,
@@ -35,6 +37,7 @@ class UserModel {
       'age': age,
       'height': height,
       'weight': weight,
+      'bmi': bmi,
       'isRegularPeriod': isRegularPeriod,
       'crampsExperience': crampsExperience,
       'symptomDuration': symptomDuration,
@@ -54,6 +57,7 @@ class UserModel {
       age: map['age'] ?? 0,
       height: map['height'] ?? 0.0,
       weight: map['weight'] ?? 0.0,
+      bmi: map['bmi'] ?? 0.0,
       isRegularPeriod: map['isRegularPeriod'] ?? false,
       crampsExperience: map['crampsExperience'] ?? 'No',
       symptomDuration: map['symptomDuration'] ?? '1-3 days',

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/login-page.dart';
 import 'package:frontend/services/auth-service.dart';
 import '../widgets/custom-text-field.dart';
 import '../widgets/signup-illustration.dart';
@@ -21,6 +22,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  // State variable to control password visibility
+  bool _passwordVisible = false;
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -31,91 +38,260 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _handleSignUp() async {
+    // Hide keyboard when sign up is pressed
+    FocusScope.of(context).unfocus();
+
     if (_formKey.currentState!.validate()) {
-      String email = _emailController.text.trim();
-      String password = _passwordController.text.trim();
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
 
-      // Call the signUp method from the AuthService class
-      AuthService authService = AuthService();
-      User? user = await authService.signUp(email, password);
+      try {
+        String username = _usernameController.text.trim();
+        String email = _emailController.text.trim();
+        String password = _passwordController.text.trim();
 
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PersonalInfoScreen(userId: user.uid)),
+        print('SignUpScreen: Username: $username');
+
+        // Call the updated signUp method with username
+        AuthService authService = AuthService();
+        final result = await authService.signUp(
+          email,
+          password,
+          username: username,
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to sign up. Please try again.'),
-          ),
-        );
+
+        if (result['success']) {
+          User? user = result['user'];
+          if (user != null) {
+            // Navigate to personal info screen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PersonalInfoScreen(userId: user.uid),
+              ),
+            );
+          }
+        } else {
+          // Show error message returned from the service
+          setState(() {
+            _errorMessage = result['message'];
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _errorMessage = 'An unexpected error occurred. Please try again.';
+        });
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  void _navigateToLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
-        ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  const SizedBox(height: 50),
-                  const SignUpIllustration(),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Sign Up Page',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 30),
-                  CustomTextField(
-                    controller: _usernameController,
-                    hintText: 'Enter User Name',
-                    validator: Validators.validateUsername,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _emailController,
-                    hintText: 'Enter Email',
-                    validator: Validators.validateEmail,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _passwordController,
-                    hintText: 'Enter Password',
-                    validator: Validators.validatePassword,
-                    isPassword: true,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _confirmPasswordController,
-                    hintText: 'Confirm Password',
-                    validator:
-                        (value) => Validators.validateConfirmPassword(
-                          value,
-                          _passwordController.text,
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    const SignUpIllustration(),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Create Account',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Please fill in the details to sign up',
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Error message display
+                    if (_errorMessage != null)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade300),
                         ),
-                    isPassword: true,
-                  ),
-                  const SizedBox(height: 30),
-                  SignUpButton(onPressed: _handleSignUp),
-                ],
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.red),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // Username TextField with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _usernameController,
+                        hintText: 'Enter User Name',
+                        validator: Validators.validateUsername,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Email TextField with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _emailController,
+                        hintText: 'Enter Email',
+                        validator: Validators.validateEmail,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Password field with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _passwordController,
+                        hintText: 'Enter Password',
+                        validator: Validators.validatePassword,
+                        isPassword: !_passwordVisible,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Confirm Password field with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _confirmPasswordController,
+                        hintText: 'Confirm Password',
+                        validator:
+                            (value) => Validators.validateConfirmPassword(
+                              value,
+                              _passwordController.text,
+                            ),
+                        isPassword: !_passwordVisible,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Loading state handling with sign up button
+                    _isLoading
+                        ? const CircularProgressIndicator()
+                        : SignUpButton(onPressed: _handleSignUp),
+
+                    const SizedBox(height: 20),
+
+                    // Login redirect row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Already have an account?',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        TextButton(
+                          onPressed: _navigateToLogin,
+                          child: const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color.fromARGB(255, 240, 99, 153),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

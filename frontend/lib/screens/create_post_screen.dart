@@ -43,30 +43,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   // Open emoji picker
   void _openEmojiPicker() {
-    // This is a simplified representation
-    // You would implement an emoji picker here based on your needs
     showModalBottomSheet(
       context: context,
       builder: (context) {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
               child: Text(
                 'Emoji Picker',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            // Sample emoji grid - in a real app, you'd use an emoji picker package
             Expanded(
               child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 8,
                 ),
                 itemCount: 20,
                 itemBuilder: (context, index) {
-                  // Sample emojis
                   List<String> sampleEmojis = [
                     '😊',
                     '😂',
@@ -91,7 +87,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   ];
                   return GestureDetector(
                     onTap: () {
-                      // Insert emoji at current cursor position
                       final text = _contentController.text;
                       final selection = _contentController.selection;
                       final newText = text.replaceRange(
@@ -102,8 +97,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       _contentController.value = TextEditingValue(
                         text: newText,
                         selection: TextSelection.collapsed(
-                          offset:
-                              selection.start + 2, // Emoji length is usually 2
+                          offset: selection.start + 2,
                         ),
                       );
                       Navigator.pop(context);
@@ -111,7 +105,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     child: Center(
                       child: Text(
                         sampleEmojis[index % sampleEmojis.length],
-                        style: TextStyle(fontSize: 24),
+                        style: const TextStyle(fontSize: 24),
                       ),
                     ),
                   );
@@ -169,9 +163,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Future<List<String>> _uploadImages() async {
     if (_selectedImages.isEmpty) return [];
 
-    setState(() {
-    });
-
     try {
       final List<String> imageUrls = [];
       final user = _communityService.currentUser;
@@ -197,11 +188,6 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error uploading images: $e')));
       return [];
-    } finally {
-      if (mounted) {
-        setState(() {
-        });
-      }
     }
   }
 
@@ -225,13 +211,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
 
     try {
-      // First upload images if any
       List<String> imageUrls = [];
       if (_selectedImages.isNotEmpty) {
         imageUrls = await _uploadImages();
       }
 
-      // Create post with image URLs
       await _communityService.addPost(
         content: _contentController.text.trim(),
         tags: _selectedTags,
@@ -240,7 +224,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       );
 
       if (mounted) {
-        Navigator.pop(context, true); // Return true to indicate success
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -257,9 +241,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     }
   }
 
-  // Get appropriate icon for category
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
+  IconData _getTagIcon(String tag) {
+    switch (tag) {
       case 'Pain Management':
         return Icons.healing;
       case 'Exercises':
@@ -267,31 +250,43 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       case 'Diets':
         return Icons.restaurant_menu;
       case 'Reproductive Health':
-        return Icons.spa;
+        return Icons.favorite;
       default:
         return Icons.label;
     }
   }
 
+  Color _getTagColor(String tag) {
+    switch (tag) {
+      case 'Pain Management':
+        return const Color(0xFFFF6B8B); // Pink for Pain Management
+      case 'Exercises':
+        return const Color(0xFF4CAF50); // Green for Exercises
+      case 'Diets':
+        return const Color(0xFFFFC107); // Yellow/Gold for Diets
+      case 'Reproductive Health':
+        return const Color(0xFFFF4081); // Brighter pink for Reproductive Health
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Main pink color used throughout the app
+    final Color primaryPink = const Color(0xFFFF4081);
+    final Color lightPink = const Color(0xFFFCE4EC);
+
     return Scaffold(
-      // Remove background color and elevation for appbar
+      backgroundColor: lightPink,
       appBar: AppBar(
         title: const Text(
           'Create Post',
-          style: TextStyle(
-            color:
-                Colors
-                    .black, // Change text color to black for better visibility
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.transparent, // Make background transparent
-        elevation: 0, // Remove shadow
-        iconTheme: IconThemeData(
-          color: Colors.black,
-        ), // Change back button color to black
+        backgroundColor: lightPink,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _submitPost,
@@ -301,45 +296,35 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                        color:
-                            Colors
-                                .pink, // Change loading indicator color to match theme
+                        color: Color(0xFFFF4081),
                         strokeWidth: 2,
                       ),
                     )
                     : const Text(
                       'Post',
                       style: TextStyle(
-                        color:
-                            Colors
-                                .pink, // Change button text color to pink to match theme
+                        color: Color(0xFFFF4081),
                         fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
           ),
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+        color: lightPink,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Content TextField with emoji button
+              // Content TextField with emoji button - rounded white card
               Card(
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                color: Colors.white,
                 child: Column(
                   children: [
                     Padding(
@@ -349,11 +334,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         maxLines: 6,
                         decoration: const InputDecoration(
                           hintText: 'Share your thoughts...',
+                          hintStyle: TextStyle(color: Colors.grey),
                           border: InputBorder.none,
                         ),
                       ),
                     ),
-                    const Divider(height: 1),
+                    const Divider(height: 1, thickness: 0.5),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -365,21 +351,21 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           ),
                           tooltip: 'Add emoji',
                         ),
-                        const SizedBox(width: 8),
                       ],
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
 
               // Selected Images Preview
               if (_selectedImages.isNotEmpty) ...[
                 Card(
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  color: Colors.white,
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
                     child: Column(
@@ -446,118 +432,205 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 const SizedBox(height: 16),
               ],
 
-              // Image Upload Options
+              // Image Upload Options - white card with row of options
               Card(
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                color: Colors.white,
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
+                      // Gallery option
                       Column(
                         children: [
-                          IconButton(
-                            onPressed: _pickImages,
-                            icon: const Icon(
-                              Icons.photo_library,
-                              color: Colors.green,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              shape: BoxShape.circle,
                             ),
-                            tooltip: 'Upload from gallery',
+                            padding: const EdgeInsets.all(8),
+                            child: IconButton(
+                              onPressed: _pickImages,
+                              icon: const Icon(
+                                Icons.photo_library,
+                                color: Colors.green,
+                                size: 24,
+                              ),
+                              tooltip: 'Upload from gallery',
+                            ),
                           ),
-                          const Text('Gallery', style: TextStyle(fontSize: 12)),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Gallery',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ],
                       ),
+
+                      // Camera option
                       Column(
                         children: [
-                          IconButton(
-                            onPressed: _takePhoto,
-                            icon: const Icon(
-                              Icons.camera_alt,
-                              color: Colors.blue,
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              shape: BoxShape.circle,
                             ),
-                            tooltip: 'Take a photo',
+                            padding: const EdgeInsets.all(8),
+                            child: IconButton(
+                              onPressed: _takePhoto,
+                              icon: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.blue,
+                                size: 24,
+                              ),
+                              tooltip: 'Take a photo',
+                            ),
                           ),
-                          const Text('Camera', style: TextStyle(fontSize: 12)),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Camera',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
 
-              // Post Options
+              // Post Anonymously Option - white card with switch
               Card(
+                elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                 ),
+                color: Colors.white,
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Anonymous Toggle
-                      SwitchListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Post Anonymously'),
-                        subtitle: const Text(
-                          'Your name will not be shown with this post',
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Post Anonymously',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Your name will not be shown with this post',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      Switch(
                         value: _isAnonymous,
                         onChanged: (value) {
                           setState(() {
                             _isAnonymous = value;
                           });
                         },
+                        activeColor: primaryPink,
                       ),
                     ],
                   ),
                 ),
               ),
-
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // Tags Section
               const Text(
                 'Select Tags (Required)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+
+              // Tag chips with updated styling
               Wrap(
                 spacing: 8,
-                runSpacing: 8,
+                runSpacing: 12,
                 children:
                     _availableTags.map((tag) {
-                      final isSelected = _selectedTags.contains(tag);
+                      final bool isSelected = _selectedTags.contains(tag);
                       return GestureDetector(
                         onTap: () => _toggleTag(tag),
-                        child: Chip(
-                          avatar: Icon(
-                            _getCategoryIcon(tag),
-                            color: isSelected ? Colors.white : Colors.pink,
-                            size: 18,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          label: Text(tag),
-                          backgroundColor:
-                              isSelected
-                                  ? Colors.pink.withOpacity(0.7)
-                                  : Colors.grey[200],
-                          labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black,
-                            fontWeight:
+                          decoration: BoxDecoration(
+                            color:
                                 isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                                    ? _getTagColor(tag)
+                                    : _getTagColor(tag).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: _getTagColor(tag),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getTagIcon(tag),
+                                size: 16,
+                                color:
+                                    isSelected
+                                        ? Colors.white
+                                        : _getTagColor(tag),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                tag,
+                                style: TextStyle(
+                                  color:
+                                      isSelected
+                                          ? Colors.white
+                                          : Colors.black87,
+                                  fontWeight:
+                                      isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
                     }).toList(),
               ),
 
-              const SizedBox(height: 100), // Bottom padding for scrolling
+              const SizedBox(height: 100), // Bottom padding
             ],
           ),
         ),

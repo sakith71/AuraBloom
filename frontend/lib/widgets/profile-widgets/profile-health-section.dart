@@ -23,22 +23,40 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
     _loadUserData();
   }
 
+  // Get BMI category based on BMI value
+  String _getBmiCategory(double bmi) {
+    if (bmi < 18.5) {
+      return 'Underweight';
+    } else if (bmi < 25) {
+      return 'Normal weight';
+    } else if (bmi < 30) {
+      return 'Overweight';
+    } else {
+      return 'Obesity';
+    }
+  }
+
+  // Format BMI to one decimal place and add category
+  String _formatBmi(double bmi) {
+    final formattedBmi = bmi.toStringAsFixed(1);
+    final category = _getBmiCategory(bmi);
+    return '$formattedBmi - $category';
+  }
+
   Future<void> _loadUserData() async {
     if (!mounted) return;
-
+    
     setState(() {
       _isLoading = true;
     });
 
     try {
       if (_authService.currentUserId != null) {
-        final userData = await _firestoreService.getUserProfile(
-          _authService.currentUserId!,
-        );
-
+        final userData = await _firestoreService.getUserProfile(_authService.currentUserId!);
+        
         // Check if widget is still mounted after async operation
         if (!mounted) return;
-
+        
         if (userData != null) {
           setState(() {
             _userModel = userData;
@@ -46,6 +64,7 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
               'Age': '${userData.age} years',
               'Height': '${userData.height} cm',
               'Weight': '${userData.weight} kg',
+              'BMI': _formatBmi(userData.bmi),
               'Blood Type': 'A+', // Not in UserModel, so using a default
               'Cycle Length': '${userData.cycleLength} days',
               'Period Length': '${userData.periodLength} days',
@@ -61,16 +80,17 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
       }
     } catch (e) {
       print('Error loading user data: $e');
-
+      
       // Check if widget is still mounted before updating state
       if (!mounted) return;
-
+      
       setState(() {
         _isLoading = false;
         _healthInfo = {
           'Age': '25 years',
           'Height': '165 cm',
           'Weight': '58 kg',
+          'BMI': '21.3 - Normal weight',
           'Blood Type': 'A+',
           'Cycle Length': '28 days',
           'Period Length': '5 days',
@@ -94,43 +114,50 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
           ),
         ],
       ),
-      child:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Health Information',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          if (mounted) {
-                            _showEditDialog(context);
-                          }
-                        },
-                        color: Colors.pink,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  ..._healthInfo.entries.map(
-                    (entry) => _buildHealthItem(entry.key, entry.value),
-                  ),
-                ],
-              ),
+      child: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Health Information',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        if (mounted) {
+                          _showEditDialog(context);
+                        }
+                      },
+                      color: Colors.pink,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ..._healthInfo.entries.map(
+                  (entry) => _buildHealthItem(entry.key, entry.value),
+                ),
+              ],
+            ),
     );
   }
 
   Widget _buildHealthItem(String label, String value) {
+      // Add special styling for BMI based on category
+    bool isBmi = label == 'BMI';
+    
+    if (isBmi) {
+      if (value.contains('Underweight')) {
+      } else if (value.contains('Normal')) {
+      } else if (value.contains('Overweight')) {
+      } else if (value.contains('Obesity')) {
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -153,52 +180,51 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
     // Store local references to avoid lifecycle issues
     final localHealthInfo = Map<String, String>.from(_healthInfo);
     final localUserModel = _userModel;
-
+    
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => EditHealthInfoScreen(
-            initialHealthInfo: localHealthInfo,
-            userModel: localUserModel,
-            onSave: (updatedInfo, updatedUserModel) async {
-              // Close dialog first to avoid lifecycle issues
-              Navigator.pop(dialogContext);
-
-              try {
-                // Save to Firestore
-                if (updatedUserModel != null) {
-                  await _firestoreService.saveUserProfile(updatedUserModel);
-
-                  // Check if widget is still mounted before updating state
-                  if (!mounted) return;
-
-                  setState(() {
-                    _healthInfo.clear();
-                    _healthInfo.addAll(updatedInfo);
-                    _userModel = updatedUserModel;
-                  });
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Health information updated'),
-                      backgroundColor: Colors.pink,
-                    ),
-                  );
-                }
-              } catch (e) {
-                print('Error updating health info: $e');
-
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error updating health information: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
-          ),
+      builder: (dialogContext) => EditHealthInfoScreen(
+        initialHealthInfo: localHealthInfo,
+        userModel: localUserModel,
+        onSave: (updatedInfo, updatedUserModel) async {
+          // Close dialog first to avoid lifecycle issues
+          Navigator.pop(dialogContext);
+          
+          try {
+            // Save to Firestore
+            if (updatedUserModel != null) {
+              await _firestoreService.saveUserProfile(updatedUserModel);
+              
+              // Check if widget is still mounted before updating state
+              if (!mounted) return;
+              
+              setState(() {
+                _healthInfo.clear();
+                _healthInfo.addAll(updatedInfo);
+                _userModel = updatedUserModel;
+              });
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Health information updated'),
+                  backgroundColor: Colors.pink,
+                ),
+              );
+            }
+          } catch (e) {
+            print('Error updating health info: $e');
+            
+            if (!mounted) return;
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error updating health information: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 }
@@ -209,11 +235,11 @@ class EditHealthInfoScreen extends StatefulWidget {
   final Function(Map<String, String>, UserModel?) onSave;
 
   const EditHealthInfoScreen({
-    Key? key,
+    super.key,
     required this.initialHealthInfo,
     this.userModel,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<EditHealthInfoScreen> createState() => _EditHealthInfoScreenState();
@@ -227,15 +253,26 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
   @override
   void initState() {
     super.initState();
-    _controllers = widget.initialHealthInfo.map(
-      (key, value) => MapEntry(key, TextEditingController(text: value)),
+    // Exclude BMI from editable fields as it's calculated
+    _controllers = Map.fromEntries(
+      widget.initialHealthInfo.entries.where((entry) => entry.key != 'BMI').map(
+        (entry) => MapEntry(entry.key, TextEditingController(text: entry.value)),
+      ),
     );
   }
 
   @override
   void dispose() {
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+   double _calculateBMI(double heightInCm, double weightInKg) {
+    // BMI formula: weight (kg) / (height (m))²
+    double heightInMeters = heightInCm / 100;
+    return weightInKg / (heightInMeters * heightInMeters);
   }
 
   @override
@@ -349,24 +386,23 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            child:
-                _isUpdating
-                    ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                    : const Text(
-                      'Save',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+            child: _isUpdating
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
                     ),
+                  )
+                : const Text(
+                    'Save',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -375,43 +411,32 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
 
   void _saveChanges() async {
     if (!mounted) return;
-
+    
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isUpdating = true;
       });
-
+      
       try {
         // Extract updated values from controllers
         final updatedHealthInfo = _controllers.map(
           (key, controller) => MapEntry(key, controller.text),
         );
-
+        
         // Extract numeric values for UserModel update
-        int? age = int.tryParse(
-          updatedHealthInfo['Age']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '',
-        );
-        double? height = double.tryParse(
-          updatedHealthInfo['Height']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '',
-        );
-        double? weight = double.tryParse(
-          updatedHealthInfo['Weight']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '',
-        );
-        int? cycleLength = int.tryParse(
-          updatedHealthInfo['Cycle Length']?.replaceAll(
-                RegExp(r'[^0-9]'),
-                '',
-              ) ??
-              '',
-        );
-        int? periodLength = int.tryParse(
-          updatedHealthInfo['Period Length']?.replaceAll(
-                RegExp(r'[^0-9]'),
-                '',
-              ) ??
-              '',
-        );
+        int? age = int.tryParse(updatedHealthInfo['Age']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+        double? height = double.tryParse(updatedHealthInfo['Height']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+        double? weight = double.tryParse(updatedHealthInfo['Weight']?.replaceAll(RegExp(r'[^0-9.]'), '') ?? '');
+        int? cycleLength = int.tryParse(updatedHealthInfo['Cycle Length']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
+        int? periodLength = int.tryParse(updatedHealthInfo['Period Length']?.replaceAll(RegExp(r'[^0-9]'), '') ?? '');
 
+        double? bmi;
+        if (height != null && weight != null) {
+          bmi = _calculateBMI(height, weight);
+          // Add BMI to updated health info
+          updatedHealthInfo['BMI'] = '${bmi.toStringAsFixed(1)} - ${_getBmiCategory(bmi)}';
+        }
+        
         // Create updated user model if original exists
         UserModel? updatedUserModel;
         if (widget.userModel != null) {
@@ -421,6 +446,7 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
             age: age ?? widget.userModel!.age,
             height: height ?? widget.userModel!.height,
             weight: weight ?? widget.userModel!.weight,
+            bmi: bmi ?? widget.userModel!.bmi,
             isRegularPeriod: widget.userModel!.isRegularPeriod,
             crampsExperience: widget.userModel!.crampsExperience,
             symptomDuration: widget.userModel!.symptomDuration,
@@ -430,18 +456,18 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
             lastPeriodDate: widget.userModel!.lastPeriodDate,
           );
         }
-
+        
         // Invoke callback with updated data
         widget.onSave(updatedHealthInfo, updatedUserModel);
       } catch (e) {
         print('Error processing health info: $e');
-
+        
         if (!mounted) return;
-
+        
         setState(() {
           _isUpdating = false;
         });
-
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error processing health information: $e'),
@@ -510,5 +536,18 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
         break;
     }
     return null;
+  }
+
+  // Get BMI category based on BMI value
+  String _getBmiCategory(double bmi) {
+    if (bmi < 18.5) {
+      return 'Underweight';
+    } else if (bmi < 25) {
+      return 'Normal weight';
+    } else if (bmi < 30) {
+      return 'Overweight';
+    } else {
+      return 'Obesity';
+    }
   }
 }

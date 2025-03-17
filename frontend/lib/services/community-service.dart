@@ -3,11 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/community-models.dart';
+import 'package:frontend/models/notification.dart';
 import 'package:frontend/models/reply.dart';
+import 'package:frontend/services/notification-service.dart';
 
 class CommunityService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final NotificationService _notificationService = NotificationService();
 
   // Get current user
   User? get currentUser => _auth.currentUser;
@@ -122,6 +125,12 @@ class CommunityService {
       throw Exception('User not authenticated');
     }
 
+    // First, get the post to find the post author
+    final post = await getPost(postId);
+    if (post == null) {
+      throw Exception('Post not found');
+    }
+
     // Check if user already liked the post
     final likeDoc =
         await _firestore
@@ -157,6 +166,13 @@ class CommunityService {
       await _firestore.collection('posts').doc(postId).update({
         'likeCount': FieldValue.increment(1),
       });
+
+      // Create notification for post author
+      await _notificationService.createNotification(
+        userId: post.authorId,
+        postId: postId,
+        type: NotificationType.like,
+      );
     }
   }
 
@@ -178,6 +194,12 @@ class CommunityService {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('User not authenticated');
+    }
+
+    // Get the post to find the post author
+    final post = await getPost(comment.postId);
+    if (post == null) {
+      throw Exception('Post not found');
     }
 
     // Create comment data with explicit author name handling
@@ -205,7 +227,7 @@ class CommunityService {
     }
 
     // Add to post's comments collection
-    await _firestore
+    final docRef = await _firestore
         .collection('posts')
         .doc(comment.postId)
         .collection('comments')
@@ -215,6 +237,15 @@ class CommunityService {
     await _firestore.collection('posts').doc(comment.postId).update({
       'commentCount': FieldValue.increment(1),
     });
+
+    // Create notification for post author
+    await _notificationService.createNotification(
+      userId: post.authorId,
+      postId: comment.postId,
+      commentId: docRef.id,
+      content: comment.content,
+      type: NotificationType.comment,
+    );
   }
 
   // Get comments for a post
@@ -243,27 +274,30 @@ class CommunityService {
     }
 
     // Delete all replies to the comment
-    final repliesSnapshot = await _firestore
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .doc(commentId)
-        .collection('replies')
-        .get();
-    
+    final repliesSnapshot =
+        await _firestore
+            .collection('posts')
+            .doc(postId)
+            .collection('comments')
+            .doc(commentId)
+            .collection('replies')
+            .get();
+
     final batch = _firestore.batch();
-    
+
     for (var doc in repliesSnapshot.docs) {
       batch.delete(doc.reference);
     }
-    
+
     // Delete the comment
-    batch.delete(_firestore
-        .collection('posts')
-        .doc(postId)
-        .collection('comments')
-        .doc(commentId));
-    
+    batch.delete(
+      _firestore
+          .collection('posts')
+          .doc(postId)
+          .collection('comments')
+          .doc(commentId),
+    );
+
     await batch.commit();
 
     // Decrement comment count
@@ -303,12 +337,13 @@ class CommunityService {
     }
 
     // Get the post ID for the comment
-    final commentSnapshot = await _firestore
-        .collection('posts')
-        .where('comments', arrayContains: reply.commentId)
-        .limit(1)
-        .get();
-    
+    final commentSnapshot =
+        await _firestore
+            .collection('posts')
+            .where('comments', arrayContains: reply.commentId)
+            .limit(1)
+            .get();
+
     String postId = '';
     if (commentSnapshot.docs.isNotEmpty) {
       postId = commentSnapshot.docs.first.id;
@@ -316,10 +351,11 @@ class CommunityService {
       // Find the post ID by querying all posts
       final allPostsSnapshot = await _firestore.collection('posts').get();
       for (final doc in allPostsSnapshot.docs) {
-        final commentCheck = await doc.reference
-            .collection('comments')
-            .doc(reply.commentId)
-            .get();
+        final commentCheck =
+            await doc.reference
+                .collection('comments')
+                .doc(reply.commentId)
+                .get();
         if (commentCheck.exists) {
           postId = doc.id;
           break;
@@ -331,8 +367,24 @@ class CommunityService {
       throw Exception('Could not find post for this comment');
     }
 
+    // Get the comment to find its author
+    final commentDoc =
+        await _firestore
+            .collection('posts')
+            .doc(postId)
+            .collection('comments')
+            .doc(reply.commentId)
+            .get();
+
+    if (!commentDoc.exists) {
+      throw Exception('Comment not found');
+    }
+
+    final commentData = commentDoc.data() as Map<String, dynamic>;
+    final commentAuthorId = commentData['authorId'];
+
     // Add to comment's replies collection
-    await _firestore
+    final replyDocRef = await _firestore
         .collection('posts')
         .doc(postId)
         .collection('comments')
@@ -346,13 +398,24 @@ class CommunityService {
         .doc(postId)
         .collection('comments')
         .doc(reply.commentId)
-        .update({
-          'replyCount': FieldValue.increment(1),
-        });
+        .update({'replyCount': FieldValue.increment(1)});
+
+    // Create notification for comment author
+    await _notificationService.createNotification(
+      userId: commentAuthorId,
+      postId: postId,
+      commentId: reply.commentId,
+      replyId: replyDocRef.id,
+      content: reply.content,
+      type: NotificationType.reply,
+    );
   }
 
   // Get replies for a comment
-  Future<List<Reply>> getRepliesForComment(String postId, String commentId) async {
+  Future<List<Reply>> getRepliesForComment(
+    String postId,
+    String commentId,
+  ) async {
     final snapshot =
         await _firestore
             .collection('posts')
@@ -372,7 +435,11 @@ class CommunityService {
   }
 
   // Delete a reply
-  Future<void> deleteReply(String postId, String commentId, String replyId) async {
+  Future<void> deleteReply(
+    String postId,
+    String commentId,
+    String replyId,
+  ) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('User not authenticated');
@@ -394,9 +461,7 @@ class CommunityService {
         .doc(postId)
         .collection('comments')
         .doc(commentId)
-        .update({
-          'replyCount': FieldValue.increment(-1),
-        });
+        .update({'replyCount': FieldValue.increment(-1)});
   }
 
   // Delete a post

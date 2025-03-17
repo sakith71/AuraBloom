@@ -102,14 +102,7 @@ class _CycleLengthScreenState extends State<CycleLengthScreen> {
       body: Container(
         // Apply the gradient background
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(

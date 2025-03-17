@@ -15,7 +15,7 @@ class PeriodLoggingScreen extends StatefulWidget {
 }
 
 class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
-  final Set<String> _selectedDates = {}; // Changed to Set for multiple dates
+  final Set<String> _selectedDates = {};
   final ScrollController _scrollController = ScrollController();
   late DateTime _currentDate;
   bool _isLoading = false;
@@ -65,11 +65,13 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
         _isLoading = true;
       });
       
-      // Use the enhanced savePeriodDates method from PeriodService to save all dates at once
-      // This will automatically update the lastPeriodDate field with the most recent date
+      // Save the period dates
       await _periodService.savePeriodDates(widget.userId, _selectedDates);
       
-      // Navigate to home screen
+      
+      // Verify that the stats were saved to the database
+      await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
+      
       if (mounted) {
         // Find the most recent date for display purposes
         String? mostRecentDateKey;
@@ -120,6 +122,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Rest of the build method remains the same
     List<Widget> monthWidgets = [];
     DateTime currentMonth = DateTime(_currentDate.year, _currentDate.month);
 
@@ -133,7 +136,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
           month: CalendarUtils.months[targetMonth.month - 1],
           monthIndex: targetMonth.month - 1,
           year: targetMonth.year,
-          selectedDates: _selectedDates, // Pass the set of selected dates
+          selectedDates: _selectedDates,
           onDateSelected: _handleDateSelection,
         ),
       );
@@ -142,14 +145,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(
@@ -164,7 +160,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Please select all days of your period', // Updated instruction
+                  'Please select all days of your period',
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 30),

@@ -8,7 +8,7 @@ import 'menstrual-symptoms-screen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   final String userId; // Pass the user ID from the previous screen
-  
+
   const PersonalInfoScreen({super.key, required this.userId});
 
   @override
@@ -22,8 +22,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   final AuthService _authService = AuthService();
-  
+
   bool _isLoading = false;
+  double? _bmi;
+  bool _showErrorMessage = false; // Flag to control error visibility
 
   bool get _isFormValid => _formKey.currentState?.validate() ?? false;
 
@@ -36,39 +38,60 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     super.dispose();
   }
 
+  // Calculate BMI
+  double _calculateBMI(double heightInCm, double weightInKg) {
+    // BMI formula: weight (kg) / (height (m))²
+    double heightInMeters = heightInCm / 100;
+    return weightInKg / (heightInMeters * heightInMeters);
+  }
+
   // Save personal info and proceed
   Future<void> _savePersonalInfoAndProceed() async {
-    if (!_formKey.currentState!.validate()) return;
-    
+    // Force validate and show error message if invalid
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _showErrorMessage = true;
+      });
+      return;
+    }
+
     try {
       setState(() {
         _isLoading = true;
+        _showErrorMessage = false; // Hide error when proceeding
       });
-      
-      // Save the personal info to Firestore
+
+      // Calculate BMI before saving
+      double height = double.parse(_heightController.text);
+      double weight = double.parse(_weightController.text);
+      _bmi = _calculateBMI(height, weight);
+
+      // Save the personal info with BMI to Firestore
       await _authService.createUserProfile(
         widget.userId,
         _nameController.text,
         int.parse(_ageController.text),
-        double.parse(_heightController.text),
-        double.parse(_weightController.text),
+        height,
+        weight,
+        _bmi!,
       );
-      
+
       // Navigate to next screen
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MenstrualSymptomsScreen(userId: widget.userId),
+            builder:
+                (context) => MenstrualSymptomsScreen(userId: widget.userId),
           ),
         );
       }
     } catch (e) {
       // Show error snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
       }
     } finally {
       if (mounted) {
@@ -88,14 +111,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(
@@ -103,12 +119,16 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40),
                 Expanded(
                   child: SingleChildScrollView(
                     child: Form(
                       key: _formKey,
-                      onChanged: () => setState(() {}),
+                      onChanged: () => setState(() {
+                        // Hide error message when form is valid
+                        if (_showErrorMessage && _isFormValid) {
+                          _showErrorMessage = false;
+                        }
+                      }),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -122,58 +142,114 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                             ),
                           ),
                           const SizedBox(height: 30),
-                          CustomTextField(
-                            controller: _nameController,
-                            hintText: 'Enter your Name',
-                            validator: Validators.validateUsername,
+                          // Name TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _nameController,
+                              hintText: 'Enter your Name',
+                              validator: Validators.validateUsername,
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          CustomTextField(
-                            controller: _ageController,
-                            hintText: 'Enter Age',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your age';
-                              }
-                              final age = int.tryParse(value);
-                              if (age == null || age < 8 || age > 100) {
-                                return 'Please enter a valid age';
-                              }
-                              return null;
-                            },
+                          // Age TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _ageController,
+                              hintText: 'Enter Age',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your age';
+                                }
+                                final age = int.tryParse(value);
+                                if (age == null || age < 8 || age > 100) {
+                                  return 'Please enter a valid age';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          CustomTextField(
-                            controller: _heightController,
-                            hintText: 'Enter Height (cm)',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your height';
-                              }
-                              final height = double.tryParse(value);
-                              if (height == null || height < 50 || height > 250) {
-                                return 'Please enter a valid height';
-                              }
-                              return null;
-                            },
+                          // Height TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _heightController,
+                              hintText: 'Enter Height (cm)',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your height';
+                                }
+                                final height = double.tryParse(value);
+                                if (height == null ||
+                                    height < 50 ||
+                                    height > 250) {
+                                  return 'Please enter a valid height';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          CustomTextField(
-                            controller: _weightController,
-                            hintText: 'Enter Weight (kg)',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your weight';
-                              }
-                              final weight = double.tryParse(value);
-                              if (weight == null || weight < 20 || weight > 300) {
-                                return 'Please enter a valid weight';
-                              }
-                              return null;
-                            },
+                          // Weight TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _weightController,
+                              hintText: 'Enter Weight (kg)',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your weight';
+                                }
+                                final weight = double.tryParse(value);
+                                if (weight == null ||
+                                    weight < 20 ||
+                                    weight > 300) {
+                                  return 'Please enter a valid weight';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                         ],
                       ),
@@ -184,10 +260,10 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : NavigationButtonRow(
-                        onPrevious: _handlePrevious,
-                        onNext: _savePersonalInfoAndProceed,
-                        isNextEnabled: _isFormValid,
-                      ),
+                      onPrevious: _handlePrevious,
+                      onNext: _savePersonalInfoAndProceed,
+                      isNextEnabled: true,
+                    ),
               ],
             ),
           ),

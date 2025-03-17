@@ -22,6 +22,13 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   bool _isLiking = false;
   bool _userHasLiked = false;
   bool _isAnonymousComment = false; // Added for anonymous comment toggle
+  late ScaffoldMessengerState _scaffoldMessenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.of(context);
+  }
 
   @override
   void initState() {
@@ -63,9 +70,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load comments: $e')));
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to load comments: $e')),
+        );
       }
     }
   }
@@ -95,7 +102,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
     final user = _communityService.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      _scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('You need to be logged in to comment')),
       );
       return;
@@ -107,7 +114,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (_isAnonymousComment) {
       authorName = 'Anonymous';
     } else {
-      // Use our robust getUserDisplayName method
       authorName = _communityService.getUserDisplayName();
 
       // Debug output of what name we're using
@@ -143,9 +149,45 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to add comment: $e')));
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to add comment: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deletePost() async {
+    bool isDeleting = true;
+
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) {
+          return WillPopScope(
+            onWillPop: () async => !isDeleting,
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    }
+
+    try {
+      await _communityService.deletePost(widget.post.id);
+      isDeleting = false;
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      isDeleting = false;
+
+      if (mounted) {
+        Navigator.pop(context);
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to delete post: $e')),
+        );
       }
     }
   }
@@ -155,7 +197,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       await _communityService.deleteComment(commentId, widget.post.id);
       _loadComments();
 
-      // Update the post's comment count in UI
       if (mounted) {
         setState(() {
           widget.post.commentCount -= 1;
@@ -163,9 +204,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to delete comment: $e')));
+        _scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Failed to delete comment: $e')),
+        );
       }
     }
   }
@@ -181,13 +222,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       final userId = _communityService.currentUser?.uid ?? 'anonymous';
       await _communityService.likePost(widget.post.id, userId);
 
-      // Update the UI
       if (mounted) {
         setState(() {
           _isLiking = false;
-          _userHasLiked = !_userHasLiked; // Toggle like status
-
-          // Update like count based on the action (like or unlike)
+          _userHasLiked = !_userHasLiked;
           if (_userHasLiked) {
             widget.post.likeCount += 1;
           } else {
@@ -200,9 +238,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         setState(() {
           _isLiking = false;
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$e')));
+        _scaffoldMessenger.showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }
@@ -222,51 +258,38 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  // Get initial for avatar
   String _getInitial(String name) {
     if (name.isEmpty) return 'U';
 
-    // If it's an email address, get the first letter before the @ symbol
     if (name.contains('@')) {
       return name.split('@')[0][0].toUpperCase();
     }
 
-    // Otherwise get the first letter of the name
     return name[0].toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Extra debugging for post author name
     if (kDebugMode) {
       print('Building PostDetailScreen with author: ${widget.post.authorName}');
     }
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 244, 189, 228),
+      // Updated background color to use the global scaffold background color.
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'Post Details',
-          style: TextStyle(
-            color: Colors.black, // Change text color to black
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.transparent, // Make background transparent
-        elevation: 0, // Remove shadow
-        iconTheme: const IconThemeData(
-          color: Colors.black,
-        ), // Make back button black
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.more_vert,
-              color: Colors.black,
-            ), // Make menu icon black
+            icon: const Icon(Icons.more_vert, color: Colors.black),
             onPressed: () {
-              // Your existing code for showing options menu
               if (_communityService.currentUser?.uid == widget.post.authorId) {
-                // Keep your existing showDialog code here
                 showDialog(
                   context: context,
                   builder:
@@ -281,26 +304,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 color: Colors.red,
                               ),
                               title: const Text('Delete Post'),
-                              onTap: () async {
+                              onTap: () {
                                 Navigator.pop(context);
-                                try {
-                                  await _communityService.deletePost(
-                                    widget.post.id,
-                                  );
-                                  if (mounted) {
-                                    Navigator.pop(context, true);
-                                  }
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Failed to delete post: $e',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
+                                _deletePost();
                               },
                             ),
                           ],
@@ -314,14 +320,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       ),
       body: Column(
         children: [
-          // Post content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Post card
                   Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -331,7 +335,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Author info
                           Row(
                             children: [
                               CircleAvatar(
@@ -375,13 +378,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Post content
                           Text(
                             widget.post.content,
                             style: const TextStyle(fontSize: 16),
                           ),
                           const SizedBox(height: 16),
-                          // Post image if available
                           if (widget.post.imageUrls != null &&
                               widget.post.imageUrls!.isNotEmpty)
                             Container(
@@ -398,7 +399,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                               ),
                             ),
-                          // If there are multiple images, show them in a row
                           if (widget.post.imageUrls != null &&
                               widget.post.imageUrls!.length > 1)
                             Container(
@@ -408,7 +408,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 scrollDirection: Axis.horizontal,
                                 itemCount: widget.post.imageUrls!.length - 1,
                                 itemBuilder: (context, index) {
-                                  // Start from index 1 since we already showed the first image
                                   return Container(
                                     width: 80,
                                     margin: const EdgeInsets.only(right: 8),
@@ -426,7 +425,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               ),
                             ),
                           const SizedBox(height: 16),
-                          // Tags
                           Wrap(
                             spacing: 8,
                             children:
@@ -454,7 +452,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                     .toList(),
                           ),
                           const SizedBox(height: 12),
-                          // Like and comment counts
                           Row(
                             children: [
                               InkWell(
@@ -500,15 +497,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
                   const Text(
                     'Comments',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-
-                  // Comments section
                   _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _comments.isEmpty
@@ -531,8 +525,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ),
             ),
           ),
-
-          // Comment input
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -547,7 +539,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
             child: Column(
               children: [
-                // Anonymous comment toggle
                 Row(
                   children: [
                     Switch(
@@ -614,7 +605,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   Widget _buildCommentCard(Comment comment) {
-    // Debug comment data
     if (kDebugMode) {
       print('Building comment card with author: ${comment.authorName}');
       print('Comment is anonymous: ${comment.isAnonymous}');
@@ -659,11 +649,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ],
                   ),
                 ),
-                // Delete option if user is the author
                 if (_communityService.currentUser?.uid == comment.authorId)
                   GestureDetector(
                     onTap: () {
-                      // Show delete confirmation
                       showDialog(
                         context: context,
                         builder:

@@ -9,7 +9,6 @@ class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _LoginFormState createState() => _LoginFormState();
 }
 
@@ -17,8 +16,8 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _rememberMe = false;
   bool _isLoading = false;
+  bool _passwordVisible = false; // Toggle for password visibility
 
   @override
   void dispose() {
@@ -42,13 +41,10 @@ class _LoginFormState extends State<LoginForm> {
 
         if (userCredential.user != null) {
           Navigator.pushReplacement(
-            // Use pushReplacement to prevent going back to login
             context,
             MaterialPageRoute(
               builder:
-                  (context) => HomeScreen(
-                    userId: userCredential.user!.uid, // Pass the userId
-                  ),
+                  (context) => HomeScreen(userId: userCredential.user!.uid),
             ),
           );
         }
@@ -61,29 +57,6 @@ class _LoginFormState extends State<LoginForm> {
           _isLoading = false;
         });
       }
-      // // Show loading indicator
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text(
-      //       _rememberMe ? "Logging In with Remember Me..." : "Logging In...",
-      //     ),
-      //     duration: const Duration(seconds: 1), // Shorter duration
-      //   ),
-      // );
-
-      // // Navigate to HomeScreen after brief delay to show loading
-      // Future.delayed(const Duration(seconds: 1), () {
-      //   Navigator.pushReplacement(
-      //     // Use pushReplacement to prevent going back to login
-      //     context,
-      //     MaterialPageRoute(
-      //       builder:
-      //           (context) => HomeScreen(
-      //             selectedDates: <String>{}, // Pass empty set for now
-      //           ),
-      //     ),
-      //   );
-      // });
     }
   }
 
@@ -93,62 +66,117 @@ class _LoginFormState extends State<LoginForm> {
       key: _formKey,
       child: Column(
         children: [
+          // Email Field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextFormField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                hintText: 'Enter Email',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              validator: Validators.validateEmail,
+              child: TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  hintText: 'Enter Email',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 15,
+                  ),
+                  isDense: true,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                ),
+                validator: Validators.validateEmail,
+              ),
             ),
           ),
           const SizedBox(height: 15),
+          // Password Field with Toggle Visibility
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: 'Enter Password',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              validator: Validators.validatePassword,
+              child: TextFormField(
+                controller: _passwordController,
+                obscureText: !_passwordVisible, // Updated to use toggle
+                decoration: InputDecoration(
+                  hintText: 'Enter Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 15,
+                  ),
+                  isDense: true,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
+                  ),
+                ),
+                validator: Validators.validatePassword,
+              ),
             ),
           ),
           const SizedBox(height: 10),
+          // Forgot Password
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                    ),
-                    const Text(
-                      'Remember Me',
-                      style: TextStyle(color: Colors.black45),
-                    ),
-                  ],
-                ),
                 TextButton(
                   onPressed: () {
                     showDialog(
@@ -159,7 +187,7 @@ class _LoginFormState extends State<LoginForm> {
                   child: const Text(
                     'Forget Password?',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Color.fromARGB(255, 240, 99, 153),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -168,6 +196,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 20),
+          // Login Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -176,7 +205,7 @@ class _LoginFormState extends State<LoginForm> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : () => _handleLogin(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Color.fromARGB(255, 240, 99, 153),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -192,6 +221,7 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 10),
+          // Sign Up Link
           const Text(
             "Don't have an account?",
             style: TextStyle(color: Colors.black45),
@@ -205,7 +235,10 @@ class _LoginFormState extends State<LoginForm> {
             },
             child: const Text(
               'Sign up',
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color.fromARGB(255, 240, 99, 153),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

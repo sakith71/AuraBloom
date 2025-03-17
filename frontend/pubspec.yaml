@@ -41,6 +41,8 @@ dependencies:
   image_picker: ^1.0.5
   path: ^1.8.3
   firebase_storage: ^12.3.0
+  url_launcher: ^6.1.10
+  shared_preferences: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -99,3 +101,8 @@ flutter:
     - assets/sign_up.png
     - assets/personal_info.png
     - assets/logo.png
+    - assets/stay_active.png
+    - assets/hydrate-and-eat-well.png
+    - assets/apply-heat.png
+    - assets/get-rest.png
+    - assets/mindfulness.png

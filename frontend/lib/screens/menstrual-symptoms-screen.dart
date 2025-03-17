@@ -136,19 +136,19 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
           ),
           decoration: BoxDecoration(
             color: isSelected 
-                ? const Color(0xFFE1F5FE)
+                ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
                 : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? Colors.blue
+                  ? const Color.fromARGB(255, 240, 99, 153)
                   : Colors.grey.shade300,
               width: 2,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001),
                       spreadRadius: 1,
                       blurRadius: 4,
                       offset: const Offset(0, 2),
@@ -164,7 +164,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: isSelected
-                        ? Colors.blue.shade700
+                        ? const Color.fromARGB(255, 240, 99, 153)
                         : Colors.black87,
                     fontWeight: isSelected
                         ? FontWeight.w600
@@ -175,7 +175,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
               if (isSelected)
                 Icon(
                   Icons.check_circle,
-                  color: Colors.blue.shade700,
+                  color: const Color.fromARGB(255, 240, 99, 153),
                 ),
             ],
           ),
@@ -189,14 +189,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(
