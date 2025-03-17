@@ -147,60 +147,113 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
 
-                    CustomTextField(
-                      controller: _usernameController,
-                      hintText: 'Enter User Name',
-                      validator: Validators.validateUsername,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomTextField(
-                      controller: _emailController,
-                      hintText: 'Enter Email',
-                      validator: Validators.validateEmail,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    // Password field with visibility toggle
-                    CustomTextField(
-                      controller: _passwordController,
-                      hintText: 'Enter Password',
-                      validator: Validators.validatePassword,
-                      isPassword: !_passwordVisible,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
+                    // Username TextField with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _usernameController,
+                        hintText: 'Enter User Name',
+                        validator: Validators.validateUsername,
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Confirm Password field with same visibility toggle
-                    CustomTextField(
-                      controller: _confirmPasswordController,
-                      hintText: 'Confirm Password',
-                      validator:
-                          (value) => Validators.validateConfirmPassword(
-                            value,
-                            _passwordController.text,
+                    
+                    // Email TextField with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
                           ),
-                      isPassword: !_passwordVisible,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _emailController,
+                        hintText: 'Enter Email',
+                        validator: Validators.validateEmail,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Password field with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _passwordController,
+                        hintText: 'Enter Password',
+                        validator: Validators.validatePassword,
+                        isPassword: !_passwordVisible,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _passwordVisible = !_passwordVisible;
-                          });
-                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Confirm Password field with box shadow
+                    Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: CustomTextField(
+                        controller: _confirmPasswordController,
+                        hintText: 'Confirm Password',
+                        validator:
+                            (value) => Validators.validateConfirmPassword(
+                          value,
+                          _passwordController.text,
+                        ),
+                        isPassword: !_passwordVisible,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 30),
