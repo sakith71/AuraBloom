@@ -111,14 +111,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(
@@ -149,62 +142,114 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                             ),
                           ),
                           const SizedBox(height: 30),
-                          CustomTextField(
-                            controller: _nameController,
-                            hintText: 'Enter your Name',
-                            validator: Validators.validateUsername,
+                          // Name TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _nameController,
+                              hintText: 'Enter your Name',
+                              validator: Validators.validateUsername,
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          CustomTextField(
-                            controller: _ageController,
-                            hintText: 'Enter Age',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your age';
-                              }
-                              final age = int.tryParse(value);
-                              if (age == null || age < 8 || age > 100) {
-                                return 'Please enter a valid age';
-                              }
-                              return null;
-                            },
+                          // Age TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _ageController,
+                              hintText: 'Enter Age',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your age';
+                                }
+                                final age = int.tryParse(value);
+                                if (age == null || age < 8 || age > 100) {
+                                  return 'Please enter a valid age';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          CustomTextField(
-                            controller: _heightController,
-                            hintText: 'Enter Height (cm)',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your height';
-                              }
-                              final height = double.tryParse(value);
-                              if (height == null ||
-                                  height < 50 ||
-                                  height > 250) {
-                                return 'Please enter a valid height';
-                              }
-                              return null;
-                            },
+                          // Height TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _heightController,
+                              hintText: 'Enter Height (cm)',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your height';
+                                }
+                                final height = double.tryParse(value);
+                                if (height == null ||
+                                    height < 50 ||
+                                    height > 250) {
+                                  return 'Please enter a valid height';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                           const SizedBox(height: 16),
-                          CustomTextField(
-                            controller: _weightController,
-                            hintText: 'Enter Weight (kg)',
-                            keyboardType: TextInputType.number,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your weight';
-                              }
-                              final weight = double.tryParse(value);
-                              if (weight == null ||
-                                  weight < 20 ||
-                                  weight > 300) {
-                                return 'Please enter a valid weight';
-                              }
-                              return null;
-                            },
+                          // Weight TextField with box shadow
+                          Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: CustomTextField(
+                              controller: _weightController,
+                              hintText: 'Enter Weight (kg)',
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your weight';
+                                }
+                                final weight = double.tryParse(value);
+                                if (weight == null ||
+                                    weight < 20 ||
+                                    weight > 300) {
+                                  return 'Please enter a valid weight';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                         ],
                       ),
