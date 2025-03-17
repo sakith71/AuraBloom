@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/health-tips-screen.dart';
-import 'package:frontend/screens/services/feeling-today-screen.dart'; // Updated path// Import the new screen
+import 'package:frontend/screens/services/feeling-today-screen.dart';
+import 'package:frontend/screens/calender-page.dart'; // Import calendar page
 
 class DailyInsights extends StatelessWidget {
-  const DailyInsights({super.key});
+  final String userId; // Add userId as a parameter
+
+  const DailyInsights({
+    super.key,
+    required this.userId, // Make userId required
+  });
 
   Widget _buildCustomIcon(IconData icon, Color color) {
     return Icon(icon, color: color, size: 28);
@@ -63,7 +69,18 @@ class DailyInsights extends StatelessWidget {
                 title: 'Mark period',
                 color: const Color(0xFFFAD4E4),
                 onTap: () {
-                  // Add navigation for Mark period
+                  // Navigate to Calendar Page in edit mode
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => CalendarPage(
+                            userId: userId, // Pass the user ID
+                            selectedDates:
+                                {}, // Pass existing selected dates if any
+                          ),
+                    ),
+                  );
                 },
               ),
               const SizedBox(width: 12),
