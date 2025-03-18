@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/calender-page.dart';
 import 'package:frontend/screens/chat-screen.dart';
+import '../services/period-stats-service.dart';
 import '../widgets/home-widgets/daily-insights.dart';
+import '../widgets/home-widgets/previous-cycle-box.dart';
 import '../widgets/home-widgets/tip-of-the-day.dart';
 import '../widgets/home-widgets/app-bar.dart';
 import '../widgets/prediction-widget.dart';
-import '../widgets/home-widgets/welcome-section.dart'; // Import the WelcomeSection widget
+import '../widgets/home-widgets/welcome-section.dart';
 import '../services/period-service.dart';
+import 'cycle-history-page.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
 import 'dart:math' as math;
@@ -153,7 +156,12 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late Set<String> _selectedDates;
   final PeriodService _periodService = PeriodService();
+  final PeriodStatsService _periodStatsService = PeriodStatsService();
   bool _isLoading = true;
+
+  DateTime? _lastCycleStartDate;
+  int _lastCycleDuration = 28;
+  int _lastPeriodDuration = 5;
 
   @override
   void initState() {
@@ -174,6 +182,30 @@ class _HomeScreenState extends State<HomeScreen> {
       _fetchPeriodDates();
     } else {
       _isLoading = false;
+    }
+    // Fetch cycle data for the Previous Cycle box
+    _fetchCycleData();
+  }
+
+  Future<void> _fetchCycleData() async {
+    try {
+      // Use the PeriodService to get the last cycle date
+      DateTime? lastCycleDate = await _periodService.fetchLastCycleStartDate(
+        widget.userId,
+      );
+
+      // Use the PeriodStatsService to get cycle stats
+      final stats = await _periodStatsService.calculatePeriodStats(
+        widget.userId,
+      );
+
+      setState(() {
+        _lastCycleStartDate = lastCycleDate;
+        _lastCycleDuration = stats['meanCycleLength'] ?? 28;
+        _lastPeriodDuration = stats['meanPeriodLength'] ?? 5;
+      });
+    } catch (e) {
+      throw Exception('Failed to fetch cycle data: $e');
     }
   }
 
@@ -200,6 +232,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToProfile() {
     setState(() {
       _selectedIndex = 4;
+    });
+  }
+
+  void _navigateToCycleHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CycleHistoryPage()),
+    ).then((_) {
+      // Refresh cycle data when returning from history page
+      _fetchCycleData();
     });
   }
 
@@ -253,6 +295,12 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: PredictionWidget(),
+          ),
+          PreviousCycleBox(
+            lastCycleStartDate: _lastCycleStartDate,
+            cycleDuration: _lastCycleDuration,
+            periodDuration: _lastPeriodDuration,
+            onReviewTap: _navigateToCycleHistory,
           ),
         ],
       ),
