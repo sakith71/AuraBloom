@@ -77,6 +77,76 @@ def home():
         "usingActualModel": using_actual_model
     })
 
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        print(f"Received data: {data}")
+        
+        # Check that all required fields are present
+        required_fields = ["MeanCycleLength", "LengthofMenses", "MeanMensesLength", "BMI"]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
+        # Prepare input data based on model's expected features
+        if using_actual_model and hasattr(model, 'feature_names_in_'):
+            input_data = {}
+            for feature in model.feature_names_in_:
+                if feature in data:
+                    input_data[feature] = float(data[feature])
+                else:
+                    # For any missing required features, use reasonable defaults
+                    if feature == "MeanCycleLength":
+                        input_data[feature] = float(data.get("MeanCycleLength", 28))
+                    elif feature == "MeanMensesLength":
+                        input_data[feature] = float(data.get("MeanMensesLength", 5))
+                    elif feature == "LengthofMenses":
+                        input_data[feature] = float(data.get("LengthofMenses", 5))
+                    elif feature == "BMI":
+                        input_data[feature] = float(data.get("BMI", 22.5))
+                    else:
+                        # For any other features, use default value of 0
+                        input_data[feature] = 0.0
+        else:
+            # Default input data structure
+            input_data = {
+                "MeanCycleLength": float(data["MeanCycleLength"]),
+                "LengthofMenses": float(data["LengthofMenses"]),
+                "MeanMensesLength": float(data["MeanMensesLength"]),
+                "BMI": float(data["BMI"])
+            }
+        
+        # Convert JSON to DataFrame
+        input_df = pd.DataFrame([input_data])
+        print(f"Input dataframe shape: {input_df.shape}")
+        print(f"Input dataframe columns: {input_df.columns.tolist()}")
+        
+        # Make a prediction
+        try:
+            prediction = model.predict(input_df)[0]
+            prediction_success = True
+        except Exception as e:
+            print(f"Error during prediction: {e}")
+            traceback.print_exc()
+            # Fallback to using MeanCycleLength as prediction
+            prediction = float(data["MeanCycleLength"])
+            prediction_success = False
+        
+        print(f"Prediction: {prediction}")
+        
+        # Return the result with information about which model was used
+        return jsonify({
+            "prediction": float(prediction),
+            "usedActualModel": using_actual_model and prediction_success,
+            "modelType": "Random Forest" if (using_actual_model and prediction_success) else "Simple Fallback"
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 # Clean up the credentials file when the app exits
 @app.teardown_appcontext
 def cleanup(exception=None):
