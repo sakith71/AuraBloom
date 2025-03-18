@@ -147,6 +147,109 @@ def predict():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route("/predict_for_user/<user_id>", methods=["GET"])
+def predict_for_user(user_id):
+    try:
+        # Get user data from Firestore
+        user_doc = db.collection('users').document(user_id).get()
+        
+        if not user_doc.exists:
+            return jsonify({"error": "User not found"}), 404
+        
+        user_data = user_doc.to_dict()
+        print(f"User data: {user_data}")
+        
+        # Extract features needed for prediction - using correct feature names for the model
+        if using_actual_model and hasattr(model, 'feature_names_in_'):
+            # Use the expected feature names from the model
+            input_data = {}
+            for feature in model.feature_names_in_:
+                if feature == "MeanCycleLength":
+                    input_data[feature] = float(user_data.get("cycleLength", 28))
+                elif feature == "MeanMensesLength":
+                    input_data[feature] = float(user_data.get("periodLength", 5))
+                elif feature == "LengthofMenses":
+                    input_data[feature] = float(user_data.get("periodLength", 5))
+                elif feature == "BMI":
+                    input_data[feature] = float(user_data.get("bmi", 22.5))
+                else:
+                    # For any other features, use default value of 0
+                    input_data[feature] = 0.0
+        else:
+            # Default input data structure if we don't know the exact feature names
+            input_data = {
+                "MeanCycleLength": float(user_data.get("cycleLength", 28)),
+                "MeanMensesLength": float(user_data.get("periodLength", 5)),
+                "LengthofMenses": float(user_data.get("periodLength", 5)),
+                "BMI": float(user_data.get("bmi", 22.5))
+            }
+        
+        print(f"Input data: {input_data}")
+        
+        # Convert to DataFrame for model prediction
+        input_df = pd.DataFrame([input_data])
+        
+        # Make prediction for cycle length
+        try:
+            predicted_cycle_length = model.predict(input_df)[0]
+            prediction_success = True
+        except Exception as e:
+            print(f"Error during prediction: {e}")
+            traceback.print_exc()
+            # Fallback to simple calculation
+            predicted_cycle_length = float(user_data.get("cycleLength", 28))
+            prediction_success = False
+            
+        # Round to nearest whole number
+        predicted_cycle_length = round(predicted_cycle_length)
+        print(f"Predicted cycle length: {predicted_cycle_length}")
+        
+        # Calculate next period start date
+        last_period_start = None
+        if "lastCycleStartDate" in user_data and user_data["lastCycleStartDate"]:
+            try:
+                last_period_start = datetime.fromisoformat(user_data["lastCycleStartDate"].replace("Z", "+00:00") if "Z" in user_data["lastCycleStartDate"] else user_data["lastCycleStartDate"])
+            except Exception as e:
+                print(f"Error parsing lastCycleStartDate: {e}")
+        
+        if not last_period_start and "lastCycleStartDate" in user_data and user_data["lastCycleStartDate"]:
+            try:
+                last_period_start = datetime.fromisoformat(user_data["lastCycleStartDate"].replace("Z", "+00:00") if "Z" in user_data["lastCycleStartDate"] else user_data["lastCycleStartDate"])
+            except Exception as e:
+                print(f"Error parsing lastCycleStartDate: {e}")
+        
+        if not last_period_start:
+            # If we still don't have a date, use current date as fallback
+            last_period_start = datetime.now()
+            print("No valid last period date found, using current date as fallback")
+        
+        next_period_start = last_period_start + timedelta(days=int(predicted_cycle_length))
+        
+        # Update user document with predictions
+        update_data = {
+            "predictedCycleLength": int(predicted_cycle_length),
+            "predictedNextPeriodStart": next_period_start.isoformat(),
+            "lastPredictionDate": datetime.now().isoformat(),
+            "usedActualModel": using_actual_model and prediction_success
+        }
+        
+        db.collection('users').document(user_id).update(update_data)
+        print(f"Updated user with predictions: {update_data}")
+        
+        # Return the prediction results with information about which model was used
+        return jsonify({
+            "userId": user_id,
+            "predictedCycleLength": int(predicted_cycle_length),
+            "nextPeriodStartDate": next_period_start.isoformat(),
+            "lastPeriodStartDate": last_period_start.isoformat(),
+            "usedActualModel": using_actual_model and prediction_success,
+            "modelType": "Random Forest" if (using_actual_model and prediction_success) else "Simple Fallback"
+        })
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 # Clean up the credentials file when the app exits
 @app.teardown_appcontext
 def cleanup(exception=None):
