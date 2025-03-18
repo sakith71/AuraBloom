@@ -3,8 +3,8 @@ import 'package:frontend/screens/calender-page.dart';
 import 'package:frontend/screens/chat-screen.dart';
 import '../widgets/home-widgets/daily-insights.dart';
 import '../widgets/home-widgets/tip-of-the-day.dart';
-import '../widgets/home-widgets/my-cycles.dart';
 import '../widgets/home-widgets/app-bar.dart';
+import '../widgets/prediction-widget.dart';
 import '../widgets/home-widgets/welcome-section.dart'; // Import the WelcomeSection widget
 import '../services/period-service.dart';
 import 'profile-screen/profile-screen.dart';
@@ -14,8 +14,7 @@ import 'dart:math' as math;
 class AnimatedWaveSection extends StatefulWidget {
   final String periodDay;
 
-  const AnimatedWaveSection({Key? key, required this.periodDay})
-    : super(key: key);
+  const AnimatedWaveSection({super.key, required this.periodDay});
 
   @override
   State<AnimatedWaveSection> createState() => _AnimatedWaveSectionState();
@@ -159,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    print('HomeScreen initialized with userId: ${widget.userId}');
 
     _selectedDates =
         widget.selectedDates.isNotEmpty
@@ -187,7 +185,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error fetching period dates: $e');
       setState(() {
         _isLoading = false;
       });
@@ -251,7 +248,12 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 20),
           const TipOfTheDay(),
           const SizedBox(height: 20),
-          const MyCycles(),
+          
+          // Insert the PredictionWidget
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: PredictionWidget(),
+          ),
         ],
       ),
     );
