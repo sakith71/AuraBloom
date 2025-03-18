@@ -111,6 +111,109 @@ class PeriodPredictionService {
       'isFallback': true
     };
   }
+  
+  // Update user data after a period
+  Future<Map<String, dynamic>> updateAfterPeriod({
+    required String userId,
+    required DateTime actualPeriodStartDate,
+    int? periodLength
+  }) async {
+    try {
+      final Map<String, dynamic> requestData = {
+        'userId': userId,
+        'actualPeriodStartDate': actualPeriodStartDate.toIso8601String(),
+      };
+      
+      if (periodLength != null) {
+        requestData['periodLength'] = periodLength;
+      }
+      
+      try {
+        final response = await http.post(
+          Uri.parse('${_apiBaseUrl}/update_after_period'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(requestData),
+        ).timeout(const Duration(seconds: 10)); // Add timeout
+        
+        if (response.statusCode == 200) {
+          return json.decode(response.body);
+        } else {
+          // If API call fails, update Firestore directly
+          return _updateFirestoreDirectly(userId, actualPeriodStartDate, periodLength);
+        }
+      } catch (e) {
+        // If API call fails, update Firestore directly
+        return _updateFirestoreDirectly(userId, actualPeriodStartDate, periodLength);
+      }
+    } catch (e) {
+      throw Exception('Error updating period data: $e');
+    }
+  }
+  
+  // Update Firestore directly if API is unavailable
+  Future<Map<String, dynamic>> _updateFirestoreDirectly(
+    String userId, 
+    DateTime actualPeriodStartDate,
+    int? periodLength
+  ) async {
+    try {
+      // Get user document
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
+      Map<String, dynamic> userData = {};
+      
+      if (userDoc.exists) {
+        userData = userDoc.data() as Map<String, dynamic>;
+      }
+      
+      // Calculate actual cycle length
+      int actualCycleLength = 28; // Default
+      
+      if (userData.containsKey('lastCycleStartDate') && userData['lastCycleStartDate'] != null) {
+        try {
+          DateTime lastCycleStartDate = DateTime.parse(userData['lastCycleStartDate']);
+          actualCycleLength = actualPeriodStartDate.difference(lastCycleStartDate).inDays;
+          if (actualCycleLength < 0) actualCycleLength = 28;
+        } catch (e) {
+          // Use default if parsing fails
+        }
+      }
+      
+      // Update data
+      Map<String, dynamic> updateData = {
+        'lastCycleStartDate': actualPeriodStartDate.toIso8601String(),
+        'actualCycleLength': actualCycleLength,
+      };
+      
+      if (periodLength != null) {
+        updateData['periodLength'] = periodLength;
+      }
+      
+      // Update Firestore
+      await _firestore.collection('users').doc(userId).update(updateData);
+      
+      // Calculate prediction
+      int predictedCycleLength = userData['cycleLength'] ?? 28;
+      DateTime nextPeriodDate = actualPeriodStartDate.add(Duration(days: predictedCycleLength));
+      
+      // Also update prediction data
+      await _firestore.collection('users').doc(userId).update({
+        'predictedCycleLength': predictedCycleLength,
+        'predictedNextPeriodStart': nextPeriodDate.toIso8601String(),
+        'lastPredictionDate': DateTime.now().toIso8601String()
+      });
+      
+      return {
+        'userId': userId,
+        'predictedCycleLength': predictedCycleLength,
+        'nextPeriodStartDate': nextPeriodDate.toIso8601String(),
+        'lastPeriodStartDate': actualPeriodStartDate.toIso8601String(),
+        'isFallback': true
+      };
+    } catch (e) {
+      throw Exception('Failed to update data in Firestore: $e');
+    }
+  }
+  
   // Make a direct prediction with specific parameters
   Future<double> makePrediction({
     required double meanCycleLength,
