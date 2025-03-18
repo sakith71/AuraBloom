@@ -89,7 +89,6 @@ class _PreviousCycleDataWidgetState extends State<PreviousCycleDataWidget> {
   }
 }
 
-// Placeholder class - will be fully implemented in a future commit
 class PeriodCycleData {
   final DateTime startDate;
   final DateTime endDate;
@@ -102,4 +101,15 @@ class PeriodCycleData {
     required this.periodLength,
     this.cycleLength,
   });
+
+  bool isRecent() {
+    final now = DateTime.now();
+    final diff = now.difference(startDate).inDays;
+    return diff <= 60; // Consider cycles in the last 2 months as recent
+  }
+
+  @override
+  String toString() {
+    return 'PeriodCycle(start: $startDate, end: $endDate, periodLength: $periodLength, cycleLength: $cycleLength)';
+  }
 }
