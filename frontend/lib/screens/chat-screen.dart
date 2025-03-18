@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/chat-widgets.dart';
 import '../models/chat-message.dart';
-import '../services/chatbot-service.dart';
+// import '../services/chatbot-service.dart';
+import '../helpers/Service.dart';
 
 class PeriodPainChatScreen extends StatefulWidget {
   @override
@@ -31,30 +32,28 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
     );
   }
 
-  void _handleSubmitted(String text) {
-    if (text.trim().isEmpty) return;
+void _handleSubmitted(String text) {
+  if (text.trim().isEmpty) return;
 
+  setState(() {
+    _messages.add(
+      ChatMessage(text: text, isUser: true, timestamp: DateTime.now()),
+    );
+  });
+
+  _textController.clear();
+  _scrollToBottom();
+
+  // Get chatbot response from the server
+  ChatbotService.getResponse(text).then((response) {
     setState(() {
       _messages.add(
-        ChatMessage(text: text, isUser: true, timestamp: DateTime.now()),
+        ChatMessage(text: response, isUser: false, timestamp: DateTime.now()),
       );
     });
-
-    _textController.clear();
     _scrollToBottom();
-
-    // Get chatbot response
-    String response = ChatbotService.getResponse(text);
-
-    Future.delayed(Duration(milliseconds: 500), () {
-      setState(() {
-        _messages.add(
-          ChatMessage(text: response, isUser: false, timestamp: DateTime.now()),
-        );
-      });
-      _scrollToBottom();
-    });
-  }
+  });
+}
 
   void _scrollToBottom() {
     Future.delayed(Duration(milliseconds: 100), () {
