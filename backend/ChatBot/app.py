@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from PeriodPainChatbot import PeriodPainChatbot
 
 app = Flask(__name__)
 
@@ -9,14 +10,15 @@ def api_status():
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
+        chatbot = PeriodPainChatbot()
         user_input = request.json.get('message')
 
         if not user_input:
             return jsonify({"error": "Message is required"}), 400
 
-        print("Initializing post endpoint to retrieve chat messages from the user.")
+        bot_reply = chatbot.get_response(user_input)
 
-        return jsonify({"message": f"Recieved: {user_input}"}), 200
+        return jsonify({"reply": bot_reply}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
