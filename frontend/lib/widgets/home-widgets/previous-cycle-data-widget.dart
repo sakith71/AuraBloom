@@ -89,6 +89,104 @@ class _PreviousCycleDataWidgetState extends State<PreviousCycleDataWidget> {
   }
 }
 
+class CycleCard extends StatelessWidget {
+  final PeriodCycleData cycle;
+  final Function(bool)? onValidationChanged;
+
+  const CycleCard({Key? key, required this.cycle, this.onValidationChanged})
+    : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('MMM d, yyyy');
+    final startDate = dateFormat.format(cycle.startDate);
+    final endDate = dateFormat.format(cycle.endDate);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_month,
+                  color: const Color.fromARGB(255, 240, 99, 153),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Period: $startDate - $endDate',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                if (cycle.isRecent())
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'Recent',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _buildInfoItem(
+                  'Period Length',
+                  '${cycle.periodLength} days',
+                  Icons.water_drop,
+                ),
+                const SizedBox(width: 24),
+                if (cycle.cycleLength != null)
+                  _buildInfoItem(
+                    'Cycle Length',
+                    '${cycle.cycleLength} days',
+                    Icons.loop,
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, IconData icon) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: Colors.grey[600]),
+        const SizedBox(width: 4),
+        Text(
+          '$label: ',
+          style: TextStyle(color: Colors.grey[600], fontSize: 14),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+      ],
+    );
+  }
+}
+
 class PeriodCycleData {
   final DateTime startDate;
   final DateTime endDate;
