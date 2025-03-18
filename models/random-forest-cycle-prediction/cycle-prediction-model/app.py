@@ -5,6 +5,9 @@ from firebase_admin import credentials, firestore
 import json
 import os
 from datetime import datetime, timedelta
+import joblib
+import pandas as pd
+import traceback
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -32,11 +35,46 @@ cred = credentials.Certificate(service_account_file)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 
+# Set the path to your model file - update this to the correct path
+MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "random_forest_model.pkl")
+print(f"Looking for model at: {MODEL_PATH}")
+
+# Flag to track if we're using the actual trained model
+using_actual_model = False
+
+# Load the saved Random Forest model
+try:
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+        using_actual_model = True
+        print("Actual Random Forest model loaded successfully!")
+        
+        # Print feature names if available to help with debugging
+        if hasattr(model, 'feature_names_in_'):
+            print(f"Model expects these feature names: {model.feature_names_in_}")
+    else:
+        print(f"Model file not found at {MODEL_PATH}")
+        # Create a dummy model for testing
+        from sklearn.ensemble import RandomForestRegressor
+        model = RandomForestRegressor()
+        model.fit([[28, 5, 5, 25]], [28])  # Dummy training
+        print("Created fallback model for testing - NOT using actual Random Forest model")
+        using_actual_model = False
+except Exception as e:
+    print(f"Error loading model: {e}")
+    # Create a dummy model for testing
+    from sklearn.ensemble import RandomForestRegressor
+    model = RandomForestRegressor()
+    model.fit([[28, 5, 5, 25]], [28])  # Dummy training
+    print("Created fallback model for testing - NOT using actual Random Forest model")
+    using_actual_model = False
+
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({
         "status": "ok",
-        "message": "Menstrual Cycle Prediction API is running!"
+        "message": "Menstrual Cycle Prediction API is running!",
+        "usingActualModel": using_actual_model
     })
 
 # Clean up the credentials file when the app exits
