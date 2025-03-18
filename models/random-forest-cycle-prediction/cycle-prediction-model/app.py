@@ -250,6 +250,77 @@ def predict_for_user(user_id):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route("/update_after_period", methods=["POST"])
+def update_after_period():
+    try:
+        data = request.get_json()
+        print(f"Update period data: {data}")
+        user_id = data.get("userId")
+        actual_period_start = data.get("actualPeriodStartDate")
+        period_length = data.get("periodLength")
+        
+        if not user_id or not actual_period_start:
+            return jsonify({"error": "Missing userId or actualPeriodStartDate"}), 400
+            
+        # Get user document
+        user_doc = db.collection('users').document(user_id).get()
+        if not user_doc.exists:
+            return jsonify({"error": "User not found"}), 404
+            
+        user_data = user_doc.to_dict()
+        
+        # Calculate actual cycle length
+        last_period_start = None
+        if "lastCycleStartDate" in user_data and user_data["lastCycleStartDate"]:
+            try:
+                last_period_start = datetime.fromisoformat(user_data["lastCycleStartDate"].replace("Z", "+00:00") if "Z" in user_data["lastCycleStartDate"] else user_data["lastCycleStartDate"])
+            except Exception as e:
+                print(f"Error parsing lastCycleStartDate: {e}")
+        
+        if not last_period_start and "lastCycleStartDate" in user_data and user_data["lastCycleStartDate"]:
+            try:
+                last_period_start = datetime.fromisoformat(user_data["lastCycleStartDate"].replace("Z", "+00:00") if "Z" in user_data["lastCycleStartDate"] else user_data["lastCycleStartDate"])
+            except Exception as e:
+                print(f"Error parsing lastCycleStartDate: {e}")
+        
+        try:
+            actual_period_start_date = datetime.fromisoformat(actual_period_start.replace("Z", "+00:00") if "Z" in actual_period_start else actual_period_start)
+        except Exception as e:
+            print(f"Error parsing actualPeriodStartDate: {e}")
+            # Fallback to current date if date parsing fails
+            actual_period_start_date = datetime.now()
+        
+        if last_period_start:
+            actual_cycle_length = (actual_period_start_date - last_period_start).days
+            if actual_cycle_length < 0:
+                # If negative days (shouldn't happen), use default
+                actual_cycle_length = user_data.get("cycleLength", 28)
+                print(f"Warning: Negative cycle length calculated, using default: {actual_cycle_length}")
+        else:
+            actual_cycle_length = user_data.get("cycleLength", 28)
+        
+        # Update user data
+        update_data = {
+            "lastCycleStartDate": actual_period_start,
+            "lastCycleStartDate": actual_period_start,
+            "actualCycleLength": actual_cycle_length
+        }
+        
+        if period_length:
+            update_data["periodLength"] = period_length
+        
+        # Update Firestore
+        db.collection('users').document(user_id).update(update_data)
+        print(f"Updated user after period: {update_data}")
+        
+        # Re-predict for next cycle
+        # This will automatically use the updated data
+        return predict_for_user(user_id)
+        
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 # Clean up the credentials file when the app exits
 @app.teardown_appcontext
 def cleanup(exception=None):
