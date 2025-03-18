@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/home-widgets/previous-cycle-data-widget.dart';
 
 class CycleHistoryPage extends StatefulWidget {
   const CycleHistoryPage({super.key});
@@ -56,6 +57,10 @@ class _CycleHistoryPageState extends State<CycleHistoryPage> {
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
+      ),
+      body: PreviousCycleDataWidget(
+        userId: _userId!,
+        onDataValidated: _refreshCycleData,
       ),
     );
   }

@@ -31,6 +31,114 @@ class _PreviousCycleDataWidgetState extends State<PreviousCycleDataWidget> {
     _loadPreviousCycleData();
   }
 
+  Future<void> _loadPreviousCycleData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Get all period dates
+      final dates = await _periodService.fetchPeriodDates(widget.userId);
+
+      // Convert date keys to DateTime objects
+      final periodDates =
+          dates
+              .map((dateKey) {
+                final parts = dateKey.split('-');
+                if (parts.length == 3) {
+                  final month = parts[0];
+                  final day = parts[1];
+                  final year = parts[2];
+                  return CalendarUtils.parseDisplayDate('$month $day, $year');
+                }
+                return null;
+              })
+              .whereType<DateTime>()
+              .toList();
+
+      // Sort dates in ascending order
+      periodDates.sort((a, b) => a.compareTo(b));
+
+      // Generate cycle data using the PeriodStatsService methods
+      final cycles = await _loadCycles(periodDates);
+
+      setState(() {
+        _cycleData = cycles;
+        _hasData = cycles.isNotEmpty;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading previous cycle data: $e');
+      setState(() {
+        _isLoading = false;
+        _hasData = false;
+      });
+    }
+  }
+
+  Future<List<PeriodCycleData>> _loadCycles(List<DateTime> dates) async {
+    if (dates.isEmpty) return [];
+
+    // Detect cycles (periods that are separated by more than 1 day)
+    List<PeriodCycleData> cycles = [];
+    DateTime? currentStart;
+    DateTime? currentEnd;
+
+    for (int i = 0; i < dates.length; i++) {
+      if (currentStart == null) {
+        // Start a new period
+        currentStart = dates[i];
+        currentEnd = dates[i];
+      } else if (i < dates.length - 1 &&
+          dates[i + 1].difference(dates[i]).inDays == 1) {
+        // Consecutive day, extend the current period
+        currentEnd = dates[i + 1];
+      } else {
+        // End of a period, add it to cycles
+        int periodLength = currentEnd!.difference(currentStart).inDays + 1;
+
+        // Calculate cycle length only if there's a next period
+        int? cycleLength;
+        if (i < dates.length - 1) {
+          final nextPeriodStart = dates[i + 1];
+          cycleLength = nextPeriodStart.difference(currentStart).inDays;
+        }
+
+        cycles.add(
+          PeriodCycleData(
+            startDate: currentStart,
+            endDate: currentEnd,
+            periodLength: periodLength,
+            cycleLength: cycleLength, // Default to validated
+          ),
+        );
+
+        // Reset for next period
+        currentStart = (i < dates.length - 1) ? dates[i + 1] : null;
+        currentEnd = currentStart;
+      }
+    }
+
+    // Add the last period if there's one in progress
+    if (currentStart != null && currentEnd != null) {
+      int periodLength = currentEnd.difference(currentStart).inDays + 1;
+      cycles.add(
+        PeriodCycleData(
+          startDate: currentStart,
+          endDate: currentEnd,
+          periodLength: periodLength,
+          cycleLength:
+              null, // No next period to calculate cycle length// Default to validated
+        ),
+      );
+    }
+
+    // Sort cycles by start date (descending - most recent first)
+    cycles.sort((a, b) => b.startDate.compareTo(a.startDate));
+
+    return cycles;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -79,13 +187,33 @@ class _PreviousCycleDataWidgetState extends State<PreviousCycleDataWidget> {
       );
     }
 
-    // Placeholder return
-    return const Center(child: Text('Loading data...'));
-  }
-
-  // Placeholder for future implementation
-  Future<void> _loadPreviousCycleData() async {
-    // Implementation will be added in a future commit
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Previous Cycles',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _cycleData.length,
+            padding: const EdgeInsets.all(16),
+            itemBuilder: (context, index) {
+              final cycle = _cycleData[index];
+              return CycleCard(cycle: cycle);
+            },
+          ),
+        ),
+      ],
+    );
   }
 }
 
