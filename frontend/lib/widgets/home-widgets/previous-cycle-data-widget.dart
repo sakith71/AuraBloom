@@ -221,8 +221,7 @@ class CycleCard extends StatelessWidget {
   final PeriodCycleData cycle;
   final Function(bool)? onValidationChanged;
 
-  const CycleCard({Key? key, required this.cycle, this.onValidationChanged})
-    : super(key: key);
+  const CycleCard({super.key, required this.cycle, this.onValidationChanged});
 
   @override
   Widget build(BuildContext context) {

@@ -32,9 +32,10 @@ class PreviousCycleBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 12,
+            spreadRadius: 2,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -49,7 +50,7 @@ class PreviousCycleBox extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
-                  color: Color.fromARGB(255, 240, 99, 153),
+                  color: Colors.black,
                 ),
               ),
               GestureDetector(

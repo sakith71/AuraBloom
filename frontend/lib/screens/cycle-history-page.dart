@@ -40,8 +40,21 @@ class _CycleHistoryPageState extends State<CycleHistoryPage> {
     if (_userId == null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Cycle History'),
-          backgroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: Color.fromARGB(255, 240, 99, 153),
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: const Text(
+            'Cycle History',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 240, 99, 153),
+            ),
+          ),
+          backgroundColor: Color(0xFFFCF0F7),
           foregroundColor: Colors.black87,
           elevation: 0,
         ),
@@ -53,8 +66,21 @@ class _CycleHistoryPageState extends State<CycleHistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cycle History'),
-        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios,
+            color: Color.fromARGB(255, 240, 99, 153),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'Cycle History',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 240, 99, 153),
+          ),
+        ),
+        backgroundColor: Color(0xFFFCF0F7),
         foregroundColor: Colors.black87,
         elevation: 0,
       ),
