@@ -26,10 +26,13 @@ class CommentWithRepliesWidget extends StatefulWidget {
 
 class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
   final CommunityService _communityService = CommunityService();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _replyController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   
+  bool _isLoadingReplies = false;
+  bool _showReplies = false;
   bool _showReplyInput = false;
+  bool _isSubmittingReply = false;
   bool _isAnonymous = false;
   List<Reply> _replies = [];
 
@@ -37,6 +40,65 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
   void dispose() {
     _replyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _addReply() async {
+    if (_replyController.text.trim().isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _isSubmittingReply = true;
+    });
+
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Get user display name with improved logic
+      String authorName;
+      if (_isAnonymous) {
+        authorName = 'Anonymous';
+      } else {
+        authorName = _communityService.getUserDisplayName();
+        
+        if (kDebugMode) {
+          print('Adding reply with author name: $authorName');
+          print('User display name: ${user.displayName}');
+          print('User email: ${user.email}');
+          print('Reply is anonymous: $_isAnonymous');
+        }
+      }
+
+      final reply = Reply(
+        id: '', // Will be set by Firestore
+        commentId: widget.comment.id,
+        authorId: user.uid,
+        authorName: authorName,
+        authorAvatar: user.photoURL ?? '',
+        createdAt: DateTime.now(),
+        content: _replyController.text.trim(),
+        isAnonymous: _isAnonymous,
+      );
+
+      await _communityService.addReply(reply);
+
+      // Will implement loading replies in next commit
+      setState(() {
+        _isSubmittingReply = false;
+        _replyController.clear();
+        widget.comment.replyCount += 1; // Update reply count
+      });
+    } catch (e) {
+      setState(() {
+        _isSubmittingReply = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add reply: $e')),
+      );
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -274,6 +336,100 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
               ],
             ),
           ),
+
+          // Reply input
+          if (_showReplyInput)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _replyController,
+                          decoration: InputDecoration(
+                            hintText: 'Write a reply...',
+                            hintStyle: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 14,
+                            ),
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: const BorderSide(
+                                color: Colors.pinkAccent,
+                              ),
+                            ),
+                          ),
+                          minLines: 1,
+                          maxLines: 3,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _isSubmittingReply
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.pink,
+                                ),
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : IconButton(
+                              onPressed: _addReply,
+                              icon: const Icon(
+                                Icons.send_rounded,
+                                color: Colors.pinkAccent,
+                              ),
+                              iconSize: 24,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _isAnonymous,
+                        onChanged: (value) {
+                          setState(() {
+                            _isAnonymous = value ?? false;
+                          });
+                        },
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const Text(
+                        'Reply anonymously',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
