@@ -31,11 +31,9 @@ class Reply {
         try {
           return DateTime.parse(dateValue);
         } catch (e) {
-          print('Error parsing date string: $dateValue');
           return DateTime.now();
         }
       } else {
-        print('Unknown date format: $dateValue (${dateValue.runtimeType})');
         return DateTime.now();
       }
     }

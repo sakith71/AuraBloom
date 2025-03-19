@@ -17,7 +17,7 @@ void main() async {
       await FirebaseAuth.instance.signInAnonymously();
     }
   } catch (e) {
-    print('Error signing in anonymously: $e');
+    throw Exception('Error signing in anonymously: $e');
   }
 
   runApp(const MyApp());

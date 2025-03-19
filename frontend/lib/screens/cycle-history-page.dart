@@ -68,7 +68,7 @@ class _CycleHistoryPageState extends State<CycleHistoryPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(
-            Icons.arrow_back_ios,
+            Icons.arrow_back_sharp,
             color: Color.fromARGB(255, 240, 99, 153),
           ),
           onPressed: () => Navigator.of(context).pop(),

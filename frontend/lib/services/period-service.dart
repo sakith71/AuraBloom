@@ -34,7 +34,6 @@ class PeriodService {
       
       return periodDates;
     } catch (e) {
-      print('Error fetching period dates: $e');
       return {};
     }
   }
@@ -96,7 +95,6 @@ class PeriodService {
       
       return null;
     } catch (e) {
-      print('Error fetching last cycle start date: $e');
       return null;
     }
   }
@@ -137,7 +135,6 @@ class PeriodService {
         }
       }
     } catch (e) {
-      print('Error deleting period date: $e');
       rethrow;
     }
   }
@@ -174,7 +171,6 @@ class PeriodService {
       // After saving all dates, determine the cycle start dates and update lastCycleStartDate
       await updateLastCycleStartDate(userId);
     } catch (e) {
-      print('Error saving period dates: $e');
       rethrow;
     }
   }
@@ -234,7 +230,6 @@ class PeriodService {
         });
       }
     } catch (e) {
-      print('Error updating last cycle start date: $e');
       rethrow;
     }
   }

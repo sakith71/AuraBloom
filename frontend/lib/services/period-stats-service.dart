@@ -173,7 +173,6 @@ class PeriodStatsService {
       Map<String, dynamic> stats = _calculateStats(recentCycles);
       return stats;
     } catch (e) {
-      print('Error calculating period stats: $e');
       return {
         'meanPeriodLength': 0,
         'meanCycleLength': 0,
@@ -191,9 +190,7 @@ class PeriodStatsService {
         'statsLastUpdated': DateTime.now().toIso8601String(),
       });
       
-      print('Period stats saved successfully: Period length=${stats['meanPeriodLength']}, Cycle length=${stats['meanCycleLength']}');
     } catch (e) {
-      print('Error saving period stats: $e');
       rethrow;
     }
   }

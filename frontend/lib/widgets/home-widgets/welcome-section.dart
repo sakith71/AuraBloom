@@ -8,11 +8,11 @@ class WelcomeSection extends StatefulWidget {
   final List<String> selectedDates;
 
   const WelcomeSection({
-    Key? key,
+    super.key,
     required this.userId,
     this.selectedDate,
     this.selectedDates = const [],
-  }) : super(key: key);
+  });
 
   @override
   State<WelcomeSection> createState() => _WelcomeSectionState();
@@ -33,9 +33,7 @@ class _WelcomeSectionState extends State<WelcomeSection> {
 
   Future<void> _loadUsername() async {
     try {
-      print('WelcomeSection: Loading username for user ${widget.userId}');
       final username = await _userService.getUserName(widget.userId);
-      print('WelcomeSection: Username loaded: $username');
 
       if (mounted) {
         setState(() {
@@ -44,7 +42,6 @@ class _WelcomeSectionState extends State<WelcomeSection> {
         });
       }
     } catch (e) {
-      print('WelcomeSection: Error loading username: $e');
       if (mounted) {
         setState(() {
           _username = 'User'; // Fallback

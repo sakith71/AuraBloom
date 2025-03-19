@@ -4,7 +4,6 @@ import '../../widgets/profile-widgets/profile-header.dart';
 import '../../widgets/profile-widgets/profile-menu-section.dart';
 import '../../widgets/profile-widgets/profile-health-section.dart';
 import '../../widgets/profile-widgets/profile-settings-section.dart';
-import '../../widgets/profile-widgets/logout-button.dart';
 import '../login-page.dart';
 
 class ProfileScreen extends StatelessWidget {

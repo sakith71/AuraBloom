@@ -26,7 +26,6 @@ class AuthService {
       );
       return methods.isNotEmpty;
     } catch (e) {
-      print('Error checking email existence: $e');
       return false;
     }
   }
@@ -56,9 +55,6 @@ class AuthService {
       if (userCredential.user != null &&
           username != null &&
           username.isNotEmpty) {
-        print(
-          'Saving username: $username for user: ${userCredential.user!.uid}',
-        );
         await _firestoreService.saveUserName(
           userCredential.user!.uid,
           username,

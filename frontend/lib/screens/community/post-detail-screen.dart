@@ -53,12 +53,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         widget.post.id,
       );
 
-      // Debug comments data
-      if (kDebugMode && comments.isNotEmpty) {
-        print('First comment author: ${comments.first.authorName}');
-        print('First comment anonymous: ${comments.first.isAnonymous}');
-      }
-
       if (mounted) {
         setState(() {
           _comments = comments;

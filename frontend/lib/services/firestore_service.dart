@@ -35,9 +35,7 @@ class FirestoreService {
         }
       });
 
-      print('User profile saved successfully: ${user.uid}');
     } catch (e) {
-      print('Error saving user profile: $e');
       // Re-throw to allow handling in UI
       throw Exception('Failed to save user profile: $e');
     }
@@ -50,14 +48,11 @@ class FirestoreService {
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
-        print('Retrieved user profile: $uid');
         return UserModel.fromMap(data);
       }
 
-      print('User profile not found: $uid');
       return null;
     } catch (e) {
-      print('Error getting user profile: $e');
       throw Exception('Failed to retrieve user profile: $e');
     }
   }
@@ -65,14 +60,11 @@ class FirestoreService {
   // Save just the username
   Future<void> saveUserName(String uid, String username) async {
     try {
-      print('FirestoreService: Saving username "$username" for user $uid');
       await users.doc(uid).set({
         'name': username,
         'updatedAt': DateTime.now().toIso8601String(),
       }, SetOptions(merge: true));
-      print('Username saved successfully for user: $uid');
     } catch (e) {
-      print('Error saving username: $e');
       throw Exception('Failed to save username: $e');
     }
   }
@@ -80,25 +72,19 @@ class FirestoreService {
   // Get just the username for a user
   Future<String> getUserName(String uid) async {
     try {
-      print('FirestoreService: Getting username for user $uid');
       DocumentSnapshot doc = await users.doc(uid).get();
-      print('FirestoreService: Doc exists? ${doc.exists}');
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
-        print('FirestoreService: Doc data: $data');
 
         if (data.containsKey('name') &&
             data['name'] != null &&
             data['name'].toString().isNotEmpty) {
-          print('FirestoreService: Found username: ${data['name']}');
           return data['name'] as String;
         }
       }
-      print('FirestoreService: Username not found, returning default');
       return 'User'; // Default if name not found
     } catch (e) {
-      print('FirestoreService: Error getting username: $e');
       return 'User'; // Default on error
     }
   }
@@ -108,7 +94,6 @@ class FirestoreService {
     try {
       await users.doc(uid).update({'periodDates': dates.toList()});
     } catch (e) {
-      print('Error updating period dates: $e');
       throw Exception('Failed to update period dates: $e');
     }
   }
@@ -125,7 +110,7 @@ class FirestoreService {
       }
       return <String>{};
     } catch (e) {
-      print('Error getting period dates: $e');
+    
       return <String>{};
     }
   }
@@ -138,7 +123,6 @@ class FirestoreService {
 
       await users.doc(uid).update(data);
     } catch (e) {
-      print('Error updating user data: $e');
       throw Exception('Failed to update user data: $e');
     }
   }
@@ -163,7 +147,7 @@ class FirestoreService {
           try {
             lastCycleStartDate = DateTime.parse(userData['lastCycleStartDate']);
           } catch (e) {
-            print('Error parsing existing lastCycleStartDate: $e');
+            throw Exception('Failed to parse lastCycleStartDate: $e');
           }
         }
       }
@@ -187,11 +171,7 @@ class FirestoreService {
         'createdAt': now.toIso8601String(),
       });
 
-      print(
-        'Prediction data stored: $uid, Cycle: ${updatedPrediction.predictedCycleLength}, Next start: ${updatedPrediction.getFormattedNextPeriodDate()}',
-      );
     } catch (e) {
-      print('Error storing prediction data: $e');
       throw Exception('Failed to store prediction data: $e');
     }
   }
@@ -219,7 +199,6 @@ class FirestoreService {
       // Call the model-based method
       await storePredictionData(uid, prediction);
     } catch (e) {
-      print('Error storing prediction data from values: $e');
       throw Exception('Failed to store prediction data: $e');
     }
   }
