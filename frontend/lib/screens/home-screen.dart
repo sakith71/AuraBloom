@@ -9,6 +9,7 @@ import '../widgets/home-widgets/app-bar.dart';
 import '../widgets/prediction-widget.dart';
 import '../widgets/home-widgets/welcome-section.dart';
 import '../services/period-service.dart';
+import '../utils/calendar.dart';
 import 'cycle-history-page.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
@@ -163,9 +164,15 @@ class _HomeScreenState extends State<HomeScreen> {
   int _lastCycleDuration = 28;
   int _lastPeriodDuration = 5;
 
+  // Added: Track the current week dates
+  late List<DateTime> _weekDates;
+
   @override
   void initState() {
     super.initState();
+
+    // Added: Initialize the week dates
+    _weekDates = CalendarUtils.getCurrentWeekDates();
 
     _selectedDates =
         widget.selectedDates.isNotEmpty
@@ -302,10 +309,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Updated: Dynamic week calendar
   Widget _buildWeekCalendar() {
     final days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-    final dates = [9, 10, 11, 12, 13, 14, 15];
-    final selectedIndex = 1; // Example: "Day 10" is selected
+
+    // Get today's date for highlighting
+    final today = DateTime.now();
+
+    // Find today's index in the week
+    final todayIndex = _weekDates.indexWhere(
+      (date) =>
+          date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -340,17 +357,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color:
-                      index == selectedIndex
+                      index == todayIndex
                           ? const Color(0xFFE6E9FF)
                           : Colors.white,
                 ),
                 child: Center(
                   child: Text(
-                    '${dates[index]}',
+                    '${_weekDates[index].day}',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight:
-                          index == selectedIndex
+                          index == todayIndex
                               ? FontWeight.w500
                               : FontWeight.w400,
                       color: Colors.black87,

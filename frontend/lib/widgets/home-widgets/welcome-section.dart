@@ -8,11 +8,11 @@ class WelcomeSection extends StatefulWidget {
   final List<String> selectedDates;
 
   const WelcomeSection({
-    Key? key,
+    super.key,
     required this.userId,
     this.selectedDate,
     this.selectedDates = const [],
-  }) : super(key: key);
+  });
 
   @override
   State<WelcomeSection> createState() => _WelcomeSectionState();
