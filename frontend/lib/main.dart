@@ -19,7 +19,6 @@ void main() async {
   } catch (e) {
     throw Exception('Error signing in anonymously: $e');
   }
-
   runApp(const MyApp());
 }
 

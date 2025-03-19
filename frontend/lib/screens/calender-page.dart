@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/period-prediction-service.dart';
 import '../widgets/calendar-month.dart';
 import '../utils/calendar.dart';
 import '../services/period-service.dart';
@@ -21,14 +22,17 @@ class CalendarPage extends StatefulWidget {
 class _CalendarPageState extends State<CalendarPage> {
   late Set<String> selectedDates;
   late Set<String> originalDates; // Store original dates before editing
+  late Set<String> predictedDates; // Store predicted period dates
   bool isEditing = false;
   bool isSaving = false;
   bool isLoading = true;
   bool hasChanges = false; // Track if changes were made during editing
   bool isCalculatingStats = false;
+  bool isFetchingPredictions = false;
   late DateTime _currentDate;
   final PeriodService _periodService = PeriodService();
   final PeriodStatsService _periodStatsService = PeriodStatsService();
+  final PeriodPredictionService _predictionService = PeriodPredictionService();
 
   // Stats information
   int _averageCycleLength = 28;
@@ -43,6 +47,7 @@ class _CalendarPageState extends State<CalendarPage> {
     // Initialize with dates passed from parent
     selectedDates = Set<String>.from(widget.selectedDates);
     originalDates = Set<String>.from(widget.selectedDates);
+    predictedDates = {};
     _currentDate = DateTime.now();
 
     // Fetch period dates from Firestore
@@ -71,6 +76,9 @@ class _CalendarPageState extends State<CalendarPage> {
         originalDates = Set<String>.from(dates); // Make a copy
         isLoading = false;
       });
+      
+      // After loading period dates, fetch predictions
+      _fetchPredictions();
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -88,6 +96,64 @@ class _CalendarPageState extends State<CalendarPage> {
       _averagePeriodLength = stats['meanPeriodLength'] ?? 5;
       _showStats = true;
     });
+  }
+
+  Future<void> _fetchPredictions() async {
+    if (isFetchingPredictions) return;
+    
+    try {
+      setState(() {
+        isFetchingPredictions = true;
+      });
+
+      final userId = widget.userId;
+      
+      // Get predictions from service
+      final prediction = await _predictionService.getPredictionsForUser(userId);
+      
+      if (prediction.containsKey('nextPeriodStartDate') && 
+          prediction['nextPeriodStartDate'] != null) {
+        
+        // Parse next period date
+        final nextPeriodStart = DateTime.parse(prediction['nextPeriodStartDate']);
+        
+        // Use the average period length, not the cycle length
+        // Period length is how many days bleeding lasts
+        final periodLength = _averagePeriodLength; // Use the value from stats
+        
+        // Set the next period date for display
+        setState(() {
+          
+          // Generate predicted dates for period duration only
+          predictedDates = _generatePredictedDates(nextPeriodStart, periodLength);
+        });
+      }
+    } catch (e) {
+      print('Error fetching predictions: $e');
+    } finally {
+      setState(() {
+        isFetchingPredictions = false;
+      });
+    }
+  }
+
+  // Generate a set of date keys for the predicted period
+  Set<String> _generatePredictedDates(DateTime startDate, int periodLength) {
+    Set<String> dates = {};
+    
+    // Generate dates for the period duration (not the whole cycle)
+    for (int i = 0; i < periodLength; i++) {
+      DateTime currentDate = startDate.add(Duration(days: i));
+      String monthName = CalendarUtils.months[currentDate.month - 1];
+      String day = currentDate.day.toString().padLeft(2, '0');
+      String year = currentDate.year.toString();
+      
+      // Format: "January-01-2023"
+      String dateKey = '$monthName-$day-$year';
+      dates.add(dateKey);
+    }
+    
+    return dates;
   }
 
   void _scrollToCurrentMonth() {
@@ -187,7 +253,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         child: TextButton(
                           onPressed: () => Navigator.of(context).pop(true),
                           style: TextButton.styleFrom(
-                            backgroundColor: Color.fromARGB(255, 240, 99, 153),
+                            backgroundColor: const Color.fromARGB(255, 240, 99, 153),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
@@ -290,6 +356,9 @@ class _CalendarPageState extends State<CalendarPage> {
         isCalculatingStats = false;
         _showStats = true;
       });
+
+      // Refresh predictions now that we've updated period data
+      await _fetchPredictions();
 
       // Exit edit mode
       setState(() {
@@ -404,6 +473,7 @@ class _CalendarPageState extends State<CalendarPage> {
           monthIndex: targetMonth.month - 1,
           year: targetMonth.year,
           selectedDates: selectedDates,
+          predictedDates: isEditing ? {} : predictedDates, // Don't show predictions in edit mode
           onDateSelected: onDateSelected,
         ),
       );
@@ -461,6 +531,21 @@ class _CalendarPageState extends State<CalendarPage> {
                       CircularProgressIndicator(),
                       SizedBox(height: 8),
                       Text("Calculating cycle statistics..."),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Show spinner if fetching predictions
+            if (isFetchingPredictions && !isEditing && !isCalculatingStats)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Center(
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 8),
+                      Text("Updating predictions..."),
                     ],
                   ),
                 ),
