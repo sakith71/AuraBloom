@@ -11,17 +11,7 @@ class PrivacyPage extends StatefulWidget {
 
 class _PrivacyPageState extends State<PrivacyPage> {
   bool _profileVisible = true;
-  bool _locationSharing = false;
   bool _dataSharing = true;
-  String _selectedDataRetention = '6 months';
-
-  final List<String> _dataRetentionOptions = [
-    '1 month',
-    '3 months',
-    '6 months',
-    '1 year',
-    'Forever',
-  ];
 
   @override
   void initState() {
@@ -33,9 +23,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _profileVisible = prefs.getBool('profileVisible') ?? true;
-      _locationSharing = prefs.getBool('locationSharing') ?? false;
       _dataSharing = prefs.getBool('dataSharing') ?? true;
-      _selectedDataRetention = prefs.getString('dataRetention') ?? '6 months';
     });
   }
 
@@ -47,27 +35,11 @@ class _PrivacyPageState extends State<PrivacyPage> {
     });
   }
 
-  Future<void> _saveLocationSharing(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('locationSharing', value);
-    setState(() {
-      _locationSharing = value;
-    });
-  }
-
   Future<void> _saveDataSharing(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('dataSharing', value);
     setState(() {
       _dataSharing = value;
-    });
-  }
-
-  Future<void> _saveDataRetention(String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('dataRetention', value);
-    setState(() {
-      _selectedDataRetention = value;
     });
   }
 
@@ -90,64 +62,73 @@ class _PrivacyPageState extends State<PrivacyPage> {
             ],
           ),
         ),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            _buildPrivacySection(
-              title: 'Profile Visibility',
-              subtitle: 'Make your profile visible to other users',
-              value: _profileVisible,
-              onChanged: (value) {
-                _saveProfileVisibility(value);
-              },
-            ),
-            const SizedBox(height: 15),
-            _buildPrivacySection(
-              title: 'Location Sharing',
-              subtitle: 'Share your location for better recommendations',
-              value: _locationSharing,
-              onChanged: (value) {
-                _saveLocationSharing(value);
-              },
-            ),
-            const SizedBox(height: 15),
-            _buildPrivacySection(
-              title: 'Health Data Sharing',
-              subtitle: 'Share anonymous health data to improve the app',
-              value: _dataSharing,
-              onChanged: (value) {
-                _saveDataSharing(value);
-              },
-            ),
-            const SizedBox(height: 15),
-            _buildDataRetentionSection(),
-            const SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () => _handleDataDownload(),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildPrivacySection(
+                      title: 'Profile Visibility',
+                      subtitle: 'Make your profile visible to other users',
+                      value: _profileVisible,
+                      onChanged: (value) {
+                        _saveProfileVisibility(value);
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    _buildPrivacySection(
+                      title: 'Health Data Sharing',
+                      subtitle:
+                          'Share anonymous health data to improve the app',
+                      value: _dataSharing,
+                      onChanged: (value) {
+                        _saveDataSharing(value);
+                      },
+                    ),
+                  ],
                 ),
               ),
-              child: const Text(
-                'Download My Data',
-                style: TextStyle(fontSize: 16),
-              ),
             ),
-            const SizedBox(height: 15),
-            TextButton(
-              onPressed: () => _handleDataDeletion(),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(color: Colors.red.shade300),
-                ),
-              ),
-              child: Text(
-                'Delete My Account',
-                style: TextStyle(color: Colors.red.shade300, fontSize: 16),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () => _handleDataDownload(),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    child: const Text(
+                      'Download My Data',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextButton(
+                    onPressed: () => _handleDataDeletion(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: BorderSide(color: Colors.red.shade300),
+                      ),
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    child: Text(
+                      'Delete My Account',
+                      style: TextStyle(
+                        color: Colors.red.shade300,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -197,62 +178,6 @@ class _PrivacyPageState extends State<PrivacyPage> {
             ),
           ),
           Switch(value: value, onChanged: onChanged, activeColor: Colors.blue),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDataRetentionSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Data Retention',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Choose how long to keep your data',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-          ),
-          const SizedBox(height: 15),
-          DropdownButtonFormField<String>(
-            value: _selectedDataRetention,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 15,
-                vertical: 10,
-              ),
-            ),
-            items:
-                _dataRetentionOptions.map((String duration) {
-                  return DropdownMenuItem<String>(
-                    value: duration,
-                    child: Text(duration),
-                  );
-                }).toList(),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                _saveDataRetention(newValue);
-              }
-            },
-          ),
         ],
       ),
     );
