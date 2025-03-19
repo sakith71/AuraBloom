@@ -1,5 +1,3 @@
-// lib/utils/calendar.dart
-
 class CalendarUtils {
   static const List<String> months = [
     'January',
@@ -80,6 +78,7 @@ class CalendarUtils {
         return DateTime.parse('$year-$monthNumber-${day.padLeft(2, '0')}');
       }
     } catch (e) {
+      print('Error parsing display date: $e');
       return null;
     }
     return null;
@@ -140,5 +139,39 @@ class CalendarUtils {
   static String _getWeekdayAbbreviation(int weekday) {
     const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
     return days[(weekday - 1) % 7];
+  }
+
+  // Format a date to a standard string format (YYYY-MM-DD)
+  static String formatToYYYYMMDD(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+  }
+
+  // Parse a date from a standard string format (YYYY-MM-DD)
+  static DateTime? parseFromYYYYMMDD(String dateString) {
+    try {
+      final parts = dateString.split('-');
+      if (parts.length == 3) {
+        final year = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final day = int.parse(parts[2]);
+        return DateTime(year, month, day);
+      }
+      return null;
+    } catch (e) {
+      print('Error parsing date: $e');
+      return null;
+    }
+  }
+
+  // Get current week dates starting from Sunday
+  static List<DateTime> getCurrentWeekDates() {
+    final DateTime now = DateTime.now();
+    final int currentWeekday = now.weekday % 7; // 0 for Sunday
+
+    // Get the date of the Sunday of this week
+    final DateTime startOfWeek = now.subtract(Duration(days: currentWeekday));
+
+    // Generate dates for the whole week
+    return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
   }
 }
