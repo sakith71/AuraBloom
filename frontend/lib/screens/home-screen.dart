@@ -163,15 +163,16 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime? _lastCycleStartDate;
   int _lastCycleDuration = 28;
   int _lastPeriodDuration = 5;
+  String _currentPeriodDay = 'Day 1'; // Default value
 
-  // Added: Track the current week dates
+  // Track the current week dates
   late List<DateTime> _weekDates;
 
   @override
   void initState() {
     super.initState();
 
-    // Added: Initialize the week dates
+    // Initialize the week dates
     _weekDates = CalendarUtils.getCurrentWeekDates();
 
     _selectedDates =
@@ -190,8 +191,58 @@ class _HomeScreenState extends State<HomeScreen> {
     } else {
       _isLoading = false;
     }
+
     // Fetch cycle data for the Previous Cycle box
     _fetchCycleData();
+
+    // Calculate current period day
+    _calculateCurrentPeriodDay();
+  }
+
+  void _calculateCurrentPeriodDay() {
+    if (_selectedDates.isEmpty) return;
+
+    // Get today's date in YYYY-MM-DD format
+    final DateTime now = DateTime.now();
+    final String today = CalendarUtils.formatToYYYYMMDD(now);
+
+    // Sort the selected dates to find the most recent period start
+    final List<String> sortedDates = _selectedDates.toList()..sort();
+
+    if (sortedDates.contains(today)) {
+      // Find the index of today in the sorted list
+      int dayIndex = sortedDates.indexOf(today);
+
+      // If we're in a period, calculate which day it is
+      if (dayIndex >= 0) {
+        // Find consecutive dates before today
+        int consecutiveDays = 1; // Start with today
+        final DateTime todayDate = DateTime.parse(today);
+
+        // Check previous dates
+        for (int i = 1; i <= dayIndex; i++) {
+          final String prevDateStr = sortedDates[dayIndex - i];
+          final DateTime prevDate = DateTime.parse(prevDateStr);
+
+          // If the previous date is exactly 1 day before, increment the count
+          if (todayDate.difference(prevDate).inDays == i) {
+            consecutiveDays++;
+          } else {
+            break; // Non-consecutive date, stop counting
+          }
+        }
+
+        setState(() {
+          _currentPeriodDay = 'Day $consecutiveDays';
+        });
+        return;
+      }
+    }
+
+    // Default to Day 1 if not in a period or calculation failed
+    setState(() {
+      _currentPeriodDay = 'Day 1';
+    });
   }
 
   Future<void> _fetchCycleData() async {
@@ -223,6 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _selectedDates = dates;
         _isLoading = false;
       });
+      _calculateCurrentPeriodDay();
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -291,13 +343,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           _buildWeekCalendar(),
           // Animated wave section
-          const AnimatedWaveSection(periodDay: 'Day 1'),
+          AnimatedWaveSection(periodDay: _currentPeriodDay),
           const SizedBox(height: 20),
           DailyInsights(userId: widget.userId),
           const SizedBox(height: 20),
           const TipOfTheDay(),
           const SizedBox(height: 20),
           const PredictionWidget(),
+
           PreviousCycleBox(
             lastCycleStartDate: _lastCycleStartDate,
             cycleDuration: _lastCycleDuration,
@@ -309,7 +362,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Updated: Dynamic week calendar
   Widget _buildWeekCalendar() {
     final days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -323,6 +375,16 @@ class _HomeScreenState extends State<HomeScreen> {
           date.month == today.month &&
           date.day == today.day,
     );
+
+    // Create a list of formatted dates to check against selected dates
+    final List<String> formattedWeekDates =
+        _weekDates.map((date) => CalendarUtils.formatToYYYYMMDD(date)).toList();
+
+    // Check which dates have period markers
+    final List<bool> hasMarkers =
+        formattedWeekDates
+            .map((dateStr) => _selectedDates.contains(dateStr))
+            .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -351,29 +413,48 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(
               7,
-              (index) => Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color:
-                      index == todayIndex
-                          ? const Color(0xFFE6E9FF)
-                          : Colors.white,
-                ),
-                child: Center(
-                  child: Text(
-                    '${_weekDates[index].day}',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight:
+              (index) => Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Date circle
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color:
                           index == todayIndex
-                              ? FontWeight.w500
-                              : FontWeight.w400,
-                      color: Colors.black87,
+                              ? const Color(0xFFE6E9FF)
+                              : Colors.white,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${_weekDates[index].day}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight:
+                              index == todayIndex
+                                  ? FontWeight.w500
+                                  : FontWeight.w400,
+                          color: Colors.black87,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  // Period indicator dot
+                  if (hasMarkers[index])
+                    Positioned(
+                      bottom: 2,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFE3A6DD),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),
