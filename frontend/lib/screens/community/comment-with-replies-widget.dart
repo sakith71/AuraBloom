@@ -28,7 +28,6 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
   final CommunityService _communityService = CommunityService();
   final TextEditingController _replyController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
   bool _isLoadingReplies = false;
   bool _showReplies = false;
   bool _showReplyInput = false;
@@ -40,6 +39,42 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
   void dispose() {
     _replyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadReplies() async {
+    if (!_showReplies) {
+      setState(() {
+        _isLoadingReplies = true;
+      });
+
+      try {
+        final replies = await _communityService.getRepliesForComment(
+          widget.postId,
+          widget.comment.id,
+        );
+        
+        if (kDebugMode && replies.isNotEmpty) {
+          print('Loaded ${replies.length} replies for comment: ${widget.comment.id}');
+        }
+        
+        setState(() {
+          _replies = replies;
+          _showReplies = true;
+          _isLoadingReplies = false;
+        });
+      } catch (e) {
+        setState(() {
+          _isLoadingReplies = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load replies: $e')),
+        );
+      }
+    } else {
+      setState(() {
+        _showReplies = false;
+      });
+    }
   }
 
   Future<void> _addReply() async {
@@ -85,8 +120,15 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
 
       await _communityService.addReply(reply);
 
-      // Will implement loading replies in next commit
+      // Load the updated replies
+      final replies = await _communityService.getRepliesForComment(
+        widget.postId,
+        widget.comment.id,
+      );
+
       setState(() {
+        _replies = replies;
+        _showReplies = true;
         _isSubmittingReply = false;
         _replyController.clear();
         widget.comment.replyCount += 1; // Update reply count
@@ -306,16 +348,18 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                       const Spacer(),
                       if (widget.comment.replyCount > 0)
                         TextButton.icon(
-                          onPressed: () {
-                            // Will implement in next commit
-                          },
+                          onPressed: _loadReplies,
                           icon: Icon(
-                            Icons.keyboard_arrow_down,
+                            _showReplies
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
                             size: 16,
                             color: Colors.grey[700],
                           ),
                           label: Text(
-                            '${widget.comment.replyCount} ${widget.comment.replyCount == 1 ? 'reply' : 'replies'}',
+                            _showReplies
+                                ? 'Hide replies'
+                                : '${widget.comment.replyCount} ${widget.comment.replyCount == 1 ? 'reply' : 'replies'}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[700],
@@ -428,6 +472,122 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                     ],
                   ),
                 ],
+              ),
+            ),
+
+          // Replies loading indicator
+          if (_isLoadingReplies)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+
+          // Display replies
+          if (_showReplies && _replies.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.only(left: 46, right: 12, bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: _replies.map((reply) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Reply author avatar
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: reply.isAnonymous
+                                    ? Colors.grey
+                                    : Colors.pinkAccent.withOpacity(0.7),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  reply.isAnonymous
+                                      ? 'A'
+                                      : _getInitial(reply.authorName),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Reply content
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        reply.isAnonymous
+                                            ? 'Anonymous'
+                                            : reply.authorName,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      if (widget.isPostAuthor &&
+                                          !reply.isAnonymous &&
+                                          _auth.currentUser?.uid == reply.authorId)
+                                        Container(
+                                          margin: const EdgeInsets.only(left: 8),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.pink[100],
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Text(
+                                            'Author',
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.pink,
+                                            ),
+                                          ),
+                                        ),
+                                      const Spacer(),
+                                      Text(
+                                        _formatDate(reply.createdAt),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    reply.content,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ),
         ],
