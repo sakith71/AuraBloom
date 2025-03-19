@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/period-prediction-model.dart';
 import '../models/user-model.dart';
 
 class FirestoreService {
@@ -139,6 +140,87 @@ class FirestoreService {
     } catch (e) {
       print('Error updating user data: $e');
       throw Exception('Failed to update user data: $e');
+    }
+  }
+
+  // Store period prediction data using model class
+  Future<void> storePredictionData(
+    String uid,
+    PeriodPredictionModel prediction,
+  ) async {
+    try {
+      final now = DateTime.now();
+
+      // Get user document to check for existing cycle data
+      DocumentSnapshot userDoc = await users.doc(uid).get();
+      DateTime? lastCycleStartDate;
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+
+        if (userData.containsKey('lastCycleStartDate') &&
+            userData['lastCycleStartDate'] != null) {
+          try {
+            lastCycleStartDate = DateTime.parse(userData['lastCycleStartDate']);
+          } catch (e) {
+            print('Error parsing existing lastCycleStartDate: $e');
+          }
+        }
+      }
+
+      // Create updated prediction with proper metadata
+      final updatedPrediction = prediction.copyWith(
+        lastPredictionDate: now,
+        lastPeriodStartDate:
+            lastCycleStartDate ?? prediction.lastPeriodStartDate,
+      );
+
+      // Convert to map and add updatedAt timestamp
+      Map<String, dynamic> predictionData = updatedPrediction.toMap();
+      predictionData['updatedAt'] = now.toIso8601String();
+
+      await users.doc(uid).update(predictionData);
+
+      // Also store historical prediction in a subcollection for tracking accuracy over time
+      await users.doc(uid).collection('predictions').add({
+        ...predictionData,
+        'createdAt': now.toIso8601String(),
+      });
+
+      print(
+        'Prediction data stored: $uid, Cycle: ${updatedPrediction.predictedCycleLength}, Next start: ${updatedPrediction.getFormattedNextPeriodDate()}',
+      );
+    } catch (e) {
+      print('Error storing prediction data: $e');
+      throw Exception('Failed to store prediction data: $e');
+    }
+  }
+
+  // Store period prediction data using raw values (for backward compatibility)
+  Future<void> storePredictionDataFromValues(
+    String uid,
+    int predictedCycleLength,
+    String nextPeriodStartDate, {
+    bool isAiPrediction = false,
+    bool isFallback = false,
+    String? modelType,
+  }) async {
+    try {
+      // Create a model instance from the provided values
+      final prediction = PeriodPredictionModel(
+        predictedCycleLength: predictedCycleLength,
+        nextPeriodStartDate: DateTime.parse(nextPeriodStartDate),
+        lastPredictionDate: DateTime.now(),
+        isAiPrediction: isAiPrediction,
+        isFallback: isFallback,
+        modelType: modelType,
+      );
+
+      // Call the model-based method
+      await storePredictionData(uid, prediction);
+    } catch (e) {
+      print('Error storing prediction data from values: $e');
+      throw Exception('Failed to store prediction data: $e');
     }
   }
 }

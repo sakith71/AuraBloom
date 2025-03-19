@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/services/period-prediction-service.dart';
 import 'package:intl/intl.dart';
+import '../services/period-prediction-service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PredictionWidget extends StatefulWidget {
-  const PredictionWidget({Key? key}) : super(key: key);
+  const PredictionWidget({super.key});
 
   @override
   _PredictionWidgetState createState() => _PredictionWidgetState();
@@ -13,11 +14,13 @@ class PredictionWidget extends StatefulWidget {
 class _PredictionWidgetState extends State<PredictionWidget> {
   final PeriodPredictionService _predictionService = PeriodPredictionService();
   bool _isLoading = true;
+  bool _isRefreshing = false;
   String? _errorMessage;
   Map<String, dynamic>? _prediction;
+  int _retryCount = 0;
+  static const int MAX_RETRIES = 2;
 
   @override
-
   void initState() {
     super.initState();
     _loadPrediction();
@@ -31,7 +34,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
 
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
-      
+
       if (userId == null) {
         setState(() {
           _isLoading = false;
@@ -43,17 +46,91 @@ class _PredictionWidgetState extends State<PredictionWidget> {
       print("Getting prediction for user: $userId");
       final prediction = await _predictionService.getPredictionsForUser(userId);
       print("Prediction received: $prediction");
-      
+
+      // Validate that prediction has required fields
+      if (!prediction.containsKey('predictedCycleLength') ||
+          !prediction.containsKey('nextPeriodStartDate')) {
+        throw Exception('Invalid prediction data received');
+      }
+
       setState(() {
         _prediction = prediction;
         _isLoading = false;
+        _retryCount = 0; // Reset retry count on success
       });
     } catch (e) {
       print("Error loading prediction: $e");
+
+      // If we haven't reached max retries, try again
+      if (_retryCount < MAX_RETRIES) {
+        _retryCount++;
+        print(
+          "Retrying prediction load (attempt $_retryCount of $MAX_RETRIES)",
+        );
+        await Future.delayed(
+          Duration(seconds: 1),
+        ); // Wait a second before retry
+        return _loadPrediction();
+      }
+
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load prediction: $e';
+        _errorMessage = 'Failed to load prediction: ${e.toString()}';
       });
+    }
+  }
+
+  Future<void> _refreshPrediction() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You need to be logged in to refresh predictions'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isRefreshing = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Force a refresh by clearing cached predictions from Firestore first
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'lastPredictionDate': null,
+      });
+
+      // Now get a fresh prediction
+      final prediction = await _predictionService.getPredictionsForUser(userId);
+
+      if (!prediction.containsKey('predictedCycleLength') ||
+          !prediction.containsKey('nextPeriodStartDate')) {
+        throw Exception('Invalid prediction data received');
+      }
+
+      setState(() {
+        _prediction = prediction;
+        _isRefreshing = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Prediction refreshed successfully')),
+      );
+    } catch (e) {
+      print("Error refreshing prediction: $e");
+      setState(() {
+        _isRefreshing = false;
+        _errorMessage = 'Failed to refresh prediction: ${e.toString()}';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to refresh prediction: ${e.toString()}'),
+        ),
+      );
     }
   }
 
@@ -61,9 +138,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _buildContent(),
@@ -73,9 +148,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -103,14 +176,13 @@ class _PredictionWidgetState extends State<PredictionWidget> {
     }
 
     if (_prediction == null) {
-      return const Center(
-        child: Text('No prediction data available'),
-      );
+      return const Center(child: Text('No prediction data available'));
     }
 
-    // Format the next period date
+    // Format the next period date with null safety
     String nextPeriodDate = 'Unknown';
-    if (_prediction!.containsKey('nextPeriodStartDate')) {
+    if (_prediction!.containsKey('nextPeriodStartDate') &&
+        _prediction!['nextPeriodStartDate'] != null) {
       try {
         final dateTime = DateTime.parse(_prediction!['nextPeriodStartDate']);
         nextPeriodDate = DateFormat('MMM dd, yyyy').format(dateTime);
@@ -120,8 +192,21 @@ class _PredictionWidgetState extends State<PredictionWidget> {
       }
     }
 
-    bool isUsingAIModel = _prediction!.containsKey('usedActualModel') && 
-                          _prediction!['usedActualModel'] == true;
+    // Get cycle length with null safety
+    String cycleLength = 'Unknown';
+    if (_prediction!.containsKey('predictedCycleLength') &&
+        _prediction!['predictedCycleLength'] != null) {
+      try {
+        int cycleDays = _prediction!['predictedCycleLength'];
+        cycleLength = '$cycleDays days';
+      } catch (e) {
+        print("Error getting cycle length: $e");
+      }
+    }
+
+    bool isUsingAIModel =
+        _prediction!.containsKey('usedActualModel') &&
+        _prediction!['usedActualModel'] == true;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -129,70 +214,50 @@ class _PredictionWidgetState extends State<PredictionWidget> {
       children: [
         Row(
           children: [
-            const Icon(Icons.calendar_today, 
-              color: Color.fromARGB(255, 240, 99, 153), 
-              size: 24),
+            const Icon(
+              Icons.calendar_today,
+              color: Color.fromARGB(255, 240, 99, 153),
+              size: 24,
+            ),
             const SizedBox(width: 8),
             const Text(
               'Your Next Period',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Spacer(),
-            if (_prediction!.containsKey('isFallback') && _prediction!['isFallback'] == true)
+            if (_prediction!.containsKey('isFallback') &&
+                _prediction!['isFallback'] == true)
               Tooltip(
                 message: 'Using estimated prediction (server unavailable)',
-                child: const Icon(Icons.sync_problem, size: 16, color: Colors.orange),
+                child: const Icon(
+                  Icons.sync_problem,
+                  size: 16,
+                  color: Colors.orange,
+                ),
               )
             else if (isUsingAIModel)
               Tooltip(
                 message: 'Using AI prediction model',
-                child: const Icon(Icons.psychology, size: 16, color: Colors.green),
+                child: const Icon(
+                  Icons.psychology,
+                  size: 16,
+                  color: Colors.green,
+                ),
               )
-            else if (_prediction!.containsKey('fromCache') && _prediction!['fromCache'])
+            else if (_prediction!.containsKey('fromCache') &&
+                _prediction!['fromCache'] == true)
               Tooltip(
                 message: 'Using cached prediction',
-                child: const Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                child: const Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ),
           ],
         ),
         const Divider(),
-        
-        // AI Model Badge - show only when using the actual Random Forest model
-        if (isUsingAIModel)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 12.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.psychology, color: Colors.green, size: 14),
-                      SizedBox(width: 4),
-                      Text(
-                        'AI Prediction',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
+
         const SizedBox(height: 8),
         _buildInfoRow(
           icon: Icons.event,
@@ -203,34 +268,54 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         _buildInfoRow(
           icon: Icons.loop,
           label: 'Predicted Cycle Length:',
-          value: '${_prediction!['predictedCycleLength']} days',
+          value: cycleLength,
         ),
-        
-        // Show model type information
-        if (_prediction!.containsKey('modelType'))
+
+        // Show date prediction was last updated
+        if (_prediction!.containsKey('lastPredictionDate') &&
+            _prediction!['lastPredictionDate'] != null)
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: _buildInfoRow(
-              icon: Icons.model_training,
-              label: 'Prediction Method:',
-              value: _prediction!['modelType'],
-              valueColor: isUsingAIModel ? Colors.green : Colors.grey[600],
+              icon: Icons.update,
+              label: 'Last Updated:',
+              value: _formatDate(_prediction!['lastPredictionDate']),
+              valueColor: Colors.grey[600],
             ),
           ),
-          
+
         const SizedBox(height: 16),
         Center(
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.refresh),
-            label: const Text('Refresh Prediction'),
-            onPressed: _loadPrediction,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color.fromARGB(255, 240, 99, 153),
-            ),
-          ),
+          child:
+              _isRefreshing
+                  ? const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color.fromARGB(255, 240, 99, 153),
+                    ),
+                  )
+                  : OutlinedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh Prediction'),
+                    onPressed: _refreshPrediction,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color.fromARGB(255, 240, 99, 153),
+                    ),
+                  ),
         ),
       ],
     );
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return 'Unknown';
+
+    try {
+      final dateTime = DateTime.parse(dateString);
+      return DateFormat('MMM dd, yyyy').format(dateTime);
+    } catch (e) {
+      print("Error formatting date: $e");
+      return 'Unknown date';
+    }
   }
 
   Widget _buildInfoRow({
@@ -246,10 +331,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
         ),
         Text(
