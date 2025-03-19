@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart'; // Added for URL navigation
 
 // App theme colors
 class AppColors {
@@ -251,6 +252,14 @@ class ProfileSettingsSection extends StatelessWidget {
     );
   }
 
+  // Open URL helper method
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   void _showSupportOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -298,7 +307,10 @@ class ProfileSettingsSection extends StatelessWidget {
                   icon: Icons.chat_bubble_outline,
                   title: 'Chat with Support',
                   color: AppColors.primary,
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _launchUrl('https://aurabloom.vercel.app/contact');
+                  },
                 ),
                 Divider(height: 20, thickness: 1, color: AppColors.divider),
                 _buildSupportOption(
