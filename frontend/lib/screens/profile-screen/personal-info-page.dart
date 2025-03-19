@@ -78,7 +78,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         }
       }
     } catch (e) {
-      print('Error loading user data: $e');
+      
 
       // Check if widget is still mounted before showing error
       if (!mounted) return;
@@ -493,7 +493,6 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
           }
         });
       } catch (e) {
-        print('Error updating profile: $e');
 
         // Check if widget is still mounted before updating state
         if (!mounted) return;

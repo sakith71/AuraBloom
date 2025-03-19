@@ -43,9 +43,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         return;
       }
 
-      print("Getting prediction for user: $userId");
       final prediction = await _predictionService.getPredictionsForUser(userId);
-      print("Prediction received: $prediction");
 
       // Validate that prediction has required fields
       if (!prediction.containsKey('predictedCycleLength') ||
@@ -59,14 +57,10 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         _retryCount = 0; // Reset retry count on success
       });
     } catch (e) {
-      print("Error loading prediction: $e");
 
       // If we haven't reached max retries, try again
       if (_retryCount < MAX_RETRIES) {
         _retryCount++;
-        print(
-          "Retrying prediction load (attempt $_retryCount of $MAX_RETRIES)",
-        );
         await Future.delayed(
           Duration(seconds: 1),
         ); // Wait a second before retry
@@ -77,6 +71,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         _isLoading = false;
         _errorMessage = 'Failed to load prediction: ${e.toString()}';
       });
+      throw Exception('Failed to load prediction: $e');
     }
   }
 
@@ -120,7 +115,6 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         const SnackBar(content: Text('Prediction refreshed successfully')),
       );
     } catch (e) {
-      print("Error refreshing prediction: $e");
       setState(() {
         _isRefreshing = false;
         _errorMessage = 'Failed to refresh prediction: ${e.toString()}';
@@ -131,18 +125,45 @@ class _PredictionWidgetState extends State<PredictionWidget> {
           content: Text('Failed to refresh prediction: ${e.toString()}'),
         ),
       );
+      throw Exception('Failed to refresh prediction: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _buildContent(),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            'My cycle',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildContent(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -165,11 +186,11 @@ class _PredictionWidgetState extends State<PredictionWidget> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadPrediction,
-            child: const Text('Try Again'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 240, 99, 153),
               foregroundColor: Colors.white,
             ),
+            child: const Text('Try Again'),
           ),
         ],
       );
@@ -187,8 +208,9 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         final dateTime = DateTime.parse(_prediction!['nextPeriodStartDate']);
         nextPeriodDate = DateFormat('MMM dd, yyyy').format(dateTime);
       } catch (e) {
-        print("Error parsing date: $e");
+        
         nextPeriodDate = 'Date unavailable';
+        throw Exception('Error parsing date: $e');
       }
     }
 
@@ -200,7 +222,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         int cycleDays = _prediction!['predictedCycleLength'];
         cycleLength = '$cycleDays days';
       } catch (e) {
-        print("Error getting cycle length: $e");
+        throw Exception('Error getting cycle length: $e');
       }
     }
 
@@ -313,8 +335,7 @@ class _PredictionWidgetState extends State<PredictionWidget> {
       final dateTime = DateTime.parse(dateString);
       return DateFormat('MMM dd, yyyy').format(dateTime);
     } catch (e) {
-      print("Error formatting date: $e");
-      return 'Unknown date';
+      throw Exception('Error formatting date: $e');
     }
   }
 

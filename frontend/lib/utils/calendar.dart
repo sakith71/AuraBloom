@@ -80,7 +80,6 @@ class CalendarUtils {
         return DateTime.parse('$year-$monthNumber-${day.padLeft(2, '0')}');
       }
     } catch (e) {
-      print('Error parsing display date: $e');
       return null;
     }
     return null;
