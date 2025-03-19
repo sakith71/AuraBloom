@@ -45,7 +45,7 @@ class ProfileSettingsSection extends StatelessWidget {
           _buildMenuItem(
             icon: Icons.language,
             title: 'Language',
-            subtitle: 'English (US)',
+            subtitle: 'English',
             color: AppColors.languageIcon,
             iconBackgroundColor: AppColors.languageIcon.withOpacity(0.1),
             onTap: () => _showLanguageDialog(context),
@@ -167,7 +167,7 @@ class ProfileSettingsSection extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Select Language',
+                    'Language',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -178,23 +178,8 @@ class ProfileSettingsSection extends StatelessWidget {
                   const SizedBox(height: 24),
                   _buildLanguageOption(
                     context: context,
-                    language: 'English (US)',
+                    language: 'English',
                     isSelected: true,
-                  ),
-                  _buildLanguageOption(
-                    context: context,
-                    language: 'Spanish',
-                    isSelected: false,
-                  ),
-                  _buildLanguageOption(
-                    context: context,
-                    language: 'French',
-                    isSelected: false,
-                  ),
-                  _buildLanguageOption(
-                    context: context,
-                    language: 'German',
-                    isSelected: false,
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
