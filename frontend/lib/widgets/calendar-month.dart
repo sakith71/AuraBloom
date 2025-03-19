@@ -7,6 +7,7 @@ class CalendarMonth extends StatelessWidget {
   final int monthIndex;
   final int year;
   final Set<String> selectedDates;
+  final Set<String> predictedDates;
   final Function(String) onDateSelected;
 
   const CalendarMonth({
@@ -15,6 +16,7 @@ class CalendarMonth extends StatelessWidget {
     required this.monthIndex,
     required this.year,
     required this.selectedDates,
+    this.predictedDates = const {},
     required this.onDateSelected,
   });
 
@@ -89,6 +91,7 @@ class CalendarMonth extends StatelessWidget {
               children: week.map((day) {
                 final dateKey = '$month-$day-$year';
                 final isSelected = selectedDates.contains(dateKey);
+                final isPredicted = predictedDates.contains(dateKey);
                 final isEnabled = day.isNotEmpty;
                 
                 bool isPastOrToday = false;
@@ -109,9 +112,8 @@ class CalendarMonth extends StatelessWidget {
                   isEnabled: isEnabled,
                   isPastOrToday: isPastOrToday,
                   isToday: isToday,
-                  onTap: (isEnabled && isPastOrToday)
-                      ? () => onDateSelected(dateKey)
-                      : null,
+                  isPredicted: isPredicted,
+                  onTap: isEnabled ? () => onDateSelected(dateKey) : null,
                 );
               }).toList(),
             )),
