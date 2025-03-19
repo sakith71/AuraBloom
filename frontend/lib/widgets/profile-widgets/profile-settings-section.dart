@@ -329,7 +329,10 @@ class ProfileSettingsSection extends StatelessWidget {
                   icon: Icons.help_outline,
                   title: 'FAQs',
                   color: AppColors.supportIcon,
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _launchUrl('https://aurabloom.vercel.app/faq');
+                  },
                 ),
                 const SizedBox(height: 30),
               ],
