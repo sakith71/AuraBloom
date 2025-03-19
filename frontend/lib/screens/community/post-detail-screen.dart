@@ -1,14 +1,14 @@
-// lib/screens/community/post-detail-screen.dart
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/community-models.dart';
 import 'package:frontend/services/community-service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:frontend/screens/community/comment-with-replies-widget.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final CommunityPost post;
 
-  const PostDetailScreen({super.key, required this.post});
+  const PostDetailScreen({Key? key, required this.post}) : super(key: key);
 
   @override
   _PostDetailScreenState createState() => _PostDetailScreenState();
@@ -16,31 +16,26 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   final CommunityService _communityService = CommunityService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _commentController = TextEditingController();
+  
   List<Comment> _comments = [];
   bool _isLoading = true;
-  bool _isLiking = false;
-  bool _userHasLiked = false;
-  bool _isAnonymousComment = false; // Added for anonymous comment toggle
-  late ScaffoldMessengerState _scaffoldMessenger;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _scaffoldMessenger = ScaffoldMessenger.of(context);
-  }
+  bool _isLiked = false;
+  bool _isPostingComment = false;
+  bool _isAnonymousComment = false;
 
   @override
   void initState() {
     super.initState();
     _loadComments();
-    _checkIfUserLiked();
+    _checkIfLiked();
+  }
 
-    // Debug post data
-    if (kDebugMode) {
-      print('Post author name: ${widget.post.authorName}');
-      print('Post is anonymous: ${widget.post.isAnonymous}');
-    }
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadComments() async {
@@ -49,43 +44,58 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
 
     try {
-      final comments = await _communityService.getCommentsForPost(
-        widget.post.id,
-      );
-
-      if (mounted) {
-        setState(() {
-          _comments = comments;
-          _isLoading = false;
-        });
-      }
+      final comments = await _communityService.getCommentsForPost(widget.post.id);
+      setState(() {
+        _comments = comments;
+        _isLoading = false;
+      });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Failed to load comments: $e')),
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load comments: $e')),
+      );
+    }
+  }
+
+  Future<void> _checkIfLiked() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      try {
+        final liked = await _communityService.hasUserLikedPost(
+          widget.post.id,
+          user.uid,
         );
+        setState(() {
+          _isLiked = liked;
+        });
+      } catch (e) {
+        // Handle error quietly
       }
     }
   }
 
-  Future<void> _checkIfUserLiked() async {
-    try {
-      final userId = _communityService.currentUser?.uid ?? 'anonymous';
-      final hasLiked = await _communityService.hasUserLikedPost(
-        widget.post.id,
-        userId,
-      );
-
-      if (mounted) {
+  Future<void> _toggleLike() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      try {
+        await _communityService.likePost(widget.post.id, user.uid);
+        
+        // Toggle local state
         setState(() {
-          _userHasLiked = hasLiked;
+          _isLiked = !_isLiked;
+          widget.post.likeCount += _isLiked ? 1 : -1;
         });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to like post: $e')),
+        );
       }
-    } catch (e) {
-      // Silently fail
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to like posts')),
+      );
     }
   }
 
@@ -94,146 +104,53 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return;
     }
 
-    final user = _communityService.currentUser;
-    if (user == null) {
-      _scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('You need to be logged in to comment')),
-      );
-      return;
-    }
-
-    // Get user display name with improved logic
-    String authorName;
-
-    if (_isAnonymousComment) {
-      authorName = 'Anonymous';
-    } else {
-      authorName = _communityService.getUserDisplayName();
-
-      // Debug output of what name we're using
-      if (kDebugMode) {
-        print('Adding comment with author name: $authorName');
-        print('User display name: ${user.displayName}');
-        print('User email: ${user.email}');
-        print('Comment is anonymous: $_isAnonymousComment');
-      }
-    }
-
-    final newComment = Comment(
-      id: '', // Will be updated by the service
-      postId: widget.post.id,
-      authorId: user.uid,
-      authorName: authorName,
-      authorAvatar: user.photoURL ?? '',
-      createdAt: DateTime.now(),
-      content: _commentController.text.trim(),
-      isAnonymous: _isAnonymousComment,
-    );
+    setState(() {
+      _isPostingComment = true;
+    });
 
     try {
-      await _communityService.addComment(newComment);
-      _commentController.clear();
-      _loadComments();
-
-      // Update the post's comment count in UI
-      if (mounted) {
-        setState(() {
-          widget.post.commentCount += 1;
-        });
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
       }
-    } catch (e) {
-      if (mounted) {
-        _scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Failed to add comment: $e')),
-        );
-      }
-    }
-  }
 
-  Future<void> _deletePost() async {
-    bool isDeleting = true;
-
-    if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext dialogContext) {
-          return WillPopScope(
-            onWillPop: () async => !isDeleting,
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        },
+      final comment = Comment(
+        id: '', // Will be set by Firestore
+        postId: widget.post.id,
+        authorId: user.uid,
+        authorName: _isAnonymousComment ? 'Anonymous' : _communityService.getUserDisplayName(),
+        createdAt: DateTime.now(),
+        content: _commentController.text.trim(),
+        isAnonymous: _isAnonymousComment,
       );
-    }
 
-    try {
-      await _communityService.deletePost(widget.post.id);
-      isDeleting = false;
-
-      if (mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context, true);
-      }
+      await _communityService.addComment(comment);
+      
+      // Reload comments
+      await _loadComments();
+      
+      setState(() {
+        _isPostingComment = false;
+        _commentController.clear();
+      });
     } catch (e) {
-      isDeleting = false;
-
-      if (mounted) {
-        Navigator.pop(context);
-        _scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Failed to delete post: $e')),
-        );
-      }
+      setState(() {
+        _isPostingComment = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to post comment: $e')),
+      );
     }
   }
 
   Future<void> _deleteComment(String commentId) async {
     try {
       await _communityService.deleteComment(commentId, widget.post.id);
-      _loadComments();
-
-      if (mounted) {
-        setState(() {
-          widget.post.commentCount -= 1;
-        });
-      }
+      await _loadComments();
     } catch (e) {
-      if (mounted) {
-        _scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('Failed to delete comment: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _likePost() async {
-    if (_isLiking) return;
-
-    setState(() {
-      _isLiking = true;
-    });
-
-    try {
-      final userId = _communityService.currentUser?.uid ?? 'anonymous';
-      await _communityService.likePost(widget.post.id, userId);
-
-      if (mounted) {
-        setState(() {
-          _isLiking = false;
-          _userHasLiked = !_userHasLiked;
-          if (_userHasLiked) {
-            widget.post.likeCount += 1;
-          } else {
-            widget.post.likeCount -= 1;
-          }
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLiking = false;
-        });
-        _scaffoldMessenger.showSnackBar(SnackBar(content: Text('$e')));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete comment: $e')),
+      );
     }
   }
 
@@ -252,341 +169,440 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
-  String _getInitial(String name) {
-    if (name.isEmpty) return 'U';
-
-    if (name.contains('@')) {
-      return name.split('@')[0][0].toUpperCase();
+  // Get color for tag
+  Color _getTagColor(String tag) {
+    switch (tag) {
+      case 'Pain Management':
+        return Colors.redAccent;
+      case 'Exercises':
+        return Colors.green;
+      case 'Diets':
+        return Colors.amber;
+      case 'Reproductive Health':
+        return Colors.pinkAccent;
+      case 'Mental Health':
+        return Colors.purple;
+      default:
+        return Colors.blueAccent;
     }
-
-    return name[0].toUpperCase();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (kDebugMode) {
-      print('Building PostDetailScreen with author: ${widget.post.authorName}');
-    }
+    final isUserPostAuthor = _auth.currentUser?.uid == widget.post.authorId;
 
     return Scaffold(
-      // Updated background color to use the global scaffold background color.
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Post Details',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text('Post Detail'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {
-              if (_communityService.currentUser?.uid == widget.post.authorId) {
-                showDialog(
+          if (isUserPostAuthor)
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
                   context: context,
-                  builder:
-                      (context) => AlertDialog(
-                        title: const Text('Post Options'),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                              title: const Text('Delete Post'),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _deletePost();
-                              },
-                            ),
-                          ],
-                        ),
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Post'),
+                    content: const Text('Are you sure you want to delete this post?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('CANCEL'),
                       ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('DELETE'),
+                      ),
+                    ],
+                  ),
                 );
-              }
-            },
-          ),
+
+                if (confirmed == true) {
+                  try {
+                    await _communityService.deletePost(widget.post.id);
+                    Navigator.pop(context, true); // Return true to indicate deletion
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete post: $e')),
+                    );
+                  }
+                }
+              },
+            ),
         ],
       ),
       body: Column(
         children: [
+          // Post content
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  // Post card
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Author info and time
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+                          child: Row(
                             children: [
-                              CircleAvatar(
-                                backgroundColor:
+                              // Author avatar
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: widget.post.isAnonymous
+                                      ? Colors.grey
+                                      : Colors.pinkAccent,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
                                     widget.post.isAnonymous
-                                        ? Colors.grey
-                                        : Colors.purple,
-                                radius: 20,
-                                child: Text(
-                                  widget.post.isAnonymous
-                                      ? 'A'
-                                      : _getInitial(widget.post.authorName),
-                                  style: const TextStyle(color: Colors.white),
+                                        ? 'A'
+                                        : (widget.post.authorName.isNotEmpty
+                                            ? widget.post.authorName[0]
+                                            : 'U'),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 24,
+                                    ),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.post.isAnonymous
-                                          ? 'Anonymous'
-                                          : widget.post.authorName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    Text(
-                                      _formatDate(widget.post.createdAt),
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            widget.post.content,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const SizedBox(height: 16),
-                          if (widget.post.imageUrls != null &&
-                              widget.post.imageUrls!.isNotEmpty)
-                            Container(
-                              height: 200,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: NetworkImage(
-                                    widget.post.imageUrls![0],
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                          if (widget.post.imageUrls != null &&
-                              widget.post.imageUrls!.length > 1)
-                            Container(
-                              height: 80,
-                              margin: const EdgeInsets.only(top: 8),
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: widget.post.imageUrls!.length - 1,
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    width: 80,
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      image: DecorationImage(
-                                        image: NetworkImage(
-                                          widget.post.imageUrls![index + 1],
-                                        ),
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          const SizedBox(height: 16),
-                          Wrap(
-                            spacing: 8,
-                            children:
-                                widget.post.tags
-                                    .map(
-                                      (tag) => Chip(
-                                        label: Text(
-                                          tag,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        backgroundColor: Colors.blue,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        padding: EdgeInsets.zero,
-                                        labelPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 0,
-                                            ),
-                                      ),
-                                    )
-                                    .toList(),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: _likePost,
-                                child: Row(
-                                  children: [
-                                    _isLiking
-                                        ? SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            color: Colors.red,
-                                          ),
-                                        )
-                                        : Icon(
-                                          _userHasLiked
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          size: 18,
-                                          color: Colors.red,
-                                        ),
-                                    const SizedBox(width: 4),
-                                    Text('${widget.post.likeCount} Likes'),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 24),
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.comment_outlined,
-                                    size: 18,
-                                    color: Colors.blue,
+                                  Text(
+                                    widget.post.isAnonymous
+                                        ? 'Anonymous'
+                                        : widget.post.authorName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text('${widget.post.commentCount} Comments'),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _formatDate(widget.post.createdAt),
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
+
+                        // Post content
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Text(
+                            widget.post.content,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+
+                        // Image if available
+                        if (widget.post.imageUrls != null &&
+                            widget.post.imageUrls!.isNotEmpty)
+                          Container(
+                            height: 250,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              image: DecorationImage(
+                                image: NetworkImage(widget.post.imageUrls![0]),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+
+                        // Tags
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Tags as chips
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: widget.post.tags.map((tag) {
+                                  final tagColor = _getTagColor(tag);
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: tagColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(30),
+                                      border: Border.all(
+                                        color: tagColor.withOpacity(0.5),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: tagColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              
+                              const SizedBox(height: 16),
+                              
+                              // Likes and comments count
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: _toggleLike,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          _isLiked ? Icons.favorite : Icons.favorite_border,
+                                          size: 22,
+                                          color: Colors.redAccent,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${widget.post.likeCount}',
+                                          style: TextStyle(
+                                            color: Colors.grey[700],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.chat_bubble_outline,
+                                        size: 22,
+                                        color: Colors.blueAccent,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${widget.post.commentCount}',
+                                        style: TextStyle(
+                                          color: Colors.grey[700],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  // Share button
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.share_outlined,
+                                      size: 22,
+                                      color: Colors.grey,
+                                    ),
+                                    onPressed: () {
+                                      // Share functionality
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Comments section header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Text(
+                      'Comments (${_comments.length})',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Comments',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
+                  
+                  // Comments list
                   _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _comments.isEmpty
-                      ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'No comments yet. Be the first to comment!',
-                            style: TextStyle(color: Colors.grey[600]),
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
+                            ),
                           ),
-                        ),
-                      )
-                      : Column(
-                        children:
-                            _comments
-                                .map((comment) => _buildCommentCard(comment))
-                                .toList(),
-                      ),
+                        )
+                      : _comments.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(30),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.chat_bubble_outline,
+                                      size: 60,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No comments yet. Be the first to comment!',
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 16,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              itemCount: _comments.length,
+                              itemBuilder: (context, index) {
+                                return CommentWithRepliesWidget(
+                                  comment: _comments[index],
+                                  postId: widget.post.id,
+                                  onDelete: _deleteComment,
+                                  isPostAuthor: isUserPostAuthor,
+                                );
+                              },
+                            ),
                 ],
               ),
             ),
           ),
+          
+          // Comment input section
           Container(
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
-                  offset: const Offset(0, -5),
+                  offset: const Offset(0, -3),
                 ),
               ],
             ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               children: [
                 Row(
-                  children: [
-                    Switch(
-                      value: _isAnonymousComment,
-                      onChanged: (value) {
-                        setState(() {
-                          _isAnonymousComment = value;
-                        });
-                      },
-                      activeColor: Colors.pink,
-                    ),
-                    Text(
-                      'Post as anonymous',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Expanded(
                       child: TextField(
                         controller: _commentController,
                         decoration: InputDecoration(
                           hintText: 'Add a comment...',
+                          hintStyle: TextStyle(color: Colors.grey[400]),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
+                            borderSide: BorderSide(color: Colors.grey[300]!),
                           ),
-                          filled: true,
-                          fillColor: Colors.grey[100],
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                            horizontal: 20,
+                            vertical: 12,
                           ),
+                          isDense: true,
                         ),
-                        maxLines: null,
+                        minLines: 1,
+                        maxLines: 4,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    InkWell(
-                      onTap: _addComment,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: const BoxDecoration(
-                          color: Color.fromARGB(255, 228, 77, 173),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.send,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
+                    _isPostingComment
+                        ? const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
+                              ),
+                            ),
+                          )
+                        : IconButton(
+                            onPressed: _addComment,
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.pink,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.send,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isAnonymousComment,
+                      onChanged: (value) {
+                        setState(() {
+                          _isAnonymousComment = value ?? false;
+                        });
+                      },
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    const Text(
+                      'Comment anonymously',
+                      style: TextStyle(fontSize: 12),
                     ),
                   ],
                 ),
@@ -594,97 +610,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCommentCard(Comment comment) {
-    if (kDebugMode) {
-      print('Building comment card with author: ${comment.authorName}');
-      print('Comment is anonymous: ${comment.isAnonymous}');
-    }
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor:
-                      comment.isAnonymous ? Colors.grey : Colors.purple[200],
-                  radius: 16,
-                  child: Text(
-                    comment.isAnonymous ? 'A' : _getInitial(comment.authorName),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        comment.isAnonymous ? 'Anonymous' : comment.authorName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        _formatDate(comment.createdAt),
-                        style: TextStyle(color: Colors.grey[600], fontSize: 10),
-                      ),
-                    ],
-                  ),
-                ),
-                if (_communityService.currentUser?.uid == comment.authorId)
-                  GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('Delete Comment'),
-                              content: const Text(
-                                'Are you sure you want to delete this comment?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    Navigator.pop(context);
-                                    await _deleteComment(comment.id);
-                                  },
-                                  child: const Text(
-                                    'Delete',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
-                            ),
-                      );
-                    },
-                    child: Icon(
-                      Icons.more_vert,
-                      size: 16,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(comment.content),
-          ],
-        ),
       ),
     );
   }
