@@ -143,6 +143,25 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
     }
   }
 
+  Future<void> _deleteReply(String replyId) async {
+    try {
+      await _communityService.deleteReply(
+        widget.postId,
+        widget.comment.id,
+        replyId,
+      );
+
+      setState(() {
+        _replies.removeWhere((reply) => reply.id == replyId);
+        widget.comment.replyCount -= 1; // Update reply count
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete reply: $e')),
+      );
+    }
+  }
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -494,6 +513,8 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: _replies.map((reply) {
+                  final isReplyAuthor = _auth.currentUser?.uid == reply.authorId;
+                  
                   return Container(
                     margin: const EdgeInsets.only(top: 12),
                     child: Column(
@@ -579,6 +600,56 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                                     reply.content,
                                     style: const TextStyle(fontSize: 13),
                                   ),
+                                  
+                                  // Delete reply option
+                                  if (isReplyAuthor)
+                                    Align(
+                                      alignment: Alignment.bottomRight,
+                                      child: TextButton(
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text('Delete Reply'),
+                                              content: const Text(
+                                                'Are you sure you want to delete this reply?',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.pop(context),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    _deleteReply(reply.id);
+                                                  },
+                                                  child: const Text(
+                                                    'Delete',
+                                                    style: TextStyle(color: Colors.red),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          'Delete',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.red[700],
+                                          ),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 0,
+                                          ),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
