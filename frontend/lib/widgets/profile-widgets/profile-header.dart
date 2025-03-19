@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/user-model.dart';
 import 'package:frontend/services/auth-service.dart';
 import 'package:frontend/services/firestore_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileHeader extends StatefulWidget {
   const ProfileHeader({super.key});
@@ -14,15 +16,18 @@ class ProfileHeader extends StatefulWidget {
 class _ProfileHeaderState extends State<ProfileHeader> {
   final AuthService _authService = AuthService();
   final FirestoreService _firestoreService = FirestoreService();
+  final ImagePicker _imagePicker = ImagePicker();
   UserModel? _userModel;
   bool _isLoading = true;
   bool _isProfileVisible = true;
+  String? _localImagePath;
 
   @override
   void initState() {
     super.initState();
     _loadProfileVisibility();
     _loadUserData();
+    _loadLocalImagePath();
   }
 
   Future<void> _loadProfileVisibility() async {
@@ -32,6 +37,60 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     setState(() {
       _isProfileVisible = prefs.getBool('profileVisible') ?? true;
     });
+  }
+
+  Future<void> _loadLocalImagePath() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    setState(() {
+      _localImagePath = prefs.getString('profileImagePath');
+    });
+  }
+
+  Future<void> _saveLocalImagePath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profileImagePath', path);
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (pickedFile != null) {
+        if (!mounted) return;
+
+        // Save the path to SharedPreferences
+        await _saveLocalImagePath(pickedFile.path);
+
+        setState(() {
+          _localImagePath = pickedFile.path;
+        });
+
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated'),
+              backgroundColor: Color(0xFFE91E63),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error selecting image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -88,22 +147,56 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               ? const Center(child: CircularProgressIndicator())
               : Row(
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        _getInitials(),
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Stack(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            shape: BoxShape.circle,
+                            image:
+                                _localImagePath != null
+                                    ? DecorationImage(
+                                      image: FileImage(File(_localImagePath!)),
+                                      fit: BoxFit.cover,
+                                    )
+                                    : null,
+                          ),
+                          child:
+                              _localImagePath == null
+                                  ? Center(
+                                    child: Text(
+                                      _getInitials(),
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue.shade700,
+                                      ),
+                                    ),
+                                  )
+                                  : null,
                         ),
-                      ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE91E63),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 20),
@@ -217,6 +310,57 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF333333),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // Profile Picture section
+                        GestureDetector(
+                          onTap: () async {
+                            await _pickImage();
+                            // To see the change immediately in the dialog
+                            setDialogState(() {});
+                          },
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  shape: BoxShape.circle,
+                                  image:
+                                      _localImagePath != null
+                                          ? DecorationImage(
+                                            image: FileImage(
+                                              File(_localImagePath!),
+                                            ),
+                                            fit: BoxFit.cover,
+                                          )
+                                          : null,
+                                ),
+                                child:
+                                    _localImagePath == null
+                                        ? Center(
+                                          child: Text(
+                                            _getInitials(),
+                                            style: TextStyle(
+                                              fontSize: 36,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue.shade700,
+                                            ),
+                                          ),
+                                        )
+                                        : null,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Change Photo',
+                                style: TextStyle(
+                                  color: const Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 24),

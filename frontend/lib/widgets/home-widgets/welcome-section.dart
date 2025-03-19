@@ -33,7 +33,9 @@ class _WelcomeSectionState extends State<WelcomeSection> {
 
   Future<void> _loadUsername() async {
     try {
+      print('WelcomeSection: Loading username for user ${widget.userId}');
       final username = await _userService.getUserName(widget.userId);
+      print('WelcomeSection: Username loaded: $username');
 
       if (mounted) {
         setState(() {
@@ -42,6 +44,7 @@ class _WelcomeSectionState extends State<WelcomeSection> {
         });
       }
     } catch (e) {
+      print('WelcomeSection: Error loading username: $e');
       if (mounted) {
         setState(() {
           _username = 'User'; // Fallback
