@@ -12,6 +12,7 @@ class PrivacyPage extends StatefulWidget {
 class _PrivacyPageState extends State<PrivacyPage> {
   bool _profileVisible = true;
   bool _dataSharing = true;
+  bool _healthInfoVisible = true; // New variable for health info visibility
 
   @override
   void initState() {
@@ -24,6 +25,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
     setState(() {
       _profileVisible = prefs.getBool('profileVisible') ?? true;
       _dataSharing = prefs.getBool('dataSharing') ?? true;
+      _healthInfoVisible =
+          prefs.getBool('healthInfoVisible') ??
+          true; // Load health info preference
     });
   }
 
@@ -40,6 +44,14 @@ class _PrivacyPageState extends State<PrivacyPage> {
     await prefs.setBool('dataSharing', value);
     setState(() {
       _dataSharing = value;
+    });
+  }
+
+  Future<void> _saveHealthInfoVisibility(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('healthInfoVisible', value);
+    setState(() {
+      _healthInfoVisible = value;
     });
   }
 
@@ -75,6 +87,16 @@ class _PrivacyPageState extends State<PrivacyPage> {
                       value: _profileVisible,
                       onChanged: (value) {
                         _saveProfileVisibility(value);
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    _buildPrivacySection(
+                      title: 'Health Information Visibility',
+                      subtitle:
+                          'Display your health information on your profile',
+                      value: _healthInfoVisible,
+                      onChanged: (value) {
+                        _saveHealthInfoVisibility(value);
                       },
                     ),
                     const SizedBox(height: 15),
