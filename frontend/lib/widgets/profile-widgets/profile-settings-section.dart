@@ -317,14 +317,22 @@ class ProfileSettingsSection extends StatelessWidget {
                   icon: Icons.email_outlined,
                   title: 'Email Support',
                   color: AppColors.accent,
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _launchUrl(
+                      'mailto:aurabloom28@gmail.com?subject=AuraBloom Support Request',
+                    );
+                  },
                 ),
                 Divider(height: 20, thickness: 1, color: AppColors.divider),
                 _buildSupportOption(
                   icon: Icons.help_outline,
                   title: 'FAQs',
                   color: AppColors.supportIcon,
-                  onTap: () => Navigator.pop(context),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _launchUrl('https://aurabloom.vercel.app/faq');
+                  },
                 ),
                 const SizedBox(height: 30),
               ],
