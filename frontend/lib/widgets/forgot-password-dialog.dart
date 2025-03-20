@@ -21,7 +21,6 @@ class ForgotPasswordDialog extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Password reset email sent")),
         );
-        Navigator.pop(context); // Close forgot password dialog
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
