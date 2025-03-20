@@ -219,25 +219,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                             fontSize: 14,
                           ),
                         ),
-                        const SizedBox(height: 5),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.shade100,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Premium Member',
-                            style: TextStyle(
-                              color: Colors.green.shade700,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
+                        // Premium Member section removed
                       ],
                     ),
                   ),
@@ -248,7 +230,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                         _showEditProfileDialog(context);
                       }
                     },
-                    color: Colors.grey.shade600,
+                    color: const Color.fromARGB(255, 240, 99, 153),
                   ),
                 ],
               ),

@@ -78,8 +78,6 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         }
       }
     } catch (e) {
-      
-
       // Check if widget is still mounted before showing error
       if (!mounted) return;
 
@@ -154,27 +152,17 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
           _isInitializing
               ? Container(
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFFE8D5E4), // Light lavender
-                      Color(0xFFF8C4D9), // Light pink
-                    ],
-                  ),
+                  color: Color(
+                    0xFFFCF0F7,
+                  ), // Using the same background color as PrivacyPage
                 ),
                 child: const Center(child: CircularProgressIndicator()),
               )
               : Container(
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFFE8D5E4), // Light lavender
-                      Color(0xFFF8C4D9), // Light pink
-                    ],
-                  ),
+                  color: Color(
+                    0xFFFCF0F7,
+                  ), // Using the same background color as PrivacyPage
                 ),
                 child: SafeArea(
                   child: Column(
@@ -493,7 +481,6 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
           }
         });
       } catch (e) {
-
         // Check if widget is still mounted before updating state
         if (!mounted) return;
 
