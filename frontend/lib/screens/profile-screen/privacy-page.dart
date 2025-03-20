@@ -11,8 +11,7 @@ class PrivacyPage extends StatefulWidget {
 
 class _PrivacyPageState extends State<PrivacyPage> {
   bool _profileVisible = true;
-  bool _dataSharing = true;
-  bool _healthInfoVisible = true; // New variable for health info visibility
+  bool _healthInfoVisible = true; // Health info visibility
 
   @override
   void initState() {
@@ -24,10 +23,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _profileVisible = prefs.getBool('profileVisible') ?? true;
-      _dataSharing = prefs.getBool('dataSharing') ?? true;
-      _healthInfoVisible =
-          prefs.getBool('healthInfoVisible') ??
-          true; // Load health info preference
+      _healthInfoVisible = prefs.getBool('healthInfoVisible') ?? true;
     });
   }
 
@@ -36,14 +32,6 @@ class _PrivacyPageState extends State<PrivacyPage> {
     await prefs.setBool('profileVisible', value);
     setState(() {
       _profileVisible = value;
-    });
-  }
-
-  Future<void> _saveDataSharing(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('dataSharing', value);
-    setState(() {
-      _dataSharing = value;
     });
   }
 
@@ -57,6 +45,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Define the toggle color
+    const Color toggleColor = Color.fromARGB(255, 255, 115, 166);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Privacy Settings'),
@@ -88,6 +79,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
                       onChanged: (value) {
                         _saveProfileVisibility(value);
                       },
+                      activeColor: toggleColor,
                     ),
                     const SizedBox(height: 15),
                     _buildPrivacySection(
@@ -98,16 +90,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
                       onChanged: (value) {
                         _saveHealthInfoVisibility(value);
                       },
-                    ),
-                    const SizedBox(height: 15),
-                    _buildPrivacySection(
-                      title: 'Health Data Sharing',
-                      subtitle:
-                          'Share anonymous health data to improve the app',
-                      value: _dataSharing,
-                      onChanged: (value) {
-                        _saveDataSharing(value);
-                      },
+                      activeColor: toggleColor,
                     ),
                   ],
                 ),
@@ -115,42 +98,21 @@ class _PrivacyPageState extends State<PrivacyPage> {
             ),
             Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _handleDataDownload(),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: const Text(
-                      'Download My Data',
-                      style: TextStyle(fontSize: 16),
-                    ),
+              child: ElevatedButton(
+                onPressed: () => _handleDataDeletion(),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color.fromARGB(255, 255, 115, 166),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(height: 15),
-                  TextButton(
-                    onPressed: () => _handleDataDeletion(),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: Colors.red.shade300),
-                      ),
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: Text(
-                      'Delete My Account',
-                      style: TextStyle(
-                        color: Colors.red.shade300,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ],
+                  minimumSize: const Size.fromHeight(50),
+                ),
+                child: const Text(
+                  'Delete My Account',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
               ),
             ),
           ],
@@ -164,6 +126,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required Color activeColor,
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -199,41 +162,9 @@ class _PrivacyPageState extends State<PrivacyPage> {
               ],
             ),
           ),
-          Switch(value: value, onChanged: onChanged, activeColor: Colors.blue),
+          Switch(value: value, onChanged: onChanged, activeColor: activeColor),
         ],
       ),
-    );
-  }
-
-  void _handleDataDownload() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Download My Data'),
-            content: const Text(
-              'You can download all your personal data. The process may take a few minutes.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Data download started. You\'ll be notified when it\'s ready.',
-                      ),
-                    ),
-                  );
-                },
-                child: const Text('Download'),
-              ),
-            ],
-          ),
     );
   }
 
