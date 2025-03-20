@@ -176,6 +176,30 @@ class CommunityService {
     }
   }
 
+    // Toggle pin status of a post
+  Future<bool> togglePinPost(String postId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Get the current post
+    final postDoc = await _firestore.collection('posts').doc(postId).get();
+    if (!postDoc.exists) {
+      throw Exception('Post not found');
+    }
+
+    final data = postDoc.data() as Map<String, dynamic>;
+    final bool currentlyPinned = data['isPinned'] ?? false;
+    
+    // Toggle the pinned status
+    await _firestore.collection('posts').doc(postId).update({
+      'isPinned': !currentlyPinned,
+    });
+    
+    return !currentlyPinned; // Return the new pinned status
+  }
+
   // Check if user liked a post
   Future<bool> hasUserLikedPost(String postId, String userId) async {
     final likeDoc =
