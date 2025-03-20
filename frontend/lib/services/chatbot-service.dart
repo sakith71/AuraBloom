@@ -1,36 +1,49 @@
-class ChatbotService {
-  static const String systemPrompt = """
-    You are a specialized chatbot focused solely on period pain management.
-    Your expertise is limited to:
-    - Period pain symptoms and management
-    - Safe pain relief methods (both medical and natural)
-    - Lifestyle adjustments for managing menstrual pain
-    - Exercise recommendations during menstruation
-    - Diet tips for period pain relief
-    - When to seek medical attention
-    - Common misconceptions about period pain
-  """;
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:http/http.dart' as http;
 
-  static List<String> getDefaultOptions() {
-    return [
-      "Track Pain Symptoms",
-      "Pain Relief Methods",
-      "Exercise Tips",
-      "Diet Recommendations",
-      "When to See a Doctor",
-    ];
+class ChatService {
+  // Dynamically set the base URL based on platform
+  String get baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://192.168.123.175:8080'; // Special IP for Android emulator
+    } else if (Platform.isIOS) {
+      return 'http://192.168.123.175:8080'; // For iOS simulator
+    } else {
+      return 'http://192.168.123.175:8080'; // Fallback
+    }
+  }
+  // Simple method to test API connectivity
+  Future<bool> testConnection() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/api/ping'));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 
-  static String getResponse(String userInput) {
-    // TODO: Replace with actual API integration
-    if (userInput.toLowerCase().contains("pain")) {
-      return "There are several ways to manage period pain:\n"
-          "1. Over-the-counter pain relievers\n"
-          "2. Heat therapy (using a heating pad)\n"
-          "3. Light exercise\n"
-          "4. Proper rest\n"
-          "Would you like more specific information about any of these methods?";
+  Future<String> sendMessage(String message) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/chat'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'prompt': message}),
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the JSON response
+        final jsonResponse = jsonDecode(response.body);
+        if (jsonResponse.containsKey('response')) {
+          return jsonResponse['response'];
+        } else {
+          return jsonResponse.toString(); // Fallback in case response format changes
+        }
+      } else {
+        return 'Error: ${response.statusCode} - ${response.reasonPhrase}';
+      }
+    } catch (e) {
+      return 'Network error: $e';
     }
-    return "How can I help you manage your period pain today?";
   }
 }
