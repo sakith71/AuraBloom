@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/privacy-policy-screen.dart';
 import 'package:url_launcher/url_launcher.dart'; // Added for URL navigation
 
 // App theme colors
@@ -471,7 +472,14 @@ class ProfileSettingsSection extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            // Add navigation to privacy policy
+                            // Navigate to privacy policy screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => const PrivacyPolicyScreen(),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12),
