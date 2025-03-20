@@ -1,9 +1,12 @@
 import '../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 import 'additional-symptoms-screen.dart';
 
 class MenstrualSymptomsScreen extends StatefulWidget {
-  const MenstrualSymptomsScreen({super.key});
+  final String userId;
+  
+  const MenstrualSymptomsScreen({super.key, required this.userId});
 
   @override
   State<MenstrualSymptomsScreen> createState() => _MenstrualSymptomsScreenState();
@@ -14,6 +17,9 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
   String? _regularityAnswer;
   String? _crampsAnswer;
   String? _daysAnswer;
+  bool _isLoading = false;
+  
+  final FirestoreService _firestoreService = FirestoreService();
 
   final List<Map<String, dynamic>> _questions = [
     {
@@ -62,18 +68,49 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
     });
   }
 
-  void _handleNext() {
+  Future<void> _saveAnswersAndProceed() async {
     if (_currentPageIndex < _questions.length - 1) {
       setState(() {
         _currentPageIndex++;
       });
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const AdditionalSymptomsScreen(),
-        ),
-      );
+      return;
+    }
+    
+    // Save all answers to Firestore
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Update user document with menstrual symptoms data
+      await _firestoreService.users.doc(widget.userId).update({
+        'isRegularPeriod': _regularityAnswer == 'Yes',
+        'crampsExperience': _crampsAnswer ?? 'No',
+        'symptomDuration': _daysAnswer ?? '1-3 days',
+      });
+      
+      // Navigate to next screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdditionalSymptomsScreen(userId: widget.userId),
+          ),
+        );
+      }
+    } catch (e) {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving data: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -99,19 +136,19 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
           ),
           decoration: BoxDecoration(
             color: isSelected 
-                ? const Color(0xFFE1F5FE)
+                ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
                 : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? Colors.blue
+                  ? const Color.fromARGB(255, 240, 99, 153)
                   : Colors.grey.shade300,
               width: 2,
             ),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001),
                       spreadRadius: 1,
                       blurRadius: 4,
                       offset: const Offset(0, 2),
@@ -127,7 +164,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: isSelected
-                        ? Colors.blue.shade700
+                        ? const Color.fromARGB(255, 240, 99, 153)
                         : Colors.black87,
                     fontWeight: isSelected
                         ? FontWeight.w600
@@ -138,7 +175,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
               if (isSelected)
                 Icon(
                   Icons.check_circle,
-                  color: Colors.blue.shade700,
+                  color: const Color.fromARGB(255, 240, 99, 153),
                 ),
             ],
           ),
@@ -152,14 +189,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(
@@ -187,11 +217,13 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                NavigationButtonRow(
-                  onPrevious: _handlePrevious,
-                  onNext: _handleNext,
-                  isNextEnabled: _getCurrentAnswer() != null,
-                ),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : NavigationButtonRow(
+                        onPrevious: _handlePrevious,
+                        onNext: _saveAnswersAndProceed,
+                        isNextEnabled: _getCurrentAnswer() != null,
+                      ),
               ],
             ),
           ),

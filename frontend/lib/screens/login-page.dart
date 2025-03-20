@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/login-form.dart';
-import '../widgets/social-login-buttons.dart';
-import '../widgets/custom-divider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -11,14 +9,7 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -48,10 +39,6 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               const LoginForm(),
-              const SizedBox(height: 20),
-              const CustomDivider(text: 'OR, log in with'),
-              const SizedBox(height: 20),
-              const SocialLoginButtons(),
             ],
           ),
         ),

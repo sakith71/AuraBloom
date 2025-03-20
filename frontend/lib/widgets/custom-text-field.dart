@@ -6,6 +6,7 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool isPassword;
   final TextInputType? keyboardType;
+  final Widget? suffixIcon;
 
   const CustomTextField({
     super.key,
@@ -14,6 +15,7 @@ class CustomTextField extends StatelessWidget {
     this.validator,
     this.isPassword = false,
     this.keyboardType,
+    this.suffixIcon,
   });
 
   @override
@@ -24,11 +26,10 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: Colors.black54,
-        ),
+        hintStyle: const TextStyle(color: Colors.black54),
         filled: true,
         fillColor: Colors.white,
+        suffixIcon: suffixIcon, // Added suffixIcon here for password toggle
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

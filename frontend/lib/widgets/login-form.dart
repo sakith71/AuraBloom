@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/validators.dart';
 import 'forgot-password-dialog.dart';
@@ -8,7 +9,6 @@ class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _LoginFormState createState() => _LoginFormState();
 }
 
@@ -16,7 +16,8 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _rememberMe = false;
+  bool _isLoading = false;
+  bool _passwordVisible = false; // Toggle for password visibility
 
   @override
   void dispose() {
@@ -25,29 +26,37 @@ class _LoginFormState extends State<LoginForm> {
     super.dispose();
   }
 
-  void _handleLogin(BuildContext context) {
+  void _handleLogin(BuildContext context) async {
     if (_formKey.currentState!.validate()) {
-      // Show loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_rememberMe
-              ? "Logging In with Remember Me..."
-              : "Logging In..."),
-          duration: const Duration(seconds: 1),  // Shorter duration
-        ),
-      );
-
-      // Navigate to HomeScreen after brief delay to show loading
-      Future.delayed(const Duration(seconds: 1), () {
-        Navigator.pushReplacement(  // Use pushReplacement to prevent going back to login
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              selectedDates: <String>{},  // Pass empty set for now
-            ),
-          ),
-        );
+      setState(() {
+        _isLoading = true;
       });
+
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
+
+      try {
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: email, password: password);
+
+        if (userCredential.user != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => HomeScreen(userId: userCredential.user!.uid),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login failed: ${e.toString()}")),
+        );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -57,60 +66,117 @@ class _LoginFormState extends State<LoginForm> {
       key: _formKey,
       child: Column(
         children: [
+          // Email Field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextFormField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                hintText: 'Enter Email',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              validator: Validators.validateEmail,
+              child: TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  hintText: 'Enter Email',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 15,
+                  ),
+                  isDense: true,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                ),
+                validator: Validators.validateEmail,
+              ),
             ),
           ),
           const SizedBox(height: 15),
+          // Password Field with Toggle Visibility
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TextFormField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: 'Enter Password',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              validator: Validators.validatePassword,
+              child: TextFormField(
+                controller: _passwordController,
+                obscureText: !_passwordVisible, // Updated to use toggle
+                decoration: InputDecoration(
+                  hintText: 'Enter Password',
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 15,
+                    horizontal: 15,
+                  ),
+                  isDense: true,
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _passwordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _passwordVisible = !_passwordVisible;
+                      });
+                    },
+                  ),
+                ),
+                validator: Validators.validatePassword,
+              ),
             ),
           ),
           const SizedBox(height: 10),
+          // Forgot Password
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _rememberMe,
-                      onChanged: (value) {
-                        setState(() {
-                          _rememberMe = value ?? false;
-                        });
-                      },
-                    ),
-                    const Text('Remember Me',
-                        style: TextStyle(color: Colors.black45)),
-                  ],
-                ),
                 TextButton(
                   onPressed: () {
                     showDialog(
@@ -121,36 +187,45 @@ class _LoginFormState extends State<LoginForm> {
                   child: const Text(
                     'Forget Password?',
                     style: TextStyle(
-                        color: Colors.blue, fontWeight: FontWeight.bold),
+                      color: Color.fromARGB(255, 240, 99, 153),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
+          // Login Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () => _handleLogin(context),  // Updated onPressed
+                onPressed: _isLoading ? null : () => _handleLogin(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Color.fromARGB(255, 240, 99, 153),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  'Log In',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child:
+                    _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                          'Log In',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
               ),
             ),
           ),
           const SizedBox(height: 10),
-          const Text("Don't have an account?",
-              style: TextStyle(color: Colors.black45)),
+          // Sign Up Link
+          const Text(
+            "Don't have an account?",
+            style: TextStyle(color: Colors.black45),
+          ),
           TextButton(
             onPressed: () {
               Navigator.push(
@@ -160,7 +235,10 @@ class _LoginFormState extends State<LoginForm> {
             },
             child: const Text(
               'Sign up',
-              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color.fromARGB(255, 240, 99, 153),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

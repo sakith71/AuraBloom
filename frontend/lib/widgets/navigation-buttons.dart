@@ -40,7 +40,7 @@ class NavigationButton extends StatelessWidget {
 
   Color _getBackgroundColor() {
     if (!isEnabled) return Colors.grey.shade300;
-    return isNext ? Colors.blue : Colors.white;
+    return isNext ? const Color.fromARGB(255, 240, 99, 153) : Colors.white;
   }
 
   Color _getTextColor() {

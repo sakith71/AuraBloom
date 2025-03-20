@@ -1,8 +1,12 @@
 import '../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 import 'cycle-length-screen.dart';
+
 class AdditionalSymptomsScreen extends StatefulWidget {
-  const AdditionalSymptomsScreen({super.key});
+  final String userId;
+  
+  const AdditionalSymptomsScreen({super.key, required this.userId});
 
   @override
   State<AdditionalSymptomsScreen> createState() => _AdditionalSymptomsScreenState();
@@ -19,15 +23,50 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
     {'name': 'Diarrhea', 'isSelected': false},
   ];
 
+  bool _isLoading = false;
+  final FirestoreService _firestoreService = FirestoreService();
+
   bool get hasSelectedSymptoms => _symptoms.any((symptom) => symptom['isSelected']);
 
-  void _handleNext() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CycleLengthScreen(),
-      ),
-    );
+  Future<void> _saveSymptomsThenProceed() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      // Extract selected symptoms
+      List<String> selectedSymptoms = _symptoms
+          .where((symptom) => symptom['isSelected'])
+          .map((symptom) => symptom['name'] as String)
+          .toList();
+      
+      // Update user document with selected symptoms
+      await _firestoreService.users.doc(widget.userId).update({
+        'additionalSymptoms': selectedSymptoms,
+      });
+      
+      // Navigate to next screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CycleLengthScreen(userId: widget.userId),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving symptoms: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _handlePrevious() {
@@ -50,19 +89,19 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
           ),
           decoration: BoxDecoration(
             color: symptom['isSelected']
-                ? const Color(0xFFE1F5FE)
+                ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
                 : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: symptom['isSelected']
-                  ? Colors.blue
+                  ? const Color.fromARGB(255, 240, 99, 153)
                   : Colors.grey.shade300,
               width: 2,
             ),
             boxShadow: symptom['isSelected']
                 ? [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.1),
                       spreadRadius: 1,
                       blurRadius: 4,
                       offset: const Offset(0, 2),
@@ -78,7 +117,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     color: symptom['isSelected']
-                        ? Colors.blue.shade700
+                        ? const Color.fromARGB(255, 240, 99, 153)
                         : Colors.black87,
                     fontWeight: symptom['isSelected']
                         ? FontWeight.w600
@@ -89,7 +128,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
               if (symptom['isSelected'])
                 Icon(
                   Icons.check_circle,
-                  color: Colors.blue.shade700,
+                  color: const Color.fromARGB(255, 240, 99, 153),
                 ),
             ],
           ),
@@ -103,14 +142,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
-          ),
+          color: Color(0xFFFCF0F7),
         ),
         child: SafeArea(
           child: Padding(
@@ -136,12 +168,13 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                NavigationButtonRow(
-                  onPrevious: _handlePrevious,
-                  onNext: _handleNext,
-                  // Since this screen doesn't require selection, we can always enable the next button
-                  isNextEnabled: true,
-                ),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : NavigationButtonRow(
+                        onPrevious: _handlePrevious,
+                        onNext: _saveSymptomsThenProceed,
+                        isNextEnabled: true, // Symptoms selection is optional
+                      ),
               ],
             ),
           ),

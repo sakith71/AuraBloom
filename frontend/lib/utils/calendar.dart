@@ -1,16 +1,27 @@
-
-
-// lib/utils/calendar_utils.dart
 class CalendarUtils {
   static const List<String> months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   static const Map<String, String> monthNumbers = {
     'January': '01', 'February': '02', 'March': '03', 'April': '04',
     'May': '05', 'June': '06', 'July': '07', 'August': '08',
-    'September': '09', 'October': '10', 'November': '11', 'December': '12'
+    'September': '09', 'October': '10', 'November': '11', 'December': '12',
+    // Short forms for better compatibility
+    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+    'Ma': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+    'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12',
   };
 
   // Calendar generation methods
@@ -18,15 +29,16 @@ class CalendarUtils {
     List<List<String>> weeks = [];
     DateTime firstDay = DateTime(year, month, 1);
     int daysInMonth = DateTime(year, month + 1, 0).day;
-    
-    int startWeekday = firstDay.weekday - 1;
+
+    int startWeekday =
+        firstDay.weekday % 7; // Adjust for Sunday as first day (0)
     List<String> currentWeek = List.filled(7, '');
     int dayCounter = 1;
-    
+
     for (int i = 0; i < startWeekday; i++) {
       currentWeek[i] = '';
     }
-    
+
     for (int i = startWeekday; dayCounter <= daysInMonth; i++) {
       if (i == 7) {
         weeks.add(List.from(currentWeek));
@@ -36,11 +48,11 @@ class CalendarUtils {
       currentWeek[i] = dayCounter.toString().padLeft(2, '0');
       dayCounter++;
     }
-    
+
     if (currentWeek.any((day) => day.isNotEmpty)) {
       weeks.add(currentWeek);
     }
-    
+
     return weeks;
   }
 
@@ -61,28 +73,105 @@ class CalendarUtils {
         final month = parts[0];
         final day = parts[1].replaceAll(',', '');
         final year = parts[2];
-        
+
         final monthNumber = getMonthNumber(month);
-        return DateTime.parse('$year-$monthNumber-$day');
+        return DateTime.parse('$year-$monthNumber-${day.padLeft(2, '0')}');
       }
     } catch (e) {
+      print('Error parsing display date: $e');
       return null;
     }
     return null;
   }
 
-  static String formatToStandardDate(String monthName, String day, String year) {
+  static String formatToStandardDate(
+    String monthName,
+    String day,
+    String year,
+  ) {
     final monthNumber = getMonthNumber(monthName);
     return '$year-$monthNumber-${day.padLeft(2, '0')}';
   }
 
   // Calculate cycle dates
-  static DateTime calculateNextPeriod(DateTime lastPeriod, {int cycleLength = 28}) {
+  static DateTime calculateNextPeriod(
+    DateTime lastPeriod, {
+    int cycleLength = 28,
+  }) {
     return lastPeriod.add(Duration(days: cycleLength));
   }
 
   static int calculateDaysUntil(DateTime targetDate) {
     final now = DateTime.now();
     return targetDate.difference(now).inDays;
+  }
+
+  // Get today's formatted date
+  static String getTodayFormatted() {
+    final now = DateTime.now();
+    final day = now.day;
+    final month = _getMonthAbbreviation(now.month);
+    final weekday = _getWeekdayAbbreviation(now.weekday);
+
+    return '$day $month, $weekday';
+  }
+
+  // Get month abbreviation
+  static String _getMonthAbbreviation(int month) {
+    const monthAbbreviations = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return monthAbbreviations[month - 1];
+  }
+
+  // Get weekday abbreviation
+  static String _getWeekdayAbbreviation(int weekday) {
+    const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    return days[(weekday - 1) % 7];
+  }
+
+  // Format a date to a standard string format (YYYY-MM-DD)
+  static String formatToYYYYMMDD(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+  }
+
+  // Parse a date from a standard string format (YYYY-MM-DD)
+  static DateTime? parseFromYYYYMMDD(String dateString) {
+    try {
+      final parts = dateString.split('-');
+      if (parts.length == 3) {
+        final year = int.parse(parts[0]);
+        final month = int.parse(parts[1]);
+        final day = int.parse(parts[2]);
+        return DateTime(year, month, day);
+      }
+      return null;
+    } catch (e) {
+      print('Error parsing date: $e');
+      return null;
+    }
+  }
+
+  // Get current week dates starting from Sunday
+  static List<DateTime> getCurrentWeekDates() {
+    final DateTime now = DateTime.now();
+    final int currentWeekday = now.weekday % 7; // 0 for Sunday
+
+    // Get the date of the Sunday of this week
+    final DateTime startOfWeek = now.subtract(Duration(days: currentWeekday));
+
+    // Generate dates for the whole week
+    return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
   }
 }

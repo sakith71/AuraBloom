@@ -5,6 +5,8 @@ import '../models/chat-message.dart';
 import '../helpers/Service.dart';
 
 class PeriodPainChatScreen extends StatefulWidget {
+  const PeriodPainChatScreen({super.key});
+
   @override
   _PeriodPainChatScreenState createState() => _PeriodPainChatScreenState();
 }
@@ -24,8 +26,7 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
     _messages.add(
       ChatMessage(
         text:
-            "Hello! I'm your Period Pain Management Assistant. "
-            "How can I help you today?",
+            "Hello! I'm your Period Pain Management Assistant. How can I help you today?",
         isUser: false,
         timestamp: DateTime.now(),
       ),
@@ -52,14 +53,25 @@ void _handleSubmitted(String text) {
       );
     });
     _scrollToBottom();
-  });
-}
+
+    // Example: Get chatbot response
+    String response = ChatbotService.getResponse(text);
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _messages.add(
+          ChatMessage(text: response, isUser: false, timestamp: DateTime.now()),
+        );
+      });
+      _scrollToBottom();
+    });
+  }
 
   void _scrollToBottom() {
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     });
@@ -68,38 +80,35 @@ void _handleSubmitted(String text) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Use the global scaffold background color
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(
-          'Period Pain Assistant',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Color(0xFFF4C2CA), // Light Pink from splash screen
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF4C2CA), // Light Pink
-              Color(0xFFD4C0D6), // Light Purple
-            ],
+        // Match the global background color so the app bar blends in
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0, // remove the drop shadow if you like a flat look
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text(
+          'CareBot',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black, // ensure the title is visible on a light bg
           ),
         ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ChatMessageList(
-                messages: _messages,
-                scrollController: _scrollController,
-              ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ChatMessageList(
+              messages: _messages,
+              scrollController: _scrollController,
             ),
-            ChatInputField(
-              controller: _textController,
-              onSubmitted: _handleSubmitted,
-            ),
-          ],
-        ),
+          ),
+          ChatInputField(
+            controller: _textController,
+            onSubmitted: _handleSubmitted,
+          ),
+        ],
       ),
     );
   }
