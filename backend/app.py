@@ -4,7 +4,7 @@ import openai
 import os
 from PeriodPainChatbot import PeriodPainChatbot
 
-app = Flask(_name_)
+app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Root route to test if server is running
@@ -38,7 +38,7 @@ def chat():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     # Get port from environment variable or use 8000 as default
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=True)

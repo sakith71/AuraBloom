@@ -8,7 +8,7 @@ API_KEY = "sk-proj-OzT58DZliX6Cj3ORo8ji2kXjG84rz7FkVazAvbKzq3tpShybd7nJoox-PpzGv
 openai.api_key = API_KEY
 
 class PeriodPainChatbot:
-    def _init_(self):
+    def __init__(self):
         """Initialize the chatbot with system context"""
         # System message to define the chatbot's role and boundaries
         self.system_message = {
