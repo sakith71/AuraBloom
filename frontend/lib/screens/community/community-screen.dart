@@ -87,11 +87,28 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 
   List<CommunityPost> _getFilteredPosts() {
+    List<CommunityPost> filteredPosts;
+    
     if (selectedFilter == 'All') {
-      return posts;
+      filteredPosts = List.from(posts);
     } else {
-      return posts.where((post) => post.tags.contains(selectedFilter)).toList();
+      filteredPosts = posts.where((post) => post.tags.contains(selectedFilter)).toList();
     }
+    
+    // Sort the posts so that pinned posts appear at the top
+    filteredPosts.sort((a, b) {
+      // First compare pinned status (pinned posts come first)
+      if (a.isPinned && !b.isPinned) {
+        return -1;
+      } else if (!a.isPinned && b.isPinned) {
+        return 1;
+      }
+      
+      // If pinned status is the same, sort by creation date (newest first)
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    
+    return filteredPosts;
   }
 
   // Get icon for category
@@ -443,6 +460,30 @@ class EnhancedCommunityPostCard extends StatelessWidget {
               ],
             ),
           ),
+
+          // Display pin indicator if post is pinned
+          if (post.isPinned)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.push_pin,
+                    size: 16,
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Pinned',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // Post content - limited to 3 lines with ellipsis
           Padding(
