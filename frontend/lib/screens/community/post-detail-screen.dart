@@ -199,10 +199,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         foregroundColor: Colors.black,
         elevation: 1,
         actions: [
-          if (isUserPostAuthor)
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () async {
+          // More options menu
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (String choice) async {
+              if (choice == 'delete') {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
@@ -220,7 +221,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     ],
                   ),
                 );
-
                 if (confirmed == true) {
                   try {
                     await _communityService.deletePost(widget.post.id);
@@ -231,8 +231,66 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     );
                   }
                 }
-              },
-            ),
+              }
+else if (choice == 'pin') {
+  try {
+    final isPinned = await _communityService.togglePinPost(widget.post.id);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(isPinned ? 'Post pinned successfully' : 'Post unpinned')),
+    );
+    
+    // Update the local post object
+    setState(() {
+      widget.post.isPinned = isPinned;
+    });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to pin post: $e')),
+    );
+  }
+}
+            },
+            itemBuilder: (BuildContext context) {
+              final List<PopupMenuEntry<String>> options = [];
+              
+              // Pin/Unpin option
+              options.add(PopupMenuItem<String>(
+                value: 'pin',
+                child: Row(
+                  children: [
+                    Icon(
+                      widget.post.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                      color: widget.post.isPinned ? Colors.amber : Colors.grey,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(widget.post.isPinned ? 'Unpin Post' : 'Pin Post'),
+                  ],
+                ),
+              ));
+              
+              // Delete option (only for post author)
+              if (isUserPostAuthor) {
+                options.add(const PopupMenuDivider());
+                options.add(const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text('Delete Post'),
+                    ],
+                  ),
+                ));
+              }
+              
+              return options;
+            },
+          ),
         ],
       ),
       body: Column(
@@ -244,6 +302,29 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Post card
+                  // Show pinned indicator if post is pinned
+                  if (widget.post.isPinned)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.push_pin,
+                            size: 16,
+                            color: Colors.amber,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Pinned Post',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.amber,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Container(
                     width: double.infinity,
                     margin: const EdgeInsets.all(16),
@@ -261,6 +342,30 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Show pinned indicator if post is pinned
+                        if (widget.post.isPinned)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.push_pin,
+                                  size: 16,
+                                  color: Colors.amber,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Pinned Post',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.amber,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          
                         // Author info and time
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
