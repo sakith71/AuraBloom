@@ -86,7 +86,6 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
               'Height': '${userData.height} cm',
               'Weight': '${userData.weight} kg',
               'BMI': _formatBmi(userData.bmi),
-              'Blood Type': 'A+', // Not in UserModel, so using a default
               'Cycle Length': '${userData.cycleLength} days',
               'Period Length': '${userData.periodLength} days',
             };
@@ -112,7 +111,6 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
           'Height': '165 cm',
           'Weight': '58 kg',
           'BMI': '21.3 - Normal weight',
-          'Blood Type': 'A+',
           'Cycle Length': '28 days',
           'Period Length': '5 days',
         };
@@ -566,22 +564,6 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
         );
         if (weight == null || weight < 20 || weight > 300) {
           return 'Please enter a valid weight between 20 and 300 kg';
-        }
-        break;
-
-      case 'Blood Type':
-        final validBloodTypes = [
-          'A+',
-          'A-',
-          'B+',
-          'B-',
-          'O+',
-          'O-',
-          'AB+',
-          'AB-',
-        ];
-        if (!validBloodTypes.contains(value.toUpperCase())) {
-          return 'Please enter a valid blood type (A+, A-, B+, B-, O+, O-, AB+, AB-)';
         }
         break;
 
