@@ -17,9 +17,7 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
   final Map<String, bool> _selectedOther = {};
   final Map<String, bool> _selectedPhysicalActivity = {};
 
-  // Pill tracking
-  bool _pillTakenOnTime = false;
-  bool _yesterdaysPill = false;
+  // Water tracking
   int _waterAmount = 0;
   final int _waterGoal = 72;
 
@@ -110,10 +108,6 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
         'discharge': selectedDischarge,
         'other': selectedOther,
         'physicalActivity': selectedPhysicalActivity,
-        'contraceptives': {
-          'pillTakenOnTime': _pillTakenOnTime,
-          'yesterdaysPill': _yesterdaysPill,
-        },
         'water': {'amount': _waterAmount, 'goal': _waterGoal},
       }, SetOptions(merge: true));
 
@@ -147,24 +141,25 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 253, 210, 234),
+      backgroundColor: const Color(0xFFFCF0F7),
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 255, 216, 238),
-        title: const Text(
-          'Today',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+        backgroundColor: const Color(0xFFFCF0F7),
+        title: Row(
+          children: [
+            Text(
+              'How you feel today',
+              style: TextStyle(
+                color: Color(0xFFFF5B9D),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: Color(0xFFFF5B9D)),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -178,7 +173,6 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
                 _buildDischargeSection(),
                 _buildOtherSection(),
                 _buildPhysicalActivitySection(),
-                _buildContraceptivesSection(),
                 _buildWaterTracking(),
                 _buildSubmitButton(),
                 const SizedBox(height: 20),
@@ -207,11 +201,11 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
       child: ElevatedButton(
         onPressed: _isSubmitting ? null : _saveDataToFirestore,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.pink,
+          backgroundColor: const Color.fromARGB(255, 240, 99, 153),
           foregroundColor: Colors.white,
           elevation: 3,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(30),
           ),
           padding: const EdgeInsets.symmetric(vertical: 12),
         ),
@@ -229,8 +223,15 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: const Color.fromARGB(255, 255, 255, 255),
           borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: TextField(
           controller: _searchController,
@@ -507,10 +508,9 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -622,211 +622,6 @@ class _FeelingTodayScreenState extends State<FeelingTodayScreen> {
                   ),
         ),
       ],
-    );
-  }
-
-  Widget _buildContraceptivesSection() {
-    // If we're searching and "contraceptives", "pill", etc. doesn't match, hide section
-    if (_searchQuery.isNotEmpty &&
-        !('contraceptives oral oc pill'.contains(_searchQuery)) &&
-        !('taken on time yesterday'.contains(_searchQuery))) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Oral contraceptives (OC)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  _buildPillOption('Taken on time', _pillTakenOnTime, (value) {
-                    setState(() {
-                      _pillTakenOnTime = value;
-                    });
-                  }),
-                  const SizedBox(width: 12),
-                  _buildPillOption('Yesterday\'s pill', _yesterdaysPill, (
-                    value,
-                  ) {
-                    setState(() {
-                      _yesterdaysPill = value;
-                    });
-                  }),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Set up reminders',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  Icon(Icons.chevron_right),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                spreadRadius: 1,
-                blurRadius: 3,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Other pills (non-OC)',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Log other pills you take a day',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 12),
-              Row(children: [_buildAddPillButton()]),
-              const SizedBox(height: 12),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Set up reminders',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  Icon(Icons.chevron_right),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPillOption(
-    String text,
-    bool isSelected,
-    Function(bool) onChanged,
-  ) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          onChanged(!isSelected);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE1F5FE),
-            borderRadius: BorderRadius.circular(20),
-            border:
-                isSelected ? Border.all(color: Colors.blue, width: 2) : null,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blue.shade300,
-                ),
-                child: Icon(
-                  isSelected ? Icons.check : Icons.remove,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  text,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddPillButton() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE1F5FE),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.blue.shade300,
-            ),
-            child: const Icon(Icons.remove, color: Colors.white, size: 16),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Add pill',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.blue.shade300,
-            ),
-            child: const Icon(Icons.add, color: Colors.white, size: 16),
-          ),
-        ],
-      ),
     );
   }
 

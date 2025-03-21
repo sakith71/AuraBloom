@@ -265,7 +265,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         elevation: 0,
         title: const Text(
           'Notifications',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Color(0xFFFF5B9D),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
@@ -273,7 +276,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
             onPressed: _markAllAsRead,
             child: const Text(
               'Mark all as read',
-              style: TextStyle(color: Colors.pink, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Color(0xFFFF5B9D),
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
