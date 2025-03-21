@@ -46,7 +46,7 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
 
     _textController.clear();
     _scrollToBottom();
-    
+
     // Test connection first
     bool isConnected = await _chatService.testConnection();
     if (!isConnected) {
@@ -54,7 +54,8 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
         _isTyping = false;
         _messages.add(
           ChatMessage(
-            text: "Cannot connect to the server. Please check your network connection and server status.",
+            text:
+                "Cannot connect to the server. Please check your network connection and server status.",
             isUser: false,
             timestamp: DateTime.now(),
             type: MessageType.warning,
@@ -68,32 +69,29 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
     // Send the message to the backend and get a response
     try {
       final response = await _chatService.sendMessage(text);
-      
+
       setState(() {
         _isTyping = false; // Hide typing indicator
         _messages.add(
-          ChatMessage(
-            text: response,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ),
+          ChatMessage(text: response, isUser: false, timestamp: DateTime.now()),
         );
       });
-      
+
       _scrollToBottom();
     } catch (e) {
       setState(() {
         _isTyping = false; // Hide typing indicator
         _messages.add(
           ChatMessage(
-            text: "Sorry, I couldn't process your request. Please try again later.",
+            text:
+                "Sorry, I couldn't process your request. Please try again later.",
             isUser: false,
             timestamp: DateTime.now(),
             type: MessageType.warning,
           ),
         );
       });
-      
+
       _scrollToBottom();
     }
   }
@@ -145,7 +143,10 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
           // Show typing indicator
           if (_isTyping)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
