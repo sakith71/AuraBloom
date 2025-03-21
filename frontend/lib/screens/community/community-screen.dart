@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/community-models.dart';
 import 'package:frontend/screens/community/post-detail-screen.dart';
@@ -8,7 +9,7 @@ class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
   @override
-  State<CommunityScreen> createState() => _CommunityScreenState();
+  _CommunityScreenState createState() => _CommunityScreenState();
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
@@ -323,16 +324,20 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          itemCount: _getFilteredPosts().length,
-                          itemBuilder: (context, index) {
-                            final post = _getFilteredPosts()[index];
-                            return GestureDetector(
-                              onTap: () => _navigateToPostDetail(post),
-                              child: EnhancedCommunityPostCard(post: post),
-                            );
-                          },
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        itemCount: _getFilteredPosts().length,
+                        itemBuilder: (context, index) {
+                          final post = _getFilteredPosts()[index];
+                          return GestureDetector(
+                            onTap: () => _navigateToPostDetail(post),
+                            child: EnhancedCommunityPostCard(
+                              post: post,
+                              onPostUpdated: () => _loadPosts(), // Callback for pin/unpin
+                              onPostDeleted: () => _loadPosts(), // Callback for delete
+                            ),
+                          );
+                        },
+                      ),
             ),
           ],
         ),
@@ -341,9 +346,26 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 }
 
-class EnhancedCommunityPostCard extends StatelessWidget {
+// Enhanced Community Post Card with Pin and Delete Features
+class EnhancedCommunityPostCard extends StatefulWidget {
   final CommunityPost post;
-  const EnhancedCommunityPostCard({Key? key, required this.post}) : super(key: key);
+  final Function? onPostUpdated;  // Callback for post updates
+  final Function? onPostDeleted;  // Callback for post deletion
+  
+  const EnhancedCommunityPostCard({
+    super.key, 
+    required this.post,
+    this.onPostUpdated,
+    this.onPostDeleted,
+  });
+
+  @override
+  State<EnhancedCommunityPostCard> createState() => _EnhancedCommunityPostCardState();
+}
+
+class _EnhancedCommunityPostCardState extends State<EnhancedCommunityPostCard> {
+  final CommunityService _communityService = CommunityService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -378,8 +400,83 @@ class EnhancedCommunityPostCard extends StatelessWidget {
     }
   }
 
+    // Handle pin post action
+  Future<void> _handlePinPost() async {
+    try {
+      final isPinned = await _communityService.togglePinPost(widget.post.id);
+      
+      // Update local state
+      setState(() {
+        widget.post.isPinned = isPinned;
+      });
+      
+      // Notify parent widget if callback is provided
+      if (widget.onPostUpdated != null) {
+        widget.onPostUpdated!();
+      }
+      
+      // Show snackbar confirmation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isPinned ? 'Post pinned successfully' : 'Post unpinned'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pin post: $e')),
+      );
+    }
+  }
+
+  // Handle delete post action
+  Future<void> _handleDeletePost() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('DELETE', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _communityService.deletePost(widget.post.id);
+        
+        // Notify parent widget if callback is provided
+        if (widget.onPostDeleted != null) {
+          widget.onPostDeleted!();
+        }
+        
+        // Show snackbar confirmation
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post deleted successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete post: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isUserPostAuthor = _auth.currentUser?.uid == widget.post.authorId;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -406,7 +503,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                   width: 45,
                   height: 45,
                   decoration: BoxDecoration(
-                    color: post.isAnonymous ? Colors.grey : Colors.pinkAccent,
+                    color: widget.post.isAnonymous ? Colors.grey : Colors.pinkAccent,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
@@ -418,10 +515,10 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      post.isAnonymous
+                      widget.post.isAnonymous
                           ? 'A'
-                          : (post.authorName.isNotEmpty
-                              ? post.authorName[0]
+                          : (widget.post.authorName.isNotEmpty
+                              ? widget.post.authorName[0]
                               : 'U'),
                       style: const TextStyle(
                         color: Colors.white,
@@ -436,7 +533,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      post.isAnonymous ? 'Anonymous' : post.authorName,
+                      widget.post.isAnonymous ? 'Anonymous' : widget.post.authorName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -444,26 +541,77 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _formatDate(post.createdAt),
+                      _formatDate(widget.post.createdAt),
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
                 ),
-                // More options button removed
+                 const Spacer(),
+                // More options button with pin functionality
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
+                  onSelected: (String choice) async {
+                    if (choice == 'pin') {
+                      await _handlePinPost();
+                    } else if (choice == 'delete') {
+                      await _handleDeletePost();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) {
+                    final List<PopupMenuEntry<String>> options = [];
+                    
+                    // Pin/Unpin option
+                    options.add(PopupMenuItem<String>(
+                      value: 'pin',
+                      child: Row(
+                        children: [
+                          Icon(
+                            widget.post.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
+                            color: widget.post.isPinned ? const Color.fromARGB(255, 240, 99, 153) : Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(widget.post.isPinned ? 'Unpin Post' : 'Pin Post'),
+                        ],
+                      ),
+                    ));
+                    
+                    // Add delete option for post author
+                    if (isUserPostAuthor) {
+                      options.add(const PopupMenuDivider());
+                      options.add(const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text('Delete Post'),
+                          ],
+                        ),
+                      ));
+                    }
+                    
+                    return options;
+                  },
+                ),
               ],
             ),
           ),
 
           // Display pin indicator if post is pinned
-          if (post.isPinned)
+          if (widget.post.isPinned)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.push_pin,
                     size: 16,
-                    color: Colors.amber,
+                    color: const Color.fromARGB(255, 240, 99, 153),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -471,7 +619,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.amber,
+                      color: const Color.fromARGB(255, 240, 99, 153),
                     ),
                   ),
                 ],
@@ -482,7 +630,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              post.content,
+              widget.post.content,
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 16),
@@ -492,14 +640,14 @@ class EnhancedCommunityPostCard extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Image if available
-          if (post.imageUrls != null && post.imageUrls!.isNotEmpty)
+          if (widget.post.imageUrls != null && widget.post.imageUrls!.isNotEmpty)
             Container(
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 image: DecorationImage(
-                  image: NetworkImage(post.imageUrls![0]),
+                  image: NetworkImage(widget.post.imageUrls![0]),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -515,7 +663,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: post.tags.map((tag) {
+                  children: widget.post.tags.map((tag) {
                     final tagColor = _getTagColor(tag);
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -555,7 +703,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${post.likeCount}',
+                          '${widget.post.likeCount}',
                           style: TextStyle(
                             color: Colors.grey[700],
                             fontWeight: FontWeight.w500,
@@ -573,7 +721,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${post.commentCount}',
+                          '${widget.post.commentCount}',
                           style: TextStyle(
                             color: Colors.grey[700],
                             fontWeight: FontWeight.w500,
