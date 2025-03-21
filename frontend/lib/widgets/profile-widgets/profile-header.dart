@@ -75,7 +75,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profile picture updated'),
-              backgroundColor: Color(0xFFE91E63),
+              backgroundColor: Color.fromARGB(255, 240, 99, 153),
             ),
           );
         }
@@ -185,7 +185,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                           child: Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE91E63),
+                              color: const Color.fromARGB(255, 240, 99, 153),
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
                             ),
@@ -338,7 +338,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                               Text(
                                 'Change Photo',
                                 style: TextStyle(
-                                  color: const Color(0xFFE91E63),
+                                  color: const Color.fromARGB(
+                                    255,
+                                    240,
+                                    99,
+                                    153,
+                                  ),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -379,7 +384,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: Colors.pink.shade200,
+                                    color: const Color.fromARGB(
+                                      255,
+                                      240,
+                                      99,
+                                      153,
+                                    ),
                                     width: 1.5,
                                   ),
                                 ),
@@ -429,7 +439,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(
-                                    color: Colors.pink.shade200,
+                                    color: const Color.fromARGB(
+                                      255,
+                                      240,
+                                      99,
+                                      153,
+                                    ),
                                     width: 1.5,
                                   ),
                                 ),
@@ -563,9 +578,13 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                                     content: Text(
                                                       'Profile updated successfully',
                                                     ),
-                                                    backgroundColor: Color(
-                                                      0xFFE91E63,
-                                                    ),
+                                                    backgroundColor:
+                                                        Color.fromARGB(
+                                                          255,
+                                                          240,
+                                                          99,
+                                                          153,
+                                                        ),
                                                   ),
                                                 );
                                               }
@@ -600,9 +619,12 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
                                   ),
-                                  backgroundColor: const Color(
-                                    0xFFE91E63,
-                                  ), // Pink color matching AuraBloom theme
+                                  backgroundColor: const Color.fromARGB(
+                                    255,
+                                    240,
+                                    99,
+                                    153,
+                                  ), // Updated color
                                   elevation: 0,
                                 ),
                                 child:

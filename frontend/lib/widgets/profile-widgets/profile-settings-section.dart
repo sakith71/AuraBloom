@@ -390,14 +390,7 @@ class ProfileSettingsSection extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white,
-                    AppColors.primaryLight.withOpacity(0.3),
-                  ],
-                ),
+                color: Colors.white, // Changed from gradient to white color
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
