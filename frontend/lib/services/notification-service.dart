@@ -24,12 +24,13 @@ class NotificationService {
   // Create a notification
   Future<void> createNotification({
     required String userId,
-    required String postId,
+    required String? postId,
     String? commentId,
     String? replyId,
     String? content,
     required NotificationType type,
     bool skipForSelf = true,
+    String? triggerUserName,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -47,28 +48,46 @@ class NotificationService {
       return;
     }
 
-    // Check if community notifications are enabled for this notification type
-    if (type == NotificationType.like ||
-        type == NotificationType.comment ||
-        type == NotificationType.reply) {
-      final enabled = await isCommunityNotificationsEnabled();
-      if (!enabled) {
-        if (kDebugMode) {
-          print('Community notifications are disabled, skipping');
-        }
-        return;
+    // Check if appropriate notifications are enabled based on type
+    bool enabled = true;
+    switch (type) {
+      case NotificationType.like:
+      case NotificationType.comment:
+      case NotificationType.reply:
+        enabled = await isCommunityNotificationsEnabled();
+        break;
+      case NotificationType.healthTip:
+        enabled = await isHealthTipsEnabled();
+        break;
+      case NotificationType.periodReminder:
+        enabled = await isPeriodRemindersEnabled();
+        break;
+      case NotificationType.cycleUpdate:
+        enabled = await isCycleUpdatesEnabled();
+        break;
+      case NotificationType.appUpdate:
+        enabled = await isAppUpdatesEnabled();
+        break;
+    }
+
+    if (!enabled) {
+      if (kDebugMode) {
+        print('${type.toString()} notifications are disabled, skipping');
       }
+      return;
     }
 
     try {
       // Get trigger user details
-      String triggerUserName;
-      if (user.displayName != null && user.displayName!.isNotEmpty) {
-        triggerUserName = user.displayName!;
-      } else if (user.email != null && user.email!.isNotEmpty) {
-        triggerUserName = user.email!;
-      } else {
-        triggerUserName = 'User_${user.uid.substring(0, 5)}';
+      String effectiveTriggerUserName = triggerUserName ?? '';
+      if (effectiveTriggerUserName.isEmpty) {
+        if (user.displayName != null && user.displayName!.isNotEmpty) {
+          effectiveTriggerUserName = user.displayName!;
+        } else if (user.email != null && user.email!.isNotEmpty) {
+          effectiveTriggerUserName = user.email!;
+        } else {
+          effectiveTriggerUserName = 'User_${user.uid.substring(0, 5)}';
+        }
       }
 
       // Truncate content for preview (if provided)
@@ -82,7 +101,7 @@ class NotificationService {
       final Map<String, dynamic> notificationData = {
         'userId': userId,
         'triggerUserId': user.uid,
-        'triggerUserName': triggerUserName,
+        'triggerUserName': effectiveTriggerUserName,
         'triggerUserAvatar': user.photoURL,
         'postId': postId,
         'commentId': commentId,
@@ -372,43 +391,33 @@ class NotificationService {
       return Stream.value(0);
     }
 
-    // Check if community notifications are enabled
-    return Stream.fromFuture(isCommunityNotificationsEnabled()).asyncExpand((
-      enabled,
-    ) {
-      if (!enabled) {
-        // If notifications are disabled, return 0
-        return Stream.value(0);
+    try {
+      return _firestore
+          .collection('notifications')
+          .where('userId', isEqualTo: user.uid)
+          .where('isRead', isEqualTo: false)
+          .snapshots()
+          .map((snapshot) {
+            final count = snapshot.docs.length;
+            if (kDebugMode) {
+              print('Unread notifications count: $count');
+            }
+            return count;
+          })
+          .handleError((error) {
+            if (kDebugMode) {
+              print('Error in unread count stream: $error');
+            }
+            // Return 0 on error instead of crashing
+            return 0;
+          });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Exception setting up unread count stream: $e');
       }
-
-      try {
-        return _firestore
-            .collection('notifications')
-            .where('userId', isEqualTo: user.uid)
-            .where('isRead', isEqualTo: false)
-            .snapshots()
-            .map((snapshot) {
-              final count = snapshot.docs.length;
-              if (kDebugMode) {
-                print('Unread notifications count: $count');
-              }
-              return count;
-            })
-            .handleError((error) {
-              if (kDebugMode) {
-                print('Error in unread count stream: $error');
-              }
-              // Return 0 on error instead of crashing
-              return 0;
-            });
-      } catch (e) {
-        if (kDebugMode) {
-          print('Exception setting up unread count stream: $e');
-        }
-        // Return 0 on exception
-        return Stream.value(0);
-      }
-    });
+      // Return 0 on exception
+      return Stream.value(0);
+    }
   }
 
   // Notification preferences methods
