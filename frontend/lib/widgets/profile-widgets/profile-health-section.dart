@@ -157,7 +157,7 @@ class _ProfileHealthSectionState extends State<ProfileHealthSection> {
                                 _showEditDialog(context);
                               }
                             },
-                            color: Colors.pink,
+                            color: const Color.fromARGB(255, 240, 99, 153),
                           )
                           : Container(), // Empty container when not visible
                     ],
