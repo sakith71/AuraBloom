@@ -187,6 +187,26 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     }
   }
 
+  // Handle pin/unpin post
+  Future<void> _handlePinPost() async {
+    try {
+      final isPinned = await _communityService.togglePinPost(widget.post.id);
+      
+      // Update local state
+      setState(() {
+        widget.post.isPinned = isPinned;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isPinned ? 'Post pinned successfully' : 'Post unpinned')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pin post: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isUserPostAuthor = _auth.currentUser?.uid == widget.post.authorId;
@@ -231,24 +251,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     );
                   }
                 }
+              } else if (choice == 'pin') {
+                await _handlePinPost();
               }
-else if (choice == 'pin') {
-  try {
-    final isPinned = await _communityService.togglePinPost(widget.post.id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(isPinned ? 'Post pinned successfully' : 'Post unpinned')),
-    );
-    
-    // Update the local post object
-    setState(() {
-      widget.post.isPinned = isPinned;
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to pin post: $e')),
-    );
-  }
-}
             },
             itemBuilder: (BuildContext context) {
               final List<PopupMenuEntry<String>> options = [];
@@ -311,7 +316,7 @@ else if (choice == 'pin') {
                           const Icon(
                             Icons.push_pin,
                             size: 16,
-                            color: const Color.fromARGB(255, 240, 99, 153),
+                            color: Color.fromARGB(255, 240, 99, 153),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -342,30 +347,6 @@ else if (choice == 'pin') {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Show pinned indicator if post is pinned
-                        if (widget.post.isPinned)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.push_pin,
-                                  size: 16,
-                                  color: const Color.fromARGB(255, 240, 99, 153),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Pinned Post',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color.fromARGB(255, 240, 99, 153),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
                         // Author info and time
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
@@ -429,6 +410,30 @@ else if (choice == 'pin') {
                             ],
                           ),
                         ),
+
+                        // Display pin indicator if post is pinned by current user
+                        if (widget.post.isPinned)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.push_pin,
+                                  size: 16,
+                                  color: Color.fromARGB(255, 240, 99, 153),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Pinned',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color.fromARGB(255, 240, 99, 153),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
 
                         // Post content
                         Padding(
