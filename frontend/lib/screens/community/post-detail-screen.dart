@@ -260,7 +260,7 @@ else if (choice == 'pin') {
                   children: [
                     Icon(
                       widget.post.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      color: widget.post.isPinned ? Colors.amber : Colors.grey,
+                      color: widget.post.isPinned ? const Color.fromARGB(255, 240, 99, 153) : Colors.grey,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -311,7 +311,7 @@ else if (choice == 'pin') {
                           const Icon(
                             Icons.push_pin,
                             size: 16,
-                            color: Colors.amber,
+                            color: const Color.fromARGB(255, 240, 99, 153),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -319,7 +319,7 @@ else if (choice == 'pin') {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: Colors.amber,
+                              color: const Color.fromARGB(255, 240, 99, 153),
                             ),
                           ),
                         ],
@@ -351,7 +351,7 @@ else if (choice == 'pin') {
                                 const Icon(
                                   Icons.push_pin,
                                   size: 16,
-                                  color: Colors.amber,
+                                  color: const Color.fromARGB(255, 240, 99, 153),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -359,7 +359,7 @@ else if (choice == 'pin') {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.amber,
+                                    color: const Color.fromARGB(255, 240, 99, 153),
                                   ),
                                 ),
                               ],
@@ -538,18 +538,6 @@ else if (choice == 'pin') {
                                         ),
                                       ),
                                     ],
-                                  ),
-                                  const Spacer(),
-                                  // Share button
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.share_outlined,
-                                      size: 22,
-                                      color: Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      // Share functionality
-                                    },
                                   ),
                                 ],
                               ),
