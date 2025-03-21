@@ -6,13 +6,14 @@ class ChatService {
   // Dynamically set the base URL based on platform
   String get baseUrl {
     if (Platform.isAndroid) {
-      return 'http://192.168.123.175:8080'; // Special IP for Android emulator
+      return 'http://10.0.2.2:8080'; // Special IP for Android emulator
     } else if (Platform.isIOS) {
       return 'http://192.168.123.175:8080'; // For iOS simulator
     } else {
       return 'http://192.168.123.175:8080'; // Fallback
     }
   }
+
   // Simple method to test API connectivity
   Future<bool> testConnection() async {
     try {
@@ -37,7 +38,8 @@ class ChatService {
         if (jsonResponse.containsKey('response')) {
           return jsonResponse['response'];
         } else {
-          return jsonResponse.toString(); // Fallback in case response format changes
+          return jsonResponse
+              .toString(); // Fallback in case response format changes
         }
       } else {
         return 'Error: ${response.statusCode} - ${response.reasonPhrase}';
