@@ -132,12 +132,36 @@ class _NotificationScreenState extends State<NotificationScreen> {
       // Mark notification as read
       await _notificationService.markAsRead(notification.id);
 
-      // Get the post
-      final post = await _communityService.getPost(notification.postId);
-      if (post == null) {
+      // For non-community notifications, just show the content
+      if (notification.type == NotificationType.healthTip ||
+          notification.type == NotificationType.periodReminder ||
+          notification.type == NotificationType.cycleUpdate ||
+          notification.type == NotificationType.appUpdate) {
+        if (notification.content != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(notification.content!),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        return;
+      }
+
+      // For community notifications, navigate to the post
+      if (notification.postId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post not found')),
+          const SnackBar(content: Text('Post information not available')),
         );
+        return;
+      }
+
+      // Get the post
+      final post = await _communityService.getPost(notification.postId!);
+      if (post == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Post not found')));
         return;
       }
 
@@ -171,23 +195,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
+  // Update the _getNotificationText method
   String _getNotificationText(UserNotification notification) {
-    String action;
     switch (notification.type) {
       case NotificationType.like:
-        action = 'liked your post';
-        break;
+        return '${notification.triggerUserName} liked your post';
       case NotificationType.comment:
-        action = 'commented on your post';
-        break;
+        return '${notification.triggerUserName} commented on your post';
       case NotificationType.reply:
-        action = 'replied to your comment';
-        break;
+        return '${notification.triggerUserName} replied to your comment';
+      case NotificationType.healthTip:
+        return 'Health Tip';
+      case NotificationType.periodReminder:
+        return 'Period Reminder';
+      case NotificationType.cycleUpdate:
+        return 'Cycle Update';
+      case NotificationType.appUpdate:
+        return 'App Update';
     }
-
-    return '${notification.triggerUserName} $action';
   }
 
+  // Update the _getNotificationIcon method
   IconData _getNotificationIcon(NotificationType type) {
     switch (type) {
       case NotificationType.like:
@@ -196,9 +224,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return Icons.comment;
       case NotificationType.reply:
         return Icons.reply;
+      case NotificationType.healthTip:
+        return Icons.health_and_safety;
+      case NotificationType.periodReminder:
+        return Icons.calendar_today;
+      case NotificationType.cycleUpdate:
+        return Icons.loop;
+      case NotificationType.appUpdate:
+        return Icons.system_update;
     }
   }
 
+  // Update the _getNotificationColor method
   Color _getNotificationColor(NotificationType type) {
     switch (type) {
       case NotificationType.like:
@@ -207,6 +244,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
         return Colors.blue;
       case NotificationType.reply:
         return Colors.green;
+      case NotificationType.healthTip:
+        return Colors.teal;
+      case NotificationType.periodReminder:
+        return Colors.purple;
+      case NotificationType.cycleUpdate:
+        return Colors.amber;
+      case NotificationType.appUpdate:
+        return Colors.indigo;
     }
   }
 
@@ -233,28 +278,29 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Color.fromARGB(255, 255, 115, 166),
+      body:
+          _isLoading
+              ? const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color.fromARGB(255, 255, 115, 166),
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 16),
-                  Text('Loading notifications...'),
-                ],
-              ),
-            )
-          : _needsIndex
+                    SizedBox(height: 16),
+                    Text('Loading notifications...'),
+                  ],
+                ),
+              )
+              : _needsIndex
               ? _buildIndexNeededUI()
               : _errorMessage != null && !_needsIndex
-                  ? _buildErrorUI()
-                  : _notifications.isEmpty
-                      ? _buildEmptyUI()
-                      : _buildNotificationsList(),
+              ? _buildErrorUI()
+              : _notifications.isEmpty
+              ? _buildEmptyUI()
+              : _buildNotificationsList(),
     );
   }
 
@@ -449,12 +495,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          color: notification.isRead
-              ? Colors.white
-              : Colors.white.withOpacity(0.9),
+          color:
+              notification.isRead
+                  ? Colors.white
+                  : Colors.white.withOpacity(0.9),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: _getNotificationColor(notification.type).withOpacity(0.2),
+              backgroundColor: _getNotificationColor(
+                notification.type,
+              ).withOpacity(0.2),
               child: Icon(
                 _getNotificationIcon(notification.type),
                 color: _getNotificationColor(notification.type),
@@ -463,21 +512,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
             title: Text(
               _getNotificationText(notification),
               style: TextStyle(
-                fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                fontWeight:
+                    notification.isRead ? FontWeight.normal : FontWeight.bold,
                 fontSize: 14,
               ),
             ),
-            subtitle: notification.content != null
-                ? Text(
-                    notification.content!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  )
-                : Text(
-                    _formatDate(notification.createdAt),
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
+            subtitle:
+                notification.content != null
+                    ? Text(
+                      notification.content!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    )
+                    : Text(
+                      _formatDate(notification.createdAt),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
             trailing: Text(
               _formatDate(notification.createdAt),
               style: TextStyle(fontSize: 11, color: Colors.grey[500]),
