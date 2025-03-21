@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import './stay-active-detail.dart'; // Import the detail screen
-import './eat-well-detail.dart';// Import the detail screen
+import './eat-well-detail.dart'; // Import the detail screen
 import './apply-heat.dart'; //Import the detail screen
 import './get-rest.dart'; //Import the detail screen
-import './practice-mindfulness.dart';//Import the detail screen
+import './practice-mindfulness.dart'; //Import the detail screen
 
 class HealthTipsScreen extends StatelessWidget {
   const HealthTipsScreen({super.key});
 
   Widget _buildTipCard({
-    required IconData icon, 
+    required IconData icon,
     required String title,
     required Color cardColor,
     required Color iconColor,
@@ -37,19 +37,12 @@ class HealthTipsScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              icon, 
-              color: iconColor, 
-              size: 28,
-            ),
+            Icon(icon, color: iconColor, size: 28),
             const SizedBox(height: 8),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -83,11 +76,7 @@ class HealthTipsScreen extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.format_quote,
-                color: Colors.pink[300],
-                size: 20,
-              ),
+              Icon(Icons.format_quote, color: Colors.pink[300], size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -122,18 +111,11 @@ class HealthTipsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            Icon(
-              Icons.lightbulb_outline,
-              color: Colors.pink[300],
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
+             Text(
               'Health Tips',
               style: TextStyle(
                 color: Colors.pink[300],
                 fontWeight: FontWeight.bold,
-                fontSize: 20,
               ),
             ),
           ],
@@ -141,23 +123,9 @@ class HealthTipsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.pink[300],),
+          icon: Icon(Icons.arrow_back, color: Colors.pink[300]),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Colors.pink[300],),
-            onPressed: () {
-              // Notification functionality
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.person_outline, color: Colors.pink[300],),
-            onPressed: () {
-              // Profile functionality
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -179,7 +147,8 @@ class HealthTipsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const StayActiveDetailScreen(),
+                            builder:
+                                (context) => const StayActiveDetailScreen(),
                           ),
                         );
                       },
@@ -198,7 +167,7 @@ class HealthTipsScreen extends StatelessWidget {
                         );
                       },
                     ),
-                    
+
                     _buildTipCard(
                       icon: Icons.hot_tub,
                       title: 'Apply\nHeat',
@@ -236,7 +205,9 @@ class HealthTipsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PracticeMindfulnessDetailScreen(),
+                            builder:
+                                (context) =>
+                                    const PracticeMindfulnessDetailScreen(),
                           ),
                         );
                       },
@@ -244,36 +215,41 @@ class HealthTipsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Quote cards
               _buildQuoteCard(
-                quote: "Menstrual cramps are not just 'part of being a woman.' Severe pain should be taken seriously and evaluated by a doctor.",
+                quote:
+                    "Menstrual cramps are not just 'part of being a woman.' Severe pain should be taken seriously and evaluated by a doctor.",
                 doctor: "Dr. Tamer Seckin",
                 specialty: "Endometriosis Specialist",
               ),
-              
+
               _buildQuoteCard(
-                quote: "Pain is not a normal part of the menstrual cycle when it disrupts your daily life. If that happens, it's time to seek medical advice.",
+                quote:
+                    "Pain is not a normal part of the menstrual cycle when it disrupts your daily life. If that happens, it's time to seek medical advice.",
                 doctor: "Dr. Jessica Shepherd",
                 specialty: "OB-GYN",
               ),
-              
+
               _buildQuoteCard(
-                quote: "Heat therapy can be as effective as ibuprofen in reducing menstrual pain. A heating pad or warm water bottle can work wonders.",
+                quote:
+                    "Heat therapy can be as effective as ibuprofen in reducing menstrual pain. A heating pad or warm water bottle can work wonders.",
                 doctor: "Dr. Penelope Law",
                 specialty: "Consultant Gynecologist",
               ),
-              
+
               _buildQuoteCard(
-                quote: "Regular exercise, even simple stretching or yoga, helps improve circulation and reduce cramping.",
+                quote:
+                    "Regular exercise, even simple stretching or yoga, helps improve circulation and reduce cramping.",
                 doctor: "Dr. Lisa Masterson",
                 specialty: "OB-GYN",
               ),
-              
+
               _buildQuoteCard(
-                quote: "Your period is a vital sign, like your pulse or blood pressure. If something feels wrong, listen to your body.",
+                quote:
+                    "Your period is a vital sign, like your pulse or blood pressure. If something feels wrong, listen to your body.",
                 doctor: "Dr. Lara Briden",
                 specialty: "Naturopathic Doctor",
               ),
