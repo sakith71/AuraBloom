@@ -52,23 +52,24 @@ class CommunityService {
         .snapshots()
         .asyncMap((snapshot) async {
           // Get posts from snapshot
-          List<CommunityPost> posts = snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return CommunityPost.fromMap(data);
-          }).toList();
+          List<CommunityPost> posts =
+              snapshot.docs.map((doc) {
+                final data = doc.data();
+                data['id'] = doc.id;
+                return CommunityPost.fromMap(data);
+              }).toList();
 
           // Get user's pinned posts
-          final pinnedPostsSnapshot = await _firestore
-              .collection('users')
-              .doc(user.uid)
-              .collection('pinnedPosts')
-              .get();
+          final pinnedPostsSnapshot =
+              await _firestore
+                  .collection('users')
+                  .doc(user.uid)
+                  .collection('pinnedPosts')
+                  .get();
 
           // Create a set of pinned post IDs for efficient lookup
-          final Set<String> pinnedPostIds = pinnedPostsSnapshot.docs
-              .map((doc) => doc.id)
-              .toSet();
+          final Set<String> pinnedPostIds =
+              pinnedPostsSnapshot.docs.map((doc) => doc.id).toSet();
 
           // Update each post with user-specific pinned status
           for (var post in posts) {
@@ -138,27 +139,28 @@ class CommunityService {
   Future<CommunityPost?> getPost(String postId) async {
     final user = _auth.currentUser;
     final doc = await _firestore.collection('posts').doc(postId).get();
-    
+
     if (!doc.exists) {
       return null;
     }
-    
+
     final data = doc.data();
     data?['id'] = doc.id;
     CommunityPost post = CommunityPost.fromMap(data!);
-    
+
     // If user is authenticated, check if post is pinned by this user
     if (user != null) {
-      final pinnedDoc = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('pinnedPosts')
-          .doc(postId)
-          .get();
-          
+      final pinnedDoc =
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('pinnedPosts')
+              .doc(postId)
+              .get();
+
       post.isPinned = pinnedDoc.exists;
     }
-    
+
     return post;
   }
 
@@ -233,19 +235,17 @@ class CommunityService {
         .doc(user.uid)
         .collection('pinnedPosts')
         .doc(postId);
-    
+
     // Check if this post is already pinned by this user
     final docSnapshot = await pinnedPostRef.get();
-    
+
     if (docSnapshot.exists) {
       // Post is already pinned, so unpin it
       await pinnedPostRef.delete();
       return false; // Return new pin status (unpinned)
     } else {
       // Post is not pinned, so pin it
-      await pinnedPostRef.set({
-        'pinnedAt': FieldValue.serverTimestamp(),
-      });
+      await pinnedPostRef.set({'pinnedAt': FieldValue.serverTimestamp()});
       return true; // Return new pin status (pinned)
     }
   }
@@ -256,14 +256,15 @@ class CommunityService {
     if (user == null) {
       return false;
     }
-    
-    final docSnapshot = await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('pinnedPosts')
-        .doc(postId)
-        .get();
-        
+
+    final docSnapshot =
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('pinnedPosts')
+            .doc(postId)
+            .get();
+
     return docSnapshot.exists;
   }
 
@@ -555,39 +556,126 @@ class CommunityService {
         .update({'replyCount': FieldValue.increment(-1)});
   }
 
-  // Delete a post
+  // Fixed: Delete a post and all associated data with proper error handling
   Future<void> deletePost(String postId) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
 
-    // Check if the user is the author of the post
-    final post = await getPost(postId);
-    if (post == null) {
-      throw Exception('Post not found');
-    }
+      // Check if the user is the author of the post
+      final postDoc = await _firestore.collection('posts').doc(postId).get();
 
-    if (post.authorId != user.uid) {
-      throw Exception('User is not authorized to delete this post');
-    }
+      if (!postDoc.exists) {
+        throw Exception('Post not found');
+      }
 
-    // Delete the post
-    await _firestore.collection('posts').doc(postId).delete();
-    
-    // Also delete all references to this post in users' pinnedPosts collections
-    // This would be done in a transaction or batch in a production app
-    // For simplicity, we'll just query all users and delete the reference
-    final usersWithPinnedPost = await _firestore
-        .collectionGroup('pinnedPosts')
-        .where(FieldPath.documentId, isEqualTo: postId)
-        .get();
-        
-    final batch = _firestore.batch();
-    for (var doc in usersWithPinnedPost.docs) {
-      batch.delete(doc.reference);
+      final postData = postDoc.data() as Map<String, dynamic>;
+
+      if (postData['authorId'] != user.uid) {
+        throw Exception('User is not authorized to delete this post');
+      }
+
+      // Start a batch to delete multiple items
+      WriteBatch batch = _firestore.batch();
+
+      // 1. Delete all comments and their replies
+      final commentsSnapshot =
+          await _firestore
+              .collection('posts')
+              .doc(postId)
+              .collection('comments')
+              .get();
+
+      for (var commentDoc in commentsSnapshot.docs) {
+        // Delete replies for each comment
+        final repliesSnapshot =
+            await _firestore
+                .collection('posts')
+                .doc(postId)
+                .collection('comments')
+                .doc(commentDoc.id)
+                .collection('replies')
+                .get();
+
+        for (var replyDoc in repliesSnapshot.docs) {
+          batch.delete(replyDoc.reference);
+        }
+
+        // Delete the comment
+        batch.delete(commentDoc.reference);
+      }
+
+      // 2. Delete all likes
+      final likesSnapshot =
+          await _firestore
+              .collection('posts')
+              .doc(postId)
+              .collection('likes')
+              .get();
+
+      for (var likeDoc in likesSnapshot.docs) {
+        batch.delete(likeDoc.reference);
+      }
+
+      // 3. Delete the post itself
+      batch.delete(_firestore.collection('posts').doc(postId));
+
+      // 4. Execute the batch
+      await batch.commit();
+
+      // 5. Find and delete pinned references in separate operation
+      // This needs to be done separately since we can't include collection group
+      // queries in a batch write
+      try {
+        final pinnedPostsSnapshot =
+            await _firestore
+                .collectionGroup('pinnedPosts')
+                .where(FieldPath.documentId, isEqualTo: postId)
+                .get();
+
+        // If there are any pinned references, delete them in a new batch
+        if (pinnedPostsSnapshot.docs.isNotEmpty) {
+          WriteBatch pinnedBatch = _firestore.batch();
+          for (var doc in pinnedPostsSnapshot.docs) {
+            pinnedBatch.delete(doc.reference);
+          }
+          await pinnedBatch.commit();
+        }
+      } catch (e) {
+        // Log the error but don't fail the whole operation if just the pinned posts cleanup fails
+        if (kDebugMode) {
+          print('Error cleaning up pinned posts: $e');
+        }
+      }
+
+      // 6. Delete related notifications in a separate operation
+      try {
+        final notificationsSnapshot =
+            await _firestore
+                .collectionGroup('notifications')
+                .where('postId', isEqualTo: postId)
+                .get();
+
+        if (notificationsSnapshot.docs.isNotEmpty) {
+          WriteBatch notificationBatch = _firestore.batch();
+          for (var doc in notificationsSnapshot.docs) {
+            notificationBatch.delete(doc.reference);
+          }
+          await notificationBatch.commit();
+        }
+      } catch (e) {
+        // Log the error but don't fail the whole operation
+        if (kDebugMode) {
+          print('Error cleaning up notifications: $e');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error deleting post: $e');
+      }
+      throw Exception('Failed to delete post: $e');
     }
-    
-    await batch.commit();
   }
 }
