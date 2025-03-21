@@ -37,45 +37,18 @@ class CommunityService {
     return user.uid.substring(0, 8); // Use first part of UID as fallback
   }
 
-  // Stream of posts with user-specific pinned status
+  // Stream of posts
   Stream<List<CommunityPost>> getPosts() {
-    final user = _auth.currentUser;
-    if (user == null) {
-      // Return empty list if user is not authenticated
-      return Stream.value([]);
-    }
-
-    // Get all posts first
     return _firestore
         .collection('posts')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .asyncMap((snapshot) async {
-          // Get posts from snapshot
-          List<CommunityPost> posts = snapshot.docs.map((doc) {
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
             final data = doc.data();
             data['id'] = doc.id;
             return CommunityPost.fromMap(data);
           }).toList();
-
-          // Get user's pinned posts
-          final pinnedPostsSnapshot = await _firestore
-              .collection('users')
-              .doc(user.uid)
-              .collection('pinnedPosts')
-              .get();
-
-          // Create a set of pinned post IDs for efficient lookup
-          final Set<String> pinnedPostIds = pinnedPostsSnapshot.docs
-              .map((doc) => doc.id)
-              .toSet();
-
-          // Update each post with user-specific pinned status
-          for (var post in posts) {
-            post.isPinned = pinnedPostIds.contains(post.id);
-          }
-
-          return posts;
         });
   }
 
@@ -136,30 +109,13 @@ class CommunityService {
 
   // Get a specific post
   Future<CommunityPost?> getPost(String postId) async {
-    final user = _auth.currentUser;
     final doc = await _firestore.collection('posts').doc(postId).get();
-    
     if (!doc.exists) {
       return null;
     }
-    
     final data = doc.data();
     data?['id'] = doc.id;
-    CommunityPost post = CommunityPost.fromMap(data!);
-    
-    // If user is authenticated, check if post is pinned by this user
-    if (user != null) {
-      final pinnedDoc = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('pinnedPosts')
-          .doc(postId)
-          .get();
-          
-      post.isPinned = pinnedDoc.exists;
-    }
-    
-    return post;
+    return CommunityPost.fromMap(data!);
   }
 
   // Like a post
@@ -220,51 +176,28 @@ class CommunityService {
     }
   }
 
-  // Toggle pin status of a post for the current user
+    // Toggle pin status of a post
   Future<bool> togglePinPost(String postId) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('User not authenticated');
     }
 
-    // Reference to this user's pinned post document
-    final pinnedPostRef = _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('pinnedPosts')
-        .doc(postId);
-    
-    // Check if this post is already pinned by this user
-    final docSnapshot = await pinnedPostRef.get();
-    
-    if (docSnapshot.exists) {
-      // Post is already pinned, so unpin it
-      await pinnedPostRef.delete();
-      return false; // Return new pin status (unpinned)
-    } else {
-      // Post is not pinned, so pin it
-      await pinnedPostRef.set({
-        'pinnedAt': FieldValue.serverTimestamp(),
-      });
-      return true; // Return new pin status (pinned)
+    // Get the current post
+    final postDoc = await _firestore.collection('posts').doc(postId).get();
+    if (!postDoc.exists) {
+      throw Exception('Post not found');
     }
-  }
 
-  // Check if user has pinned a post
-  Future<bool> hasUserPinnedPost(String postId) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      return false;
-    }
+    final data = postDoc.data() as Map<String, dynamic>;
+    final bool currentlyPinned = data['isPinned'] ?? false;
     
-    final docSnapshot = await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('pinnedPosts')
-        .doc(postId)
-        .get();
-        
-    return docSnapshot.exists;
+    // Toggle the pinned status
+    await _firestore.collection('posts').doc(postId).update({
+      'isPinned': !currentlyPinned,
+    });
+    
+    return !currentlyPinned; // Return the new pinned status
   }
 
   // Check if user liked a post
@@ -574,20 +507,5 @@ class CommunityService {
 
     // Delete the post
     await _firestore.collection('posts').doc(postId).delete();
-    
-    // Also delete all references to this post in users' pinnedPosts collections
-    // This would be done in a transaction or batch in a production app
-    // For simplicity, we'll just query all users and delete the reference
-    final usersWithPinnedPost = await _firestore
-        .collectionGroup('pinnedPosts')
-        .where(FieldPath.documentId, isEqualTo: postId)
-        .get();
-        
-    final batch = _firestore.batch();
-    for (var doc in usersWithPinnedPost.docs) {
-      batch.delete(doc.reference);
-    }
-    
-    await batch.commit();
   }
 }

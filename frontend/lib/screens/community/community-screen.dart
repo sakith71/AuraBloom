@@ -39,7 +39,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     });
 
     try {
-      // Listen to the stream of posts with user-specific pinned status
+      // Listen to the stream of posts
       _communityService.getPosts().listen((updatedPosts) {
         if (mounted) {
           setState(() {
@@ -97,7 +97,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
     
     // Sort the posts so that pinned posts appear at the top
-    // Note: isPinned now reflects if the post is pinned by the current user
     filteredPosts.sort((a, b) {
       // First compare pinned status (pinned posts come first)
       if (a.isPinned && !b.isPinned) {
@@ -401,7 +400,7 @@ class _EnhancedCommunityPostCardState extends State<EnhancedCommunityPostCard> {
     }
   }
 
-  // Handle pin post action
+    // Handle pin post action
   Future<void> _handlePinPost() async {
     try {
       final isPinned = await _communityService.togglePinPost(widget.post.id);

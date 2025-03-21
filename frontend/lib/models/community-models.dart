@@ -12,22 +12,23 @@ class CommunityPost {
   int commentCount;
   final List<String>? imageUrls;
   final bool isAnonymous;
-  bool isPinned; // This will now represent if the post is pinned for the current user
+  bool isPinned;
+  // New property for pinned status
 
-  CommunityPost({
-    required this.id,
-    required this.authorId,
-    required this.authorName,
-    this.authorAvatar = '',
-    required this.createdAt,
-    required this.content,
-    required this.tags,
-    this.likeCount = 0,
-    this.commentCount = 0,
-    this.imageUrls,
-    this.isAnonymous = false,
-    this.isPinned = false,
-  });
+CommunityPost({
+  required this.id,
+  required this.authorId,
+  required this.authorName,
+  this.authorAvatar = '',
+  required this.createdAt,
+  required this.content,
+  required this.tags,
+  this.likeCount = 0,
+  this.commentCount = 0,
+  this.imageUrls,
+  this.isAnonymous = false,
+  this.isPinned = false,  // Add this line with a default value of false
+});
 
   // Convert from Map (e.g., from JSON)
   factory CommunityPost.fromMap(Map<String, dynamic> map) {
@@ -51,7 +52,7 @@ class CommunityPost {
       imageUrls:
           map['imageUrls'] != null ? List<String>.from(map['imageUrls']) : null,
       isAnonymous: map['isAnonymous'] ?? false,
-      isPinned: map['isPinned'] ?? false, // This will be set based on user-specific data
+      isPinned: map['isPinned'] ?? false,  // Add this line to parse the isPinned property
     );
   }
 
@@ -69,7 +70,8 @@ class CommunityPost {
       'commentCount': commentCount,
       'imageUrls': imageUrls,
       'isAnonymous': isAnonymous,
-      // We don't include isPinned in the toMap method since it's user-specific
+      'isPinned': isPinned,
+        // Add this line to include the isPinned property
     };
   }
 }
