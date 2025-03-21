@@ -103,7 +103,13 @@ class CalendarUtils {
 
   static int calculateDaysUntil(DateTime targetDate) {
     final now = DateTime.now();
-    return targetDate.difference(now).inDays;
+    final nowWithoutTime = DateTime(now.year, now.month, now.day);
+    final targetWithoutTime = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+    );
+    return targetWithoutTime.difference(nowWithoutTime).inDays;
   }
 
   // Get today's formatted date
@@ -163,6 +169,20 @@ class CalendarUtils {
     }
   }
 
+  // Convert month-day-year format (January-01-2023) to YYYY-MM-DD format
+  static String convertMonthDayYearToISO(String dateKey) {
+    final parts = dateKey.split('-');
+    if (parts.length == 3) {
+      final month = parts[0];
+      final day = parts[1];
+      final year = parts[2];
+
+      final monthNumber = getMonthNumber(month);
+      return '$year-$monthNumber-$day';
+    }
+    return dateKey; // Return original if format not matched
+  }
+
   // Get current week dates starting from Sunday
   static List<DateTime> getCurrentWeekDates() {
     final DateTime now = DateTime.now();
@@ -173,5 +193,45 @@ class CalendarUtils {
 
     // Generate dates for the whole week
     return List.generate(7, (index) => startOfWeek.add(Duration(days: index)));
+  }
+
+  // Find consecutive days in a list of date strings
+  static List<List<String>> findConsecutiveDays(List<String> dates) {
+    if (dates.isEmpty) return [];
+
+    // Convert to DateTime objects and sort
+    List<DateTime> dateTimes = [];
+    for (String date in dates) {
+      final dateTime = parseFromYYYYMMDD(date);
+      if (dateTime != null) {
+        dateTimes.add(dateTime);
+      }
+    }
+    dateTimes.sort();
+
+    // Find consecutive sequences
+    List<List<String>> sequences = [];
+    List<String> currentSequence = [formatToYYYYMMDD(dateTimes[0])];
+
+    for (int i = 1; i < dateTimes.length; i++) {
+      final prevDate = dateTimes[i - 1];
+      final currentDate = dateTimes[i];
+
+      if (currentDate.difference(prevDate).inDays == 1) {
+        // Consecutive day, add to current sequence
+        currentSequence.add(formatToYYYYMMDD(currentDate));
+      } else {
+        // Non-consecutive, start a new sequence
+        sequences.add(List.from(currentSequence));
+        currentSequence = [formatToYYYYMMDD(currentDate)];
+      }
+    }
+
+    // Add the last sequence
+    if (currentSequence.isNotEmpty) {
+      sequences.add(currentSequence);
+    }
+
+    return sequences;
   }
 }

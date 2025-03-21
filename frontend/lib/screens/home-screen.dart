@@ -9,16 +9,23 @@ import '../widgets/home-widgets/app-bar.dart';
 import '../widgets/prediction-widget.dart';
 import '../widgets/home-widgets/welcome-section.dart';
 import '../services/period-service.dart';
+import '../services/period-prediction-service.dart';
 import '../utils/calendar.dart';
 import 'cycle-history-page.dart';
 import 'profile-screen/profile-screen.dart';
 import 'community/community-screen.dart';
 import 'dart:math' as math;
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AnimatedWaveSection extends StatefulWidget {
-  final String periodDay;
+  final String periodStatus;
+  final String periodSubtext;
 
-  const AnimatedWaveSection({super.key, required this.periodDay});
+  const AnimatedWaveSection({
+    super.key,
+    required this.periodStatus,
+    this.periodSubtext = '',
+  });
 
   @override
   State<AnimatedWaveSection> createState() => _AnimatedWaveSectionState();
@@ -72,13 +79,25 @@ class _AnimatedWaveSectionState extends State<AnimatedWaveSection>
               ),
               const SizedBox(height: 4),
               Text(
-                widget.periodDay,
+                widget.periodStatus,
                 style: const TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),
               ),
+              if (widget.periodSubtext.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    widget.periodSubtext,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -158,12 +177,21 @@ class _HomeScreenState extends State<HomeScreen> {
   late Set<String> _selectedDates;
   final PeriodService _periodService = PeriodService();
   final PeriodStatsService _periodStatsService = PeriodStatsService();
+  final PeriodPredictionService _predictionService = PeriodPredictionService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _isLoading = true;
 
   DateTime? _lastCycleStartDate;
+  DateTime? _nextPeriodStartDate;
   int _lastCycleDuration = 28;
   int _lastPeriodDuration = 5;
-  String _currentPeriodDay = 'Day 1'; // Default value
+
+  // Period tracking variables
+  String _periodStatus = '';
+  String _periodSubtext = '';
+  bool _isInPeriod = false;
+  int _currentPeriodDay = 0;
+  int _daysUntilNextPeriod = 0;
 
   // Track the current week dates
   late List<DateTime> _weekDates;
@@ -185,64 +213,300 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedDates.add(widget.selectedDate!);
     }
 
+    // Show loading indicator until data is loaded
+    setState(() {
+      _isLoading = true;
+      _periodStatus = 'Loading...';
+    });
+
     // If still empty, fetch from Firestore
     if (_selectedDates.isEmpty) {
       _fetchPeriodDates();
-    } else {
-      _isLoading = false;
     }
 
-    // Fetch cycle data for the Previous Cycle box
-    _fetchCycleData();
-
-    // Calculate current period day
-    _calculateCurrentPeriodDay();
+    // Load all user data
+    _loadUserData();
   }
 
-  void _calculateCurrentPeriodDay() {
-    if (_selectedDates.isEmpty) return;
+  Future<void> _loadUserData() async {
+    try {
+      // Load period stats and cycle data
+      await _fetchCycleData();
 
-    // Get today's date in YYYY-MM-DD format
-    final DateTime now = DateTime.now();
-    final String today = CalendarUtils.formatToYYYYMMDD(now);
+      // Get prediction for next period
+      await _fetchPrediction();
 
-    // Sort the selected dates to find the most recent period start
-    final List<String> sortedDates = _selectedDates.toList()..sort();
+      // Calculate current period status
+      _calculatePeriodStatus();
 
-    if (sortedDates.contains(today)) {
-      // Find the index of today in the sorted list
-      int dayIndex = sortedDates.indexOf(today);
+      // Mark loading as complete
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Handle errors
+      print('Error loading user data: $e');
+      setState(() {
+        _isLoading = false;
+        _periodStatus = 'Error';
+        _periodSubtext = 'Could not load data';
+      });
+    }
+  }
 
-      // If we're in a period, calculate which day it is
-      if (dayIndex >= 0) {
-        // Find consecutive dates before today
-        int consecutiveDays = 1; // Start with today
-        final DateTime todayDate = DateTime.parse(today);
+  // Method to handle date updates from calendar page
+  void _handlePeriodDatesUpdated(Set<String> updatedDates) async {
+    setState(() {
+      _selectedDates = updatedDates;
+      _isLoading = true; // Show loading while recalculating
+    });
 
-        // Check previous dates
-        for (int i = 1; i <= dayIndex; i++) {
-          final String prevDateStr = sortedDates[dayIndex - i];
-          final DateTime prevDate = DateTime.parse(prevDateStr);
+    try {
+      // Find the most recent date from the selected dates
+      DateTime? mostRecentDate = _findMostRecentDate(updatedDates);
 
-          // If the previous date is exactly 1 day before, increment the count
-          if (todayDate.difference(prevDate).inDays == i) {
-            consecutiveDays++;
-          } else {
-            break; // Non-consecutive date, stop counting
-          }
-        }
-
-        setState(() {
-          _currentPeriodDay = 'Day $consecutiveDays';
+      if (mostRecentDate != null) {
+        // Clear cached predictions in Firestore user document
+        await _firestore.collection('users').doc(widget.userId).update({
+          'lastPredictionDate': null, // Force new prediction
+          'predictedNextPeriodStart': null,
         });
-        return;
+
+        // Force refresh prediction with the most recent period date
+        await _predictionService.updateAfterPeriod(
+          userId: widget.userId,
+          actualPeriodStartDate: mostRecentDate,
+        );
+
+        // Wait a moment to ensure Firestore updates
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
+
+      // Reload all user data to update UI
+      await _loadUserData();
+    } catch (e) {
+      print('Error refreshing prediction: $e');
+      // Continue with loading user data even if prediction refresh fails
+      _loadUserData();
+    }
+  }
+
+  // Helper method to find most recent date in the set
+  DateTime? _findMostRecentDate(Set<String> dateKeys) {
+    if (dateKeys.isEmpty) return null;
+
+    List<DateTime> dates = [];
+    for (String dateKey in dateKeys) {
+      final parts = dateKey.split('-');
+      if (parts.length == 3) {
+        final month = parts[0];
+        final day = parts[1];
+        final year = parts[2];
+
+        final date = CalendarUtils.parseDisplayDate('$month $day, $year');
+        if (date != null) {
+          dates.add(date);
+        }
       }
     }
 
-    // Default to Day 1 if not in a period or calculation failed
-    setState(() {
-      _currentPeriodDay = 'Day 1';
-    });
+    if (dates.isEmpty) return null;
+
+    // Sort dates with most recent last
+    dates.sort((a, b) => a.compareTo(b));
+    return dates.last; // Return the most recent date
+  }
+
+  Future<void> _fetchPrediction() async {
+    try {
+      final prediction = await _predictionService.getPredictionsForUser(
+        widget.userId,
+      );
+
+      if (prediction.containsKey('nextPeriodStartDate')) {
+        setState(() {
+          _nextPeriodStartDate = DateTime.parse(
+            prediction['nextPeriodStartDate'],
+          );
+        });
+      }
+    } catch (e) {
+      print('Error fetching prediction: $e');
+    }
+  }
+
+  void _calculatePeriodStatus() {
+    if (_selectedDates.isEmpty) {
+      setState(() {
+        _periodStatus = 'No Data';
+        _periodSubtext = 'Add your period dates';
+        _isInPeriod = false;
+      });
+      return;
+    }
+
+    final DateTime now = DateTime.now();
+    final String todayFormatted = CalendarUtils.formatToYYYYMMDD(now);
+
+    // Check if today is marked as a period day
+    if (_selectedDates.contains(todayFormatted)) {
+      _isInPeriod = true;
+
+      // Convert all dateKeys to DateTime objects and sort them
+      List<String> sortedDates = _selectedDates.toList();
+      sortedDates.sort();
+
+      // Find consecutive period days leading up to today
+      List<String> currentPeriodDays = [];
+      String? firstDay;
+
+      // First, find all consecutive days that include today
+      for (int i = 0; i < sortedDates.length; i++) {
+        if (sortedDates[i] == todayFormatted) {
+          // Found today - now go backward to find the first day of this period
+          currentPeriodDays.add(todayFormatted);
+
+          // Check previous days
+          int j = i - 1;
+          DateTime prevDate = now.subtract(const Duration(days: 1));
+
+          while (j >= 0) {
+            String prevDateFormatted = CalendarUtils.formatToYYYYMMDD(prevDate);
+
+            if (sortedDates.contains(prevDateFormatted)) {
+              currentPeriodDays.insert(0, prevDateFormatted);
+              prevDate = prevDate.subtract(const Duration(days: 1));
+              j--;
+            } else {
+              // Found a gap, this is the start of the period
+              break;
+            }
+          }
+
+          // Now go forward to capture remaining days if needed
+          int k = i + 1;
+          DateTime nextDate = now.add(const Duration(days: 1));
+
+          while (k < sortedDates.length) {
+            String nextDateFormatted = CalendarUtils.formatToYYYYMMDD(nextDate);
+
+            if (sortedDates.contains(nextDateFormatted)) {
+              currentPeriodDays.add(nextDateFormatted);
+              nextDate = nextDate.add(const Duration(days: 1));
+              k++;
+            } else {
+              // Found a gap, this is the end of the period
+              break;
+            }
+          }
+
+          firstDay = currentPeriodDays.first;
+          break;
+        }
+      }
+
+      if (firstDay != null) {
+        // Calculate which day of period this is
+        DateTime firstDate = DateTime.parse(firstDay);
+        int dayNumber = now.difference(firstDate).inDays + 1;
+
+        setState(() {
+          _currentPeriodDay = dayNumber;
+          _periodStatus = 'Day $_currentPeriodDay';
+
+          if (dayNumber == 1) {
+            _periodSubtext = 'Your period is starting today';
+          } else {
+            _periodSubtext = 'of $_lastPeriodDuration days (est.)';
+          }
+        });
+      } else {
+        // Fallback if calculation fails
+        setState(() {
+          _periodStatus = 'Active';
+          _periodSubtext = 'Your period is active';
+        });
+      }
+    } else {
+      // Not currently in period
+      _isInPeriod = false;
+
+      // Check if next period prediction is available
+      if (_nextPeriodStartDate != null) {
+        int daysUntil = CalendarUtils.calculateDaysUntil(_nextPeriodStartDate!);
+
+        if (daysUntil <= 0) {
+          // Period should be starting soon/today
+          setState(() {
+            _periodStatus = 'Expected Today';
+            _periodSubtext = 'Your period may start today';
+          });
+        } else {
+          // Show countdown to next period
+          setState(() {
+            _daysUntilNextPeriod = daysUntil;
+            _periodStatus = '$daysUntil Days Away';
+            _periodSubtext = 'Until your next period';
+          });
+        }
+      } else {
+        // No prediction available
+        setState(() {
+          _periodStatus = 'No Prediction';
+          _periodSubtext = 'Check back soon';
+        });
+      }
+
+      // Check if period recently ended
+      List<String> convertedDates = [];
+      for (String dateKey in _selectedDates) {
+        // Make sure we convert dateKey to YYYY-MM-DD format if needed
+        final parts = dateKey.split('-');
+        if (parts.length == 3) {
+          // Format is like "January-01-2023", convert to DateTime then to YYYY-MM-DD
+          final month = parts[0];
+          final day = parts[1];
+          final year = parts[2];
+
+          final DateTime? date = CalendarUtils.parseDisplayDate(
+            '$month $day, $year',
+          );
+          if (date != null) {
+            convertedDates.add(CalendarUtils.formatToYYYYMMDD(date));
+          }
+        } else {
+          // Already in expected format
+          convertedDates.add(dateKey);
+        }
+      }
+
+      convertedDates.sort();
+
+      // Find the last period day
+      DateTime? lastPeriodDay;
+      for (String date in convertedDates) {
+        try {
+          lastPeriodDay = DateTime.parse(date);
+        } catch (e) {
+          // Skip invalid dates
+        }
+      }
+
+      if (lastPeriodDay != null) {
+        // Check if period recently ended (within 3 days)
+        int daysSinceEnd = now.difference(lastPeriodDay).inDays;
+
+        if (daysSinceEnd <= 3) {
+          setState(() {
+            _periodStatus = 'Period Over';
+            _periodSubtext =
+                daysSinceEnd == 0
+                    ? 'Period ended today'
+                    : 'Period ended $daysSinceEnd ${daysSinceEnd == 1 ? 'day' : 'days'} ago';
+          });
+        }
+      }
+    }
   }
 
   Future<void> _fetchCycleData() async {
@@ -272,13 +536,9 @@ class _HomeScreenState extends State<HomeScreen> {
       Set<String> dates = await _periodService.fetchPeriodDates(widget.userId);
       setState(() {
         _selectedDates = dates;
-        _isLoading = false;
       });
-      _calculateCurrentPeriodDay();
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      print('Error fetching period dates: $e');
     }
   }
 
@@ -301,14 +561,11 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((_) {
       // Refresh cycle data when returning from history page
       _fetchCycleData();
+      _calculatePeriodStatus();
     });
   }
 
   Widget _getPage() {
-    // Show a loading spinner until we fetch the user's dates
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
     // Return the page matching the selected nav index
     switch (_selectedIndex) {
       case 0:
@@ -317,6 +574,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return CalendarPage(
           userId: widget.userId,
           selectedDates: _selectedDates,
+          onDatesUpdated: _handlePeriodDatesUpdated, // Pass the callback
         );
       case 2:
         return const CommunityScreen();
@@ -342,8 +600,24 @@ class _HomeScreenState extends State<HomeScreen> {
             selectedDates: _selectedDates.toList(),
           ),
           _buildWeekCalendar(),
-          // Animated wave section
-          AnimatedWaveSection(periodDay: _currentPeriodDay),
+          // Animated wave section with updated period status
+          _isLoading
+              ? Center(
+                child: Container(
+                  height: 140,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFFE3A6DD),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+              : AnimatedWaveSection(
+                periodStatus: _periodStatus,
+                periodSubtext: _periodSubtext,
+              ),
           const SizedBox(height: 20),
           DailyInsights(userId: widget.userId),
           const SizedBox(height: 20),

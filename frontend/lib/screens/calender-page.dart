@@ -8,11 +8,13 @@ import '../services/period-stats-service.dart';
 class CalendarPage extends StatefulWidget {
   final String userId;
   final Set<String> selectedDates;
+  final Function(Set<String>)? onDatesUpdated; // Add callback for date updates
 
   const CalendarPage({
     super.key,
     required this.userId,
     required this.selectedDates,
+    this.onDatesUpdated, // Optional callback when dates are updated
   });
 
   @override
@@ -76,7 +78,7 @@ class _CalendarPageState extends State<CalendarPage> {
         originalDates = Set<String>.from(dates); // Make a copy
         isLoading = false;
       });
-      
+
       // After loading period dates, fetch predictions
       _fetchPredictions();
     } catch (e) {
@@ -100,32 +102,35 @@ class _CalendarPageState extends State<CalendarPage> {
 
   Future<void> _fetchPredictions() async {
     if (isFetchingPredictions) return;
-    
+
     try {
       setState(() {
         isFetchingPredictions = true;
       });
 
       final userId = widget.userId;
-      
+
       // Get predictions from service
       final prediction = await _predictionService.getPredictionsForUser(userId);
-      
-      if (prediction.containsKey('nextPeriodStartDate') && 
+
+      if (prediction.containsKey('nextPeriodStartDate') &&
           prediction['nextPeriodStartDate'] != null) {
-        
         // Parse next period date
-        final nextPeriodStart = DateTime.parse(prediction['nextPeriodStartDate']);
-        
+        final nextPeriodStart = DateTime.parse(
+          prediction['nextPeriodStartDate'],
+        );
+
         // Use the average period length, not the cycle length
         // Period length is how many days bleeding lasts
         final periodLength = _averagePeriodLength; // Use the value from stats
-        
+
         // Set the next period date for display
         setState(() {
-          
           // Generate predicted dates for period duration only
-          predictedDates = _generatePredictedDates(nextPeriodStart, periodLength);
+          predictedDates = _generatePredictedDates(
+            nextPeriodStart,
+            periodLength,
+          );
         });
       }
     } catch (e) {
@@ -140,19 +145,19 @@ class _CalendarPageState extends State<CalendarPage> {
   // Generate a set of date keys for the predicted period
   Set<String> _generatePredictedDates(DateTime startDate, int periodLength) {
     Set<String> dates = {};
-    
+
     // Generate dates for the period duration (not the whole cycle)
     for (int i = 0; i < periodLength; i++) {
       DateTime currentDate = startDate.add(Duration(days: i));
       String monthName = CalendarUtils.months[currentDate.month - 1];
       String day = currentDate.day.toString().padLeft(2, '0');
       String year = currentDate.year.toString();
-      
+
       // Format: "January-01-2023"
       String dateKey = '$monthName-$day-$year';
       dates.add(dateKey);
     }
-    
+
     return dates;
   }
 
@@ -253,7 +258,12 @@ class _CalendarPageState extends State<CalendarPage> {
                         child: TextButton(
                           onPressed: () => Navigator.of(context).pop(true),
                           style: TextButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 240, 99, 153),
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              240,
+                              99,
+                              153,
+                            ),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
@@ -366,6 +376,11 @@ class _CalendarPageState extends State<CalendarPage> {
         hasChanges = false;
       });
 
+      // Notify parent about the updated dates
+      if (widget.onDatesUpdated != null) {
+        widget.onDatesUpdated!(selectedDates);
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -473,7 +488,10 @@ class _CalendarPageState extends State<CalendarPage> {
           monthIndex: targetMonth.month - 1,
           year: targetMonth.year,
           selectedDates: selectedDates,
-          predictedDates: isEditing ? {} : predictedDates, // Don't show predictions in edit mode
+          predictedDates:
+              isEditing
+                  ? {}
+                  : predictedDates, // Don't show predictions in edit mode
           onDateSelected: onDateSelected,
         ),
       );
