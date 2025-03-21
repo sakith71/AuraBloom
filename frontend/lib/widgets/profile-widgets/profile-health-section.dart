@@ -423,7 +423,12 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
             onPressed: _isUpdating ? null : _saveChanges,
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: Colors.pink,
+              backgroundColor: const Color.fromARGB(
+                255,
+                240,
+                99,
+                153,
+              ), // Updated color here
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),

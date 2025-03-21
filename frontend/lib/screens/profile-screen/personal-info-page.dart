@@ -141,7 +141,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
             fontSize: 20,
           ),
         ),
-        backgroundColor: const Color(0xFFE8D5E4), // Light lavender header
+        backgroundColor: const Color(0xFFFFF0F5), // Light lavender header
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
@@ -370,7 +370,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleSave,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color.fromARGB(255, 255, 255, 255),
           foregroundColor: const Color(0xFFE91E63),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
