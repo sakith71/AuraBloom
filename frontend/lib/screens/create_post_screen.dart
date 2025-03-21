@@ -275,16 +275,17 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   Widget build(BuildContext context) {
     // Main pink color used throughout the app
     final Color primaryPink = const Color(0xFFFF4081);
-    final Color lightPink = const Color(0xFFFCE4EC);
+    // Updated to match other screens' background color
+    final Color appBackgroundColor = const Color(0xFFFCF0F7);
 
     return Scaffold(
-      backgroundColor: lightPink,
+      backgroundColor: appBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'Create Post',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: lightPink,
+        backgroundColor: appBackgroundColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         actions: [
@@ -312,7 +313,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         ],
       ),
       body: Container(
-        color: lightPink,
+        color: appBackgroundColor,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
