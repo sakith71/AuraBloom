@@ -8,7 +8,7 @@ class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
   @override
-  _CommunityScreenState createState() => _CommunityScreenState();
+  State<CommunityScreen> createState() => _CommunityScreenState();
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
@@ -343,7 +343,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
 class EnhancedCommunityPostCard extends StatelessWidget {
   final CommunityPost post;
-  const EnhancedCommunityPostCard({super.key, required this.post});
+  const EnhancedCommunityPostCard({Key? key, required this.post}) : super(key: key);
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -449,14 +449,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const Spacer(),
-                // More options button
-                IconButton(
-                  icon: const Icon(Icons.more_horiz, color: Colors.grey),
-                  onPressed: () {
-                    // Show post options
-                  },
-                ),
+                // More options button removed
               ],
             ),
           ),
@@ -467,7 +460,7 @@ class EnhancedCommunityPostCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.push_pin,
                     size: 16,
                     color: Colors.amber,
@@ -587,13 +580,6 @@ class EnhancedCommunityPostCard extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                    const Spacer(),
-                    // Share button
-                    const Icon(
-                      Icons.share_outlined,
-                      size: 20,
-                      color: Colors.grey,
                     ),
                   ],
                 ),
