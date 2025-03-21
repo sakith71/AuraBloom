@@ -12,7 +12,8 @@ class CommunityPost {
   int commentCount;
   final List<String>? imageUrls;
   final bool isAnonymous;
-  bool isPinned; // This will now represent if the post is pinned for the current user
+  bool
+  isPinned; // This will now represent if the post is pinned for the current user
 
   CommunityPost({
     required this.id,
@@ -51,7 +52,9 @@ class CommunityPost {
       imageUrls:
           map['imageUrls'] != null ? List<String>.from(map['imageUrls']) : null,
       isAnonymous: map['isAnonymous'] ?? false,
-      isPinned: map['isPinned'] ?? false, // This will be set based on user-specific data
+      isPinned:
+          map['isPinned'] ??
+          false, // This will be set based on user-specific data
     );
   }
 
