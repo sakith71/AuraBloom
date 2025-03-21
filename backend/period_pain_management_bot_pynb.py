@@ -8,7 +8,7 @@ Original file is located at
 
 *API key.*
 
-`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`
+"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
 """
 
 # Install required packages using subprocess
