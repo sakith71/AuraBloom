@@ -1,7 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-enum NotificationType { like, comment, reply }
+enum NotificationType {
+  like,
+  comment,
+  reply,
+  healthTip,
+  periodReminder,
+  cycleUpdate,
+  appUpdate,
+}
 
 class UserNotification {
   final String id;
@@ -9,7 +17,7 @@ class UserNotification {
   final String triggerUserId; // The user who triggered the notification
   final String triggerUserName;
   final String? triggerUserAvatar;
-  final String postId;
+  final String? postId;
   final String? commentId;
   final String? replyId;
   final String? content; // Preview of the content that triggered notification
@@ -23,7 +31,7 @@ class UserNotification {
     required this.triggerUserId,
     required this.triggerUserName,
     this.triggerUserAvatar,
-    required this.postId,
+    this.postId,
     this.commentId,
     this.replyId,
     this.content,
@@ -101,7 +109,7 @@ class UserNotification {
         triggerUserId: map['triggerUserId'] ?? '',
         triggerUserName: map['triggerUserName'] ?? 'Unknown',
         triggerUserAvatar: map['triggerUserAvatar'],
-        postId: map['postId'] ?? '',
+        postId: map['postId'],
         commentId: map['commentId'],
         replyId: map['replyId'],
         content: map['content'],
@@ -121,7 +129,6 @@ class UserNotification {
         userId: '',
         triggerUserId: '',
         triggerUserName: 'Unknown',
-        postId: '',
         type: NotificationType.like,
         createdAt: DateTime.now(),
       );

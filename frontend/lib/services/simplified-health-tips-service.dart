@@ -111,10 +111,11 @@ class HealthTipsService {
       if (user != null) {
         await _notificationService.createNotification(
           userId: user.uid,
-          postId: 'health_tip_${DateTime.now().millisecondsSinceEpoch}',
-          type: NotificationType.like,
+          postId: null, // Health tips don't need a post ID
+          type: NotificationType.healthTip, // Use the dedicated healthTip type
           content: tip,
           skipForSelf: false, // Allow self-notifications
+          triggerUserName: 'Health Tips', // Custom system name for health tips
         );
       }
     } catch (e) {
