@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
 import '../models/chat-message.dart';
 
+// Custom painter for chevron arrow shape
+class TriangleArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+
+    final path = Path();
+    // Create a chevron/arrow pointing right
+    path.moveTo(0, 0); // Top left
+    path.lineTo(size.width, size.height / 2); // Middle right
+    path.lineTo(0, size.height); // Bottom left
+    path.lineTo(size.width / 4, size.height / 2); // Middle indent
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class ChatMessageList extends StatelessWidget {
   final List<ChatMessage> messages;
   final ScrollController scrollController;
 
-  const ChatMessageList({super.key, 
+  const ChatMessageList({
+    super.key,
     required this.messages,
     required this.scrollController,
   });
@@ -37,7 +62,8 @@ class ChatMessageBubble extends StatelessWidget {
         margin: EdgeInsets.symmetric(vertical: 4.0),
         padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: message.isUser ? Colors.pink[100] : Colors.grey[200],
+          // Changed bot message color to white, keeping user messages pink
+          color: message.isUser ? Colors.pink[100] : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -46,6 +72,11 @@ class ChatMessageBubble extends StatelessWidget {
               offset: Offset(0, 1),
             ),
           ],
+          // Add a subtle border for bot messages to distinguish them from background
+          border:
+              message.isUser
+                  ? null
+                  : Border.all(color: Colors.grey[200]!, width: 1),
         ),
         child: Text(
           message.text,
@@ -60,10 +91,17 @@ class ChatInputField extends StatelessWidget {
   final TextEditingController controller;
   final Function(String) onSubmitted;
 
-  const ChatInputField({super.key, required this.controller, required this.onSubmitted});
+  const ChatInputField({
+    super.key,
+    required this.controller,
+    required this.onSubmitted,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Define the pink color used in "Save Daily Entry" button
+    final Color primaryPink = const Color(0xFFFF5B9D);
+
     return Container(
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
@@ -85,11 +123,11 @@ class ChatInputField extends StatelessWidget {
                 hintText: 'Type your message...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.pink[100]!, width: 1),
+                  borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: Colors.pink[300]!, width: 2),
+                  borderSide: BorderSide(color: primaryPink, width: 2),
                 ),
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 20,
@@ -100,15 +138,28 @@ class ChatInputField extends StatelessWidget {
             ),
           ),
           SizedBox(width: 8),
-          FloatingActionButton(
-            onPressed: () {
+          // Updated with custom chevron arrow shape from reference image
+          GestureDetector(
+            onTap: () {
               if (controller.text.isNotEmpty) {
                 onSubmitted(controller.text);
               }
             },
-            backgroundColor: const Color.fromARGB(255, 238, 141, 174),
-            elevation: 2,
-            child: Icon(Icons.send),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: primaryPink,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CustomPaint(painter: TriangleArrowPainter()),
+                ),
+              ),
+            ),
           ),
         ],
       ),
