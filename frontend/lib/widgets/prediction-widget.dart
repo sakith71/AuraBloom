@@ -57,7 +57,6 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         _retryCount = 0; // Reset retry count on success
       });
     } catch (e) {
-
       // If we haven't reached max retries, try again
       if (_retryCount < MAX_RETRIES) {
         _retryCount++;
@@ -208,7 +207,6 @@ class _PredictionWidgetState extends State<PredictionWidget> {
         final dateTime = DateTime.parse(_prediction!['nextPeriodStartDate']);
         nextPeriodDate = DateFormat('MMM dd, yyyy').format(dateTime);
       } catch (e) {
-        
         nextPeriodDate = 'Date unavailable';
         throw Exception('Error parsing date: $e');
       }

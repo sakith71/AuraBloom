@@ -5,7 +5,7 @@ class NavigationButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isNext;
   final bool isEnabled;
-  
+
   const NavigationButton({
     super.key,
     required this.text,
@@ -24,17 +24,9 @@ class NavigationButton extends StatelessWidget {
           vertical: 15,
         ),
         backgroundColor: _getBackgroundColor(),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: _getTextColor(),
-          fontSize: 16,
-        ),
-      ),
+      child: Text(text, style: TextStyle(color: _getTextColor(), fontSize: 16)),
     );
   }
 
@@ -53,7 +45,7 @@ class NavigationButtonRow extends StatelessWidget {
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final bool isNextEnabled;
-  
+
   const NavigationButtonRow({
     super.key,
     required this.onPrevious,
@@ -66,10 +58,7 @@ class NavigationButtonRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        NavigationButton(
-          text: 'Previous',
-          onPressed: onPrevious,
-        ),
+        NavigationButton(text: 'Previous', onPressed: onPrevious),
         NavigationButton(
           text: 'Next',
           onPressed: onNext,

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import '../widgets/navigation-buttons.dart';
-import '../widgets/calendar-month.dart';
-import '../utils/calendar.dart';
-import '../services/period-service.dart';
-import 'home-screen.dart';
+import '../../widgets/navigation-buttons.dart';
+import '../../widgets/calendar-month.dart';
+import '../../utils/calendar.dart';
+import '../../services/period-service.dart';
+import '../home/home-screen.dart';
 
 class PeriodLoggingScreen extends StatefulWidget {
   final String userId;
-  
+
   const PeriodLoggingScreen({super.key, required this.userId});
 
   @override
@@ -34,7 +34,8 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
   void _scrollToCurrentMonth() {
     // Calculate approximate position to scroll to current month
     double itemHeight = 300; // Estimated height of a month widget
-    double targetPosition = (11 - 3) * itemHeight; // Show current month after 3 months
+    double targetPosition =
+        (11 - 3) * itemHeight; // Show current month after 3 months
     _scrollController.animateTo(
       targetPosition,
       duration: const Duration(milliseconds: 500),
@@ -59,49 +60,53 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
 
   Future<void> _saveMultiplePeriodDatesAndFinish() async {
     if (_selectedDates.isEmpty) return;
-    
+
     try {
       setState(() {
         _isLoading = true;
       });
-      
+
       // Save the period dates
       await _periodService.savePeriodDates(widget.userId, _selectedDates);
-      
-      
+
       // Verify that the stats were saved to the database
-      await Future.delayed(const Duration(seconds: 1)); // Small delay to ensure data is written
-      
+      await Future.delayed(
+        const Duration(seconds: 1),
+      ); // Small delay to ensure data is written
+
       if (mounted) {
         // Find the most recent date for display purposes
         String? mostRecentDateKey;
         if (_selectedDates.isNotEmpty) {
-          final sortedDates = _selectedDates.toList()
-            ..sort((a, b) {
-              final aParts = a.split('-');
-              final bParts = b.split('-');
-              
-              final aDate = CalendarUtils.parseDisplayDate(
-                '${aParts[0]} ${aParts[1]}, ${aParts[2]}'
-              );
-              final bDate = CalendarUtils.parseDisplayDate(
-                '${bParts[0]} ${bParts[1]}, ${bParts[2]}'
-              );
-              
-              return (bDate ?? DateTime.now()).compareTo(aDate ?? DateTime.now());
-            });
-          
+          final sortedDates =
+              _selectedDates.toList()..sort((a, b) {
+                final aParts = a.split('-');
+                final bParts = b.split('-');
+
+                final aDate = CalendarUtils.parseDisplayDate(
+                  '${aParts[0]} ${aParts[1]}, ${aParts[2]}',
+                );
+                final bDate = CalendarUtils.parseDisplayDate(
+                  '${bParts[0]} ${bParts[1]}, ${bParts[2]}',
+                );
+
+                return (bDate ?? DateTime.now()).compareTo(
+                  aDate ?? DateTime.now(),
+                );
+              });
+
           mostRecentDateKey = sortedDates.first;
         }
-        
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              userId: widget.userId,
-              selectedDate: mostRecentDateKey,
-              selectedDates: _selectedDates,
-            ),
+            builder:
+                (context) => HomeScreen(
+                  userId: widget.userId,
+                  selectedDate: mostRecentDateKey,
+                  selectedDates: _selectedDates,
+                ),
           ),
         );
       }
@@ -144,9 +149,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -176,17 +179,20 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
                       'Selected ${_selectedDates.length} days',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 20),
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : NavigationButtonRow(
-                        onPrevious: _handlePrevious,
-                        onNext: _saveMultiplePeriodDatesAndFinish,
-                        isNextEnabled: _selectedDates.isNotEmpty,
-                      ),
+                      onPrevious: _handlePrevious,
+                      onNext: _saveMultiplePeriodDatesAndFinish,
+                      isNextEnabled: _selectedDates.isNotEmpty,
+                    ),
               ],
             ),
           ),

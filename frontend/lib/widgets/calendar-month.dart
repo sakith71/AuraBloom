@@ -24,7 +24,7 @@ class CalendarMonth extends StatelessWidget {
   Widget build(BuildContext context) {
     final weeks = CalendarUtils.getWeeksForMonth(year, monthIndex + 1);
     final today = DateTime.now();
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -56,7 +56,10 @@ class CalendarMonth extends StatelessWidget {
                 ),
                 if (monthIndex + 1 == today.month && year == today.year)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 255, 233, 242),
                       borderRadius: BorderRadius.circular(12),
@@ -86,37 +89,49 @@ class CalendarMonth extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            ...weeks.map((week) => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: week.map((day) {
-                final dateKey = '$month-$day-$year';
-                final isSelected = selectedDates.contains(dateKey);
-                final isPredicted = predictedDates.contains(dateKey);
-                final isEnabled = day.isNotEmpty;
-                
-                bool isPastOrToday = false;
-                if (isEnabled) {
-                  final currentDate = DateTime(year, monthIndex + 1, int.parse(day));
-                  final nowDate = DateTime(today.year, today.month, today.day);
-                  isPastOrToday = currentDate.compareTo(nowDate) <= 0;
-                }
+            ...weeks.map(
+              (week) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children:
+                    week.map((day) {
+                      final dateKey = '$month-$day-$year';
+                      final isSelected = selectedDates.contains(dateKey);
+                      final isPredicted = predictedDates.contains(dateKey);
+                      final isEnabled = day.isNotEmpty;
 
-                final isToday = isEnabled && 
-                    year == today.year && 
-                    monthIndex + 1 == today.month && 
-                    int.parse(day) == today.day;
+                      bool isPastOrToday = false;
+                      if (isEnabled) {
+                        final currentDate = DateTime(
+                          year,
+                          monthIndex + 1,
+                          int.parse(day),
+                        );
+                        final nowDate = DateTime(
+                          today.year,
+                          today.month,
+                          today.day,
+                        );
+                        isPastOrToday = currentDate.compareTo(nowDate) <= 0;
+                      }
 
-                return CalendarDay(
-                  day: day,
-                  isSelected: isSelected,
-                  isEnabled: isEnabled,
-                  isPastOrToday: isPastOrToday,
-                  isToday: isToday,
-                  isPredicted: isPredicted,
-                  onTap: isEnabled ? () => onDateSelected(dateKey) : null,
-                );
-              }).toList(),
-            )),
+                      final isToday =
+                          isEnabled &&
+                          year == today.year &&
+                          monthIndex + 1 == today.month &&
+                          int.parse(day) == today.day;
+
+                      return CalendarDay(
+                        day: day,
+                        isSelected: isSelected,
+                        isEnabled: isEnabled,
+                        isPastOrToday: isPastOrToday,
+                        isToday: isToday,
+                        isPredicted: isPredicted,
+                        onTap: isEnabled ? () => onDateSelected(dateKey) : null,
+                      );
+                    }).toList(),
+              ),
+            ),
           ],
         ),
       ),

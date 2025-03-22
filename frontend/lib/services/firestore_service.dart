@@ -34,7 +34,6 @@ class FirestoreService {
           transaction.set(userDocRef, userData);
         }
       });
-
     } catch (e) {
       // Re-throw to allow handling in UI
       throw Exception('Failed to save user profile: $e');
@@ -110,7 +109,6 @@ class FirestoreService {
       }
       return <String>{};
     } catch (e) {
-    
       return <String>{};
     }
   }
@@ -170,7 +168,6 @@ class FirestoreService {
         ...predictionData,
         'createdAt': now.toIso8601String(),
       });
-
     } catch (e) {
       throw Exception('Failed to store prediction data: $e');
     }

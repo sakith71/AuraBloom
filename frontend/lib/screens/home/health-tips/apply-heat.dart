@@ -61,7 +61,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Title section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -74,7 +74,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Main content
             Padding(
               padding: const EdgeInsets.all(16),
@@ -87,7 +87,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Expert insight section
             Container(
               margin: const EdgeInsets.all(16),
@@ -124,7 +124,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Suggested exercises section (optional addition)
             Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -145,9 +145,18 @@ class ApplyHeatDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildExerciseTile('Heating Pad or Hot Water Bottle', 'Place a heating pad or hot water bottle on your lower abdomen for 15–20 minutes at a time to relax muscles and improve blood circulation, reducing cramps.'),
-                  _buildExerciseTile('Warm Bath with Epsom Salts', 'A warm bath infused with Epsom salts helps ease muscle tension and provides full-body relaxation, making cramps more manageable.'),
-                  _buildExerciseTile('Adhesive Heat Patches', ' If you need relief while on the go, adhesive heat patches provide continuous warmth and help keep cramps under control throughout the day.'),
+                  _buildExerciseTile(
+                    'Heating Pad or Hot Water Bottle',
+                    'Place a heating pad or hot water bottle on your lower abdomen for 15–20 minutes at a time to relax muscles and improve blood circulation, reducing cramps.',
+                  ),
+                  _buildExerciseTile(
+                    'Warm Bath with Epsom Salts',
+                    'A warm bath infused with Epsom salts helps ease muscle tension and provides full-body relaxation, making cramps more manageable.',
+                  ),
+                  _buildExerciseTile(
+                    'Adhesive Heat Patches',
+                    ' If you need relief while on the go, adhesive heat patches provide continuous warmth and help keep cramps under control throughout the day.',
+                  ),
                 ],
               ),
             ),
@@ -163,11 +172,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.circle,
-            size: 8,
-            color: Colors.pink[300],
-          ),
+          Icon(Icons.circle, size: 8, color: Colors.pink[300]),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -182,10 +187,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                 ),
               ],
             ),

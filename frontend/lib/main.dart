@@ -4,9 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/splash-screen.dart';
 import 'screens/login-page.dart';
 import 'screens/signup-screen.dart';
-import 'screens/home-screen.dart';
+import 'screens/home/home-screen.dart';
 import 'screens/community/community-screen.dart';
-import 'screens/personal-info-screen.dart';
+import 'screens/register/personal-info-screen.dart';
 import 'wrapper.dart';
 
 void main() async {

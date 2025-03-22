@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/custom-text-field.dart';
-import '../utils/validators.dart';
-import '../widgets/personal-info-illustration.dart';
-import '../widgets/navigation-buttons.dart';
-import '../services/auth-service.dart';
+import '../../widgets/custom-text-field.dart';
+import '../../utils/validators.dart';
+import '../../widgets/personal-info-illustration.dart';
+import '../../widgets/navigation-buttons.dart';
+import '../../services/auth-service.dart';
 import 'menstrual-symptoms-screen.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
@@ -110,9 +110,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -123,12 +121,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
                   child: SingleChildScrollView(
                     child: Form(
                       key: _formKey,
-                      onChanged: () => setState(() {
-                        // Hide error message when form is valid
-                        if (_showErrorMessage && _isFormValid) {
-                          _showErrorMessage = false;
-                        }
-                      }),
+                      onChanged:
+                          () => setState(() {
+                            // Hide error message when form is valid
+                            if (_showErrorMessage && _isFormValid) {
+                              _showErrorMessage = false;
+                            }
+                          }),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

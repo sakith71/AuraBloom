@@ -57,9 +57,7 @@ class _PrivacyPageState extends State<PrivacyPage> {
         elevation: 0,
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7)
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: Column(
           children: [
             Expanded(
@@ -168,22 +166,20 @@ class _PrivacyPageState extends State<PrivacyPage> {
     try {
       // Get the current user
       User? user = _auth.currentUser;
-      
+
       if (user != null) {
         // Delete the user account
         await user.delete();
-        
+
         // Clear local storage and preferences if needed
         final prefs = await SharedPreferences.getInstance();
         await prefs.clear();
-        
+
         // Navigate to login page
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => const LoginScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
             (route) => false, // Clear all routes
           );
         }
@@ -202,68 +198,67 @@ class _PrivacyPageState extends State<PrivacyPage> {
   void _showReauthDialog() {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
-    
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Re-authenticate'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'For security reasons, please re-enter your credentials to delete your account.',
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Re-authenticate'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'For security reasons, please re-enter your credentials to delete your account.',
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: passwordController,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                  obscureText: true,
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+
+                  try {
+                    // Create a credential
+                    AuthCredential credential = EmailAuthProvider.credential(
+                      email: emailController.text.trim(),
+                      password: passwordController.text.trim(),
+                    );
+
+                    // Reauthenticate user
+                    await _auth.currentUser?.reauthenticateWithCredential(
+                      credential,
+                    );
+
+                    // Try deleting again after reauthentication
+                    await _deleteUserAccount();
+                  } catch (e) {
+                    _showErrorDialog('Authentication failed: ${e.toString()}');
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 255, 115, 166),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Confirm'),
               ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              
-              try {
-                // Create a credential
-                AuthCredential credential = EmailAuthProvider.credential(
-                  email: emailController.text.trim(),
-                  password: passwordController.text.trim(),
-                );
-                
-                // Reauthenticate user
-                await _auth.currentUser?.reauthenticateWithCredential(credential);
-                
-                // Try deleting again after reauthentication
-                await _deleteUserAccount();
-              } catch (e) {
-                _showErrorDialog('Authentication failed: ${e.toString()}');
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 255, 115, 166),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -271,44 +266,46 @@ class _PrivacyPageState extends State<PrivacyPage> {
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _handleDataDeletion() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
-        content: const Text(
-          'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deleteUserAccount(); // Call the method to delete the account
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: const Color.fromARGB(255, 255, 115, 166),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Account'),
+            content: const Text(
+              'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
             ),
-            child: const Text('Delete Account'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _deleteUserAccount(); // Call the method to delete the account
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color.fromARGB(255, 255, 115, 166),
+                ),
+                child: const Text('Delete Account'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/screens/calender-page.dart';
 import 'package:frontend/screens/chat-screen.dart';
-import '../services/period-stats-service.dart';
-import '../widgets/home-widgets/daily-insights.dart';
-import '../widgets/home-widgets/previous-cycle-box.dart';
-import '../widgets/home-widgets/tip-of-the-day.dart';
-import '../widgets/home-widgets/app-bar.dart';
-import '../widgets/prediction-widget.dart';
-import '../widgets/home-widgets/welcome-section.dart';
-import '../services/period-service.dart';
-import '../services/period-prediction-service.dart';
-import '../utils/calendar.dart';
+import '../../services/period-stats-service.dart';
+import '../../widgets/home-widgets/daily-insights.dart';
+import '../../widgets/home-widgets/previous-cycle-box.dart';
+import '../../widgets/home-widgets/tip-of-the-day.dart';
+import '../../widgets/home-widgets/app-bar.dart';
+import '../../widgets/prediction-widget.dart';
+import '../../widgets/home-widgets/welcome-section.dart';
+import '../../services/period-service.dart';
+import '../../services/period-prediction-service.dart';
+import '../../utils/calendar.dart';
 import 'cycle-history-page.dart';
-import 'profile-screen/profile-screen.dart';
-import 'community/community-screen.dart';
+import '../profile-screen/profile-screen.dart';
+import '../community/community-screen.dart';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -190,7 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _periodStatus = '';
   String _periodSubtext = '';
   bool _isInPeriod = false;
-  int _currentPeriodDay = 0;
   int _daysUntilNextPeriod = 0;
 
   // Track the current week dates
@@ -406,7 +405,6 @@ class _HomeScreenState extends State<HomeScreen> {
         int dayNumber = today.difference(firstDayOfPeriod).inDays + 1;
 
         setState(() {
-          _currentPeriodDay = dayNumber;
           _periodStatus = 'Day $dayNumber';
 
           if (dayNumber == 1) {
@@ -425,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (isPeriodContinuing) {
         _isInPeriod = true;
         setState(() {
-          _currentPeriodDay = 2; // It's day 2 since yesterday was day 1
+          // It's day 2 since yesterday was day 1
           _periodStatus = 'Day 2';
           _periodSubtext = 'of $_lastPeriodDuration days (est.)';
         });
@@ -448,7 +446,6 @@ class _HomeScreenState extends State<HomeScreen> {
         // Expected to start today
         _isInPeriod = true;
         setState(() {
-          _currentPeriodDay = 1;
           _periodStatus = 'Day 1';
           _periodSubtext = 'Your period may start today';
         });
@@ -457,7 +454,6 @@ class _HomeScreenState extends State<HomeScreen> {
         // Expected to have started yesterday, should be day 2 today
         _isInPeriod = true;
         setState(() {
-          _currentPeriodDay = 2;
           _periodStatus = 'Day 2';
           _periodSubtext = 'Your period was expected to start yesterday';
         });

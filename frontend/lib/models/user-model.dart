@@ -2,7 +2,7 @@ class UserModel {
   final String uid;
   final String name;
   final int age;
-  final DateTime? birthday; // Added birthday field
+  final DateTime? birthday;
   final double height;
   final double weight;
   final double bmi;

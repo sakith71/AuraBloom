@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import './stay-active-detail.dart'; // Import the detail screen
-import './eat-well-detail.dart'; // Import the detail screen
-import './apply-heat.dart'; //Import the detail screen
-import './get-rest.dart'; //Import the detail screen
-import './practice-mindfulness.dart'; //Import the detail screen
+import 'stay-active-detail.dart'; // Import the detail screen
+import 'eat-well-detail.dart'; // Import the detail screen
+import 'apply-heat.dart'; //Import the detail screen
+import 'get-rest.dart'; //Import the detail screen
+import 'practice-mindfulness.dart'; //Import the detail screen
 
 class HealthTipsScreen extends StatelessWidget {
   const HealthTipsScreen({super.key});
@@ -111,7 +111,7 @@ class HealthTipsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Row(
           children: [
-             Text(
+            Text(
               'Health Tips',
               style: TextStyle(
                 color: Colors.pink[300],

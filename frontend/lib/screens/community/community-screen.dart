@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/community-models.dart';
 import 'package:frontend/screens/community/post-detail-screen.dart';
-import 'package:frontend/screens/create_post_screen.dart';
+import 'package:frontend/screens/community/create_post_screen.dart';
 import 'package:frontend/services/community-service.dart';
 import 'package:frontend/services/notification-service.dart';
 import 'package:frontend/screens/notification-screen.dart';

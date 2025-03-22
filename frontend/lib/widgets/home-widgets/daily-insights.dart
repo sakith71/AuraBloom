@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/health-tips-screen.dart';
-import 'package:frontend/screens/feeling-today-screen.dart';
+import 'package:frontend/screens/home/health-tips/health-tips-screen.dart';
+import 'package:frontend/screens/home/feeling-today-screen.dart';
 import 'package:frontend/screens/calender-page.dart'; // Import calendar page
 
 class DailyInsights extends StatelessWidget {
