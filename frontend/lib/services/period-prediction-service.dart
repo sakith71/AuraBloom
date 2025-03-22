@@ -14,9 +14,9 @@ class PeriodPredictionService {
   String get _apiBaseUrl {
     // Check if running on Android emulator
     if (Platform.isAndroid) {
-      return 'http://209.38.123.151'; // Special IP for Android emulator to access host
+      return 'http://10.0.2.2:8000'; // Special IP for Android emulator to access host
     } else {
-      return 'http://209.38.123.151'; // For iOS simulator or actual devices
+      return 'http://127.0.0.1:8000'; // For iOS simulator or actual devices
     }
   }
 
