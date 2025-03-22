@@ -60,10 +60,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
     // Scroll to current month initially
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Add a small delay to ensure everything is rendered
-      Future.delayed(const Duration(milliseconds: 300), () {
-        _scrollToCurrentMonth();
-      });
+      _scrollToCurrentMonth();
     });
   }
 
@@ -126,16 +123,13 @@ class _CalendarPageState extends State<CalendarPage> {
         // Use the average period length, not the cycle length
         // Period length is how many days bleeding lasts
         final periodLength = _averagePeriodLength; // Use the value from stats
-        final cycleLength = _averageCycleLength; // Use for calculating future cycles
 
         // Set the next period date for display
         setState(() {
-          // Generate predicted dates for multiple future cycles
-          predictedDates = _generateMultiplePredictedCycles(
+          // Generate predicted dates for period duration only
+          predictedDates = _generatePredictedDates(
             nextPeriodStart,
             periodLength,
-            cycleLength,
-            6, // Show predictions for 6 future cycles
           );
         });
       }
@@ -148,64 +142,39 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  // Generate a set of date keys for multiple predicted cycles
-  Set<String> _generateMultiplePredictedCycles(
-    DateTime firstCycleStart,
-    int periodLength,
-    int cycleLength,
-    int numberOfCycles,
-  ) {
-    Set<String> allPredictedDates = {};
-    
-    // Start with the first predicted cycle
-    DateTime currentCycleStart = firstCycleStart;
-    
-    // Generate dates for each cycle
-    for (int cycle = 0; cycle < numberOfCycles; cycle++) {
-      // Add all the dates for this period
-      for (int day = 0; day < periodLength; day++) {
-        DateTime currentDate = currentCycleStart.add(Duration(days: day));
-        String monthName = CalendarUtils.months[currentDate.month - 1];
-        String dayNum = currentDate.day.toString().padLeft(2, '0');
-        String year = currentDate.year.toString();
+  // Generate a set of date keys for the predicted period
+  Set<String> _generatePredictedDates(DateTime startDate, int periodLength) {
+    Set<String> dates = {};
 
-        // Format: "January-01-2023"
-        String dateKey = '$monthName-$dayNum-$year';
-        allPredictedDates.add(dateKey);
-      }
-      
-      // Move to the start of the next cycle
-      currentCycleStart = currentCycleStart.add(Duration(days: cycleLength));
+    // Generate dates for the period duration (not the whole cycle)
+    for (int i = 0; i < periodLength; i++) {
+      DateTime currentDate = startDate.add(Duration(days: i));
+      String monthName = CalendarUtils.months[currentDate.month - 1];
+      String day = currentDate.day.toString().padLeft(2, '0');
+      String year = currentDate.year.toString();
+
+      // Format: "January-01-2023"
+      String dateKey = '$monthName-$day-$year';
+      dates.add(dateKey);
     }
 
-    return allPredictedDates;
+    return dates;
   }
 
   void _scrollToCurrentMonth() {
-    // Make sure scroll controller is ready
-    if (!_scrollController.hasClients) return;
-    
-    // The current month is exactly at the middle index (6) for a -6 to +6 range
-    final int currentMonthIndex = 6; // Current month (i=0) is at index 6
-    
-    // Since we want to ensure the current month is visible on screen,
-    // let's jump directly to it
-    
-    // Determine scroll position by approximate calculation - this is more reliable
-    final double estimatedPositionPerMonth = 350.0; // Approximate height
-    
-    // Target the exact position of the current month
-    double targetPosition = (currentMonthIndex - 2) * estimatedPositionPerMonth; //(currentMonthIndex - 2)-looking at 2 months first.
-    
-    // Ensure we don't scroll beyond limits
-    targetPosition = targetPosition.clamp(
-      0.0, 
-      _scrollController.position.maxScrollExtent
-    );
-    
-    // Use jumpTo instead of animateTo for immediate positioning
-    // This eliminates any timing issues with animation
-    _scrollController.jumpTo(targetPosition);
+    // Calculate approximate position to scroll to current month
+    double itemHeight = 300; // Estimated height of a month widget
+    double targetPosition =
+        (_currentDate.month - 3) *
+        itemHeight; // Show current month after 3 months
+
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        targetPosition.clamp(0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void onDateSelected(String dateKey) {
