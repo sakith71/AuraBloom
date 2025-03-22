@@ -36,9 +36,10 @@ class _SplashScreenState extends State<SplashScreen>
       _controller.forward();
     });
 
-    // Navigate to login screen after animation completes
+    // Navigate to wrapper after animation completes
+    // Changed from '/login' to '/wrapper'
     Timer(const Duration(seconds: 4), () {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/wrapper');
     });
   }
 
@@ -112,9 +113,9 @@ class _SplashScreenState extends State<SplashScreen>
                           end: Alignment.bottomRight,
                         ).createShader(bounds);
                       },
-                      child: Text(
+                      child: const Text(
                         'AuraBloom',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w500,
                           color: Colors.white, // This serves as the mask
