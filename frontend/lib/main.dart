@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:frontend/screens/community/community-screen.dart';
 import 'screens/splash-screen.dart';
 import 'screens/login-page.dart';
 import 'screens/signup-screen.dart';
 import 'screens/home-screen.dart';
+import 'screens/community/community-screen.dart';
+import 'wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
+        '/wrapper': (context) => const Wrapper(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const HomeScreen(userId: 'someUserId'),
