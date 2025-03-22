@@ -22,20 +22,6 @@ class GetRestDetailScreen extends StatelessWidget {
           icon: Icon(Icons.arrow_back, color: Colors.pink[300]),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications_outlined, color: Colors.pink[300]),
-            onPressed: () {
-              // Notification functionality
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.person_outline, color: Colors.pink[300]),
-            onPressed: () {
-              // Profile functionality
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
