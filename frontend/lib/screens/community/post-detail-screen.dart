@@ -18,7 +18,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   final CommunityService _communityService = CommunityService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _commentController = TextEditingController();
-  
+
   List<Comment> _comments = [];
   bool _isLoading = true;
   bool _isLiked = false;
@@ -44,7 +44,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     });
 
     try {
-      final comments = await _communityService.getCommentsForPost(widget.post.id);
+      final comments = await _communityService.getCommentsForPost(
+        widget.post.id,
+      );
       setState(() {
         _comments = comments;
         _isLoading = false;
@@ -53,9 +55,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load comments: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load comments: $e')));
     }
   }
 
@@ -81,16 +83,16 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     if (user != null) {
       try {
         await _communityService.likePost(widget.post.id, user.uid);
-        
+
         // Toggle local state
         setState(() {
           _isLiked = !_isLiked;
           widget.post.likeCount += _isLiked ? 1 : -1;
         });
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to like post: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to like post: $e')));
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -118,17 +120,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         id: '', // Will be set by Firestore
         postId: widget.post.id,
         authorId: user.uid,
-        authorName: _isAnonymousComment ? 'Anonymous' : _communityService.getUserDisplayName(),
+        authorName:
+            _isAnonymousComment
+                ? 'Anonymous'
+                : _communityService.getUserDisplayName(),
         createdAt: DateTime.now(),
         content: _commentController.text.trim(),
         isAnonymous: _isAnonymousComment,
       );
 
       await _communityService.addComment(comment);
-      
+
       // Reload comments
       await _loadComments();
-      
+
       setState(() {
         _isPostingComment = false;
         _commentController.clear();
@@ -137,9 +142,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       setState(() {
         _isPostingComment = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to post comment: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to post comment: $e')));
     }
   }
 
@@ -148,9 +153,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       await _communityService.deleteComment(commentId, widget.post.id);
       await _loadComments();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete comment: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete comment: $e')));
     }
   }
 
@@ -191,19 +196,23 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   Future<void> _handlePinPost() async {
     try {
       final isPinned = await _communityService.togglePinPost(widget.post.id);
-      
+
       // Update local state
       setState(() {
         widget.post.isPinned = isPinned;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(isPinned ? 'Post pinned successfully' : 'Post unpinned')),
+        SnackBar(
+          content: Text(
+            isPinned ? 'Post pinned successfully' : 'Post unpinned',
+          ),
+        ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pin post: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to pin post: $e')));
     }
   }
 
@@ -226,25 +235,31 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               if (choice == 'delete') {
                 final confirmed = await showDialog<bool>(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Delete Post'),
-                    content: const Text('Are you sure you want to delete this post?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('CANCEL'),
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text('Delete Post'),
+                        content: const Text(
+                          'Are you sure you want to delete this post?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('CANCEL'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('DELETE'),
+                          ),
+                        ],
                       ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('DELETE'),
-                      ),
-                    ],
-                  ),
                 );
                 if (confirmed == true) {
                   try {
                     await _communityService.deletePost(widget.post.id);
-                    Navigator.pop(context, true); // Return true to indicate deletion
+                    Navigator.pop(
+                      context,
+                      true,
+                    ); // Return true to indicate deletion
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Failed to delete post: $e')),
@@ -257,42 +272,47 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             },
             itemBuilder: (BuildContext context) {
               final List<PopupMenuEntry<String>> options = [];
-              
+
               // Pin/Unpin option
-              options.add(PopupMenuItem<String>(
-                value: 'pin',
-                child: Row(
-                  children: [
-                    Icon(
-                      widget.post.isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                      color: widget.post.isPinned ? const Color.fromARGB(255, 240, 99, 153) : Colors.grey,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(widget.post.isPinned ? 'Unpin Post' : 'Pin Post'),
-                  ],
-                ),
-              ));
-              
-              // Delete option (only for post author)
-              if (isUserPostAuthor) {
-                options.add(const PopupMenuDivider());
-                options.add(const PopupMenuItem<String>(
-                  value: 'delete',
+              options.add(
+                PopupMenuItem<String>(
+                  value: 'pin',
                   child: Row(
                     children: [
                       Icon(
-                        Icons.delete_outline,
-                        color: Colors.red,
+                        widget.post.isPinned
+                            ? Icons.push_pin
+                            : Icons.push_pin_outlined,
+                        color:
+                            widget.post.isPinned
+                                ? const Color.fromARGB(255, 240, 99, 153)
+                                : Colors.grey,
                         size: 20,
                       ),
-                      SizedBox(width: 8),
-                      Text('Delete Post'),
+                      const SizedBox(width: 8),
+                      Text(widget.post.isPinned ? 'Unpin Post' : 'Pin Post'),
                     ],
                   ),
-                ));
+                ),
+              );
+
+              // Delete option (only for post author)
+              if (isUserPostAuthor) {
+                options.add(const PopupMenuDivider());
+                options.add(
+                  const PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                        SizedBox(width: 8),
+                        Text('Delete Post'),
+                      ],
+                    ),
+                  ),
+                );
               }
-              
+
               return options;
             },
           ),
@@ -357,9 +377,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 width: 50,
                                 height: 50,
                                 decoration: BoxDecoration(
-                                  color: widget.post.isAnonymous
-                                      ? Colors.grey
-                                      : Colors.pinkAccent,
+                                  color:
+                                      widget.post.isAnonymous
+                                          ? Colors.grey
+                                          : Colors.pinkAccent,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
@@ -428,7 +449,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: const Color.fromARGB(255, 240, 99, 153),
+                                    color: const Color.fromARGB(
+                                      255,
+                                      240,
+                                      99,
+                                      153,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -443,10 +469,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           ),
                           child: Text(
                             widget.post.content,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              height: 1.4,
-                            ),
+                            style: const TextStyle(fontSize: 16, height: 1.4),
                           ),
                         ),
 
@@ -475,34 +498,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children: widget.post.tags.map((tag) {
-                                  final tagColor = _getTagColor(tag);
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: tagColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(30),
-                                      border: Border.all(
-                                        color: tagColor.withOpacity(0.5),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      tag,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: tagColor,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
+                                children:
+                                    widget.post.tags.map((tag) {
+                                      final tagColor = _getTagColor(tag);
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: tagColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            30,
+                                          ),
+                                          border: Border.all(
+                                            color: tagColor.withOpacity(0.5),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: tagColor,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
                               ),
-                              
+
                               const SizedBox(height: 16),
-                              
+
                               // Likes and comments count
                               Row(
                                 children: [
@@ -511,7 +537,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                     child: Row(
                                       children: [
                                         Icon(
-                                          _isLiked ? Icons.favorite : Icons.favorite_border,
+                                          _isLiked
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
                                           size: 22,
                                           color: Colors.redAccent,
                                         ),
@@ -552,7 +580,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Comments section header
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
@@ -564,60 +592,65 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Comments list
                   _isLoading
                       ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.pink,
                             ),
                           ),
-                        )
+                        ),
+                      )
                       : _comments.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(30),
-                                child: Column(
-                                  children: [
-                                    Icon(
-                                      Icons.chat_bubble_outline,
-                                      size: 60,
-                                      color: Colors.grey[400],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No comments yet. Be the first to comment!',
-                                      style: TextStyle(
-                                        color: Colors.grey[700],
-                                        fontSize: 16,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
+                      ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(30),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.chat_bubble_outline,
+                                size: 60,
+                                color: Colors.grey[400],
                               ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              itemCount: _comments.length,
-                              itemBuilder: (context, index) {
-                                return CommentWithRepliesWidget(
-                                  comment: _comments[index],
-                                  postId: widget.post.id,
-                                  onDelete: _deleteComment,
-                                  isPostAuthor: isUserPostAuthor,
-                                );
-                              },
-                            ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No comments yet. Be the first to comment!',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount: _comments.length,
+                        itemBuilder: (context, index) {
+                          return CommentWithRepliesWidget(
+                            comment: _comments[index],
+                            postId: widget.post.id,
+                            onDelete: _deleteComment,
+                            isPostAuthor: isUserPostAuthor,
+                          );
+                        },
+                      ),
                 ],
               ),
             ),
           ),
-          
+
           // Comment input section
           Container(
             decoration: BoxDecoration(
@@ -659,31 +692,33 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                     const SizedBox(width: 8),
                     _isPostingComment
                         ? const Padding(
-                            padding: EdgeInsets.only(bottom: 8),
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.pink),
-                              ),
-                            ),
-                          )
-                        : IconButton(
-                            onPressed: _addComment,
-                            icon: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.pink,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.send,
-                                color: Colors.white,
-                                size: 16,
+                          padding: EdgeInsets.only(bottom: 8),
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.pink,
                               ),
                             ),
                           ),
+                        )
+                        : IconButton(
+                          onPressed: _addComment,
+                          icon: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.pink,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.send,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
                   ],
                 ),
                 Row(

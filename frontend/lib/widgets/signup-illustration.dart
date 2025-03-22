@@ -14,10 +14,7 @@ class SignUpIllustration extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Image.asset(
-          'assets/sign_up.png',
-          fit: BoxFit.contain,
-        ),
+        child: Image.asset('assets/sign_up.png', fit: BoxFit.contain),
       ),
     );
   }

@@ -27,7 +27,7 @@ class _TipOfTheDayState extends State<TipOfTheDay> {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 24),
           child: Text(
-            'Tips Of Day',
+            'Tip of the day',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ),

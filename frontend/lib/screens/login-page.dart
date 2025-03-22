@@ -8,9 +8,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SingleChildScrollView(
           child: Column(
             children: [

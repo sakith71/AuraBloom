@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/cycle-history-page.dart';
+import 'package:frontend/screens/home/cycle-history-page.dart';
 import 'package:intl/intl.dart';
 
 class PreviousCycleBox extends StatelessWidget {

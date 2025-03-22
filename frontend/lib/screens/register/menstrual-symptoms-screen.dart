@@ -1,15 +1,16 @@
-import '../widgets/navigation-buttons.dart';
+import '../../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
+import '../../services/firestore_service.dart';
 import 'additional-symptoms-screen.dart';
 
 class MenstrualSymptomsScreen extends StatefulWidget {
   final String userId;
-  
+
   const MenstrualSymptomsScreen({super.key, required this.userId});
 
   @override
-  State<MenstrualSymptomsScreen> createState() => _MenstrualSymptomsScreenState();
+  State<MenstrualSymptomsScreen> createState() =>
+      _MenstrualSymptomsScreenState();
 }
 
 class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
@@ -18,7 +19,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
   String? _crampsAnswer;
   String? _daysAnswer;
   bool _isLoading = false;
-  
+
   final FirestoreService _firestoreService = FirestoreService();
 
   final List<Map<String, dynamic>> _questions = [
@@ -28,7 +29,8 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
       'answer': null,
     },
     {
-      'question': 'Do you experience menstrual pain (cramps) during your period?',
+      'question':
+          'Do you experience menstrual pain (cramps) during your period?',
       'options': ['Yes, every cycle', 'Sometimes', 'Rarely', 'No'],
       'answer': null,
     },
@@ -75,35 +77,36 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
       });
       return;
     }
-    
+
     // Save all answers to Firestore
     try {
       setState(() {
         _isLoading = true;
       });
-      
+
       // Update user document with menstrual symptoms data
       await _firestoreService.users.doc(widget.userId).update({
         'isRegularPeriod': _regularityAnswer == 'Yes',
         'crampsExperience': _crampsAnswer ?? 'No',
         'symptomDuration': _daysAnswer ?? '1-3 days',
       });
-      
+
       // Navigate to next screen
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => AdditionalSymptomsScreen(userId: widget.userId),
+            builder:
+                (context) => AdditionalSymptomsScreen(userId: widget.userId),
           ),
         );
       }
     } catch (e) {
       // Show error message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
       }
     } finally {
       if (mounted) {
@@ -130,31 +133,36 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
       child: InkWell(
         onTap: () => _setCurrentAnswer(option),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 15,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: BoxDecoration(
-            color: isSelected 
-                ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
-                : Colors.white,
+            color:
+                isSelected
+                    ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
+                    : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
-                  ? const Color.fromARGB(255, 240, 99, 153)
-                  : Colors.grey.shade300,
+              color:
+                  isSelected
+                      ? const Color.fromARGB(255, 240, 99, 153)
+                      : Colors.grey.shade300,
               width: 2,
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001),
-                      spreadRadius: 1,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : [],
+            boxShadow:
+                isSelected
+                    ? [
+                      BoxShadow(
+                        color: const Color.fromARGB(
+                          255,
+                          240,
+                          99,
+                          153,
+                        ).withOpacity(0.001),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                    : [],
           ),
           child: Row(
             children: [
@@ -163,12 +171,12 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                   option,
                   style: TextStyle(
                     fontSize: 16,
-                    color: isSelected
-                        ? const Color.fromARGB(255, 240, 99, 153)
-                        : Colors.black87,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                    color:
+                        isSelected
+                            ? const Color.fromARGB(255, 240, 99, 153)
+                            : Colors.black87,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
               ),
@@ -188,9 +196,7 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -210,7 +216,8 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                   child: ListView.builder(
                     itemCount: _questions[_currentPageIndex]['options'].length,
                     itemBuilder: (context, index) {
-                      final option = _questions[_currentPageIndex]['options'][index];
+                      final option =
+                          _questions[_currentPageIndex]['options'][index];
                       final isSelected = _getCurrentAnswer() == option;
                       return _buildOption(option, isSelected);
                     },
@@ -220,10 +227,10 @@ class _MenstrualSymptomsScreenState extends State<MenstrualSymptomsScreen> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : NavigationButtonRow(
-                        onPrevious: _handlePrevious,
-                        onNext: _saveAnswersAndProceed,
-                        isNextEnabled: _getCurrentAnswer() != null,
-                      ),
+                      onPrevious: _handlePrevious,
+                      onNext: _saveAnswersAndProceed,
+                      isNextEnabled: _getCurrentAnswer() != null,
+                    ),
               ],
             ),
           ),

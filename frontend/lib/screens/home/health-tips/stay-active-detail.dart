@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PracticeMindfulnessDetailScreen extends StatelessWidget {
-  const PracticeMindfulnessDetailScreen({super.key});
+class StayActiveDetailScreen extends StatelessWidget {
+  const StayActiveDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -9,7 +9,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFCF0F7),
       appBar: AppBar(
         title: Text(
-          'Get Rest',
+          'Stay Active',
           style: TextStyle(
             color: Colors.pink[300],
             fontWeight: FontWeight.bold,
@@ -49,7 +49,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: const DecorationImage(
-                  image: AssetImage('assets/mindfulness.png'),
+                  image: AssetImage('assets/stay_active.png'),
                   fit: BoxFit.cover,
                 ),
                 boxShadow: [
@@ -61,12 +61,12 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Title section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Stress Management for Pain Relief',
+                'Exercise Helps Relieve Pain',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -74,12 +74,12 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Main content
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Stress and anxiety can worsen period pain by increasing muscle tension and making cramps feel more intense. Mindfulness techniques such as deep breathing, meditation, and yoga can help calm the nervous system and reduce stress-related pain.',
+                'Engaging in physical activity during your period may seem difficult, but it can actually help relieve menstrual cramps. Exercise increases blood circulation, reducing muscle tension and helping the uterus contract more efficiently. It also boosts the release of endorphins, the body\'s natural painkillers, which improve mood and reduce discomfort. Low-impact exercises such as walking, swimming, cycling, or yoga can be especially beneficial. Stretching exercises that focus on the pelvic region can also help relax tight muscles and alleviate cramps.',
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.5,
@@ -87,7 +87,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Expert insight section
             Container(
               margin: const EdgeInsets.all(16),
@@ -113,7 +113,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '"When stress levels are high, the body releases cortisol, which can make period pain worse. Relaxation techniques help lower stress and reduce discomfort." – Dr. Jessica Shepherd, OB-GYN',
+                    '"Even light exercises like stretching or gentle yoga can improve blood flow and help reduce menstrual cramps by relaxing the pelvic muscles." – Dr. Lisa Masterson, OB-GYN',
                     style: TextStyle(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
@@ -124,7 +124,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Suggested exercises section (optional addition)
             Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -137,7 +137,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Effective Mindfulness Practices:',
+                    'Recommended Exercises',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -145,10 +145,13 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildExerciseTile('Deep breathing', 'Inhale deeply through your nose for 4 seconds, hold for 4 seconds, and exhale slowly for 6 seconds. Repeat for 5 minutes.'),
-                  _buildExerciseTile('Practice Good Sleep Hygiene', 'Maintain a consistent bedtime routine, avoid screens before bed, and create a comfortable sleeping environment.'),
-                  _buildExerciseTile('Take Short Breaks', 'If you are feeling fatigued, take short naps or relaxation breaks during the day to help your body recover.'),
-                  _buildExerciseTile('Use Comfortable Sleeping Positions', 'Sleeping in a fetal position can help relieve pressure on abdominal muscles and ease cramping.'),
+                  _buildExerciseTile('Walking', '20-30 minutes daily'),
+                  _buildExerciseTile('Yoga', 'Focus on hip-opening poses'),
+                  _buildExerciseTile('Swimming', 'Gentle laps, 15-20 minutes'),
+                  _buildExerciseTile(
+                    'Stretching',
+                    'Pelvic and lower back focus',
+                  ),
                 ],
               ),
             ),
@@ -164,11 +167,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.circle,
-            size: 8,
-            color: Colors.pink[300],
-          ),
+          Icon(Icons.circle, size: 8, color: Colors.pink[300]),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -183,10 +182,7 @@ class PracticeMindfulnessDetailScreen extends StatelessWidget {
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                 ),
               ],
             ),

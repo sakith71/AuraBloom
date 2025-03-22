@@ -1,50 +1,51 @@
 import 'package:flutter/material.dart';
-import '../widgets/navigation-buttons.dart';
-import '../services/firestore_service.dart';
-import 'period-logging-screen.dart';
+import '../../widgets/navigation-buttons.dart';
+import '../../services/firestore_service.dart';
+import 'period-length-screen.dart';
 
-class PeriodLengthScreen extends StatefulWidget {
+class CycleLengthScreen extends StatefulWidget {
   final String userId;
-  
-  const PeriodLengthScreen({super.key, required this.userId});
+
+  const CycleLengthScreen({super.key, required this.userId});
 
   @override
-  State<PeriodLengthScreen> createState() => _PeriodLengthScreenState();
+  State<CycleLengthScreen> createState() => _CycleLengthScreenState();
 }
 
-class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
-  int? selectedLength; // Allow null for "I don't know"
+class _CycleLengthScreenState extends State<CycleLengthScreen> {
+  int selectedLength = 28; // Default selected value
   bool _isLoading = false;
   final FirestoreService _firestoreService = FirestoreService();
-  
-  final List<int> periodLengths = List.generate(15, (index) => index + 1); // 1 to 15 days
 
-  Future<void> _savePeriodLengthAndProceed() async {
-    if (selectedLength == null) return;
-    
+  final List<int> cycleLengths = List.generate(
+    21,
+    (index) => index + 20,
+  ); // 20 to 40 days
+
+  Future<void> _saveCycleLengthAndProceed() async {
     try {
       setState(() {
         _isLoading = true;
       });
-      
-      // Update user document with period length
+
+      // Update user document with cycle length
       await _firestoreService.users.doc(widget.userId).update({
-        'periodLength': selectedLength,
+        'cycleLength': selectedLength,
       });
-      
+
       // Navigate to next screen
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PeriodLoggingScreen(userId: widget.userId),
+            builder: (context) => PeriodLengthScreen(userId: widget.userId),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving period length: $e')),
+          SnackBar(content: Text('Error saving cycle length: $e')),
         );
       }
     } finally {
@@ -57,7 +58,7 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
   }
 
   void _handlePrevious() {
-    Navigator.pop(context); // Navigate back to Cycle Length Screen
+    Navigator.pop(context); // Go back to Additional Symptoms Screen
   }
 
   Future<void> _handleIDontKnow() async {
@@ -65,26 +66,26 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
       setState(() {
         _isLoading = true;
       });
-      
-      // Save default period length (5 days) if user doesn't know
+
+      // Save default cycle length (28 days) if user doesn't know
       await _firestoreService.users.doc(widget.userId).update({
-        'periodLength': 5, // Default value
+        'cycleLength': 28, // Default value
       });
-      
+
       // Navigate to next screen
       if (mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PeriodLoggingScreen(userId: widget.userId),
+            builder: (context) => PeriodLengthScreen(userId: widget.userId),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving data: $e')));
       }
     } finally {
       if (mounted) {
@@ -100,9 +101,7 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
     return Scaffold(
       body: Container(
         // Apply the gradient background
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -110,7 +109,7 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
               children: [
                 const SizedBox(height: 40),
                 const Text(
-                  'Enter the average length of\nyour periods',
+                  'Enter the average length of\nyour cycle',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -134,31 +133,33 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
                             physics: const FixedExtentScrollPhysics(),
                             onSelectedItemChanged: (index) {
                               setState(() {
-                                selectedLength = periodLengths[index];
+                                selectedLength = cycleLengths[index];
                               });
                             },
                             childDelegate: ListWheelChildBuilderDelegate(
                               builder: (context, index) {
-                                if (index < 0 || index >= periodLengths.length) {
+                                if (index < 0 || index >= cycleLengths.length) {
                                   return null;
                                 }
-                                final length = periodLengths[index];
+                                final length = cycleLengths[index];
                                 final isSelected = length == selectedLength;
                                 return AnimatedDefaultTextStyle(
                                   duration: const Duration(milliseconds: 200),
                                   style: TextStyle(
-                                    fontSize: isSelected ? 28 : 22, // Larger font for selected item
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isSelected 
-                                        ? Colors.black 
-                                        : Colors.black.withOpacity(0.5),
+                                    fontSize: isSelected ? 28 : 22,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                    color:
+                                        isSelected
+                                            ? Colors.black
+                                            : Colors.black.withOpacity(0.5),
                                   ),
-                                  child: Center( // Ensures proper alignment in the box
-                                    child: Text(length.toString()),
-                                  ),
+                                  child: Center(child: Text(length.toString())),
                                 );
                               },
-                              childCount: periodLengths.length,
+                              childCount: cycleLengths.length,
                             ),
                           ),
                           Positioned.fill(
@@ -180,29 +181,23 @@ class _PeriodLengthScreenState extends State<PeriodLengthScreen> {
                     ),
                   ),
                 ),
-
-                // "I Don't Know" Button - Navigates Directly
                 TextButton(
                   onPressed: _isLoading ? null : _handleIDontKnow,
                   child: const Text(
                     "I don't remember",
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.black54, fontSize: 18),
                   ),
                 ),
+                const SizedBox(height: 20),
 
-                const SizedBox(height: 10),
-
-                // Navigation Buttons (Previous & Next)
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : NavigationButtonRow(
-                        onPrevious: _handlePrevious,
-                        onNext: _savePeriodLengthAndProceed,
-                        isNextEnabled: selectedLength != null, // Enable "Next" only if a selection is made
-                      ),
+                      onPrevious: _handlePrevious,
+                      onNext: _saveCycleLengthAndProceed,
+                      isNextEnabled:
+                          true, // Always enabled as we have a default
+                    ),
 
                 const SizedBox(height: 20),
               ],

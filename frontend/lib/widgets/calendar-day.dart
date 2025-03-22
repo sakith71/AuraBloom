@@ -35,34 +35,39 @@ class CalendarDay extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isSelected 
-                  ? const Color.fromARGB(255, 255, 233, 242) 
-                  : isToday 
+              color:
+                  isSelected
+                      ? const Color.fromARGB(255, 255, 233, 242)
+                      : isToday
                       ? Colors.red.withOpacity(0.1)
                       : Colors.transparent,
-              border: isSelected
-                  ? Border.all(color: const Color.fromARGB(255, 240, 99, 153), width: 2)
-                  : isToday
+              border:
+                  isSelected
+                      ? Border.all(
+                        color: const Color.fromARGB(255, 240, 99, 153),
+                        width: 2,
+                      )
+                      : isToday
                       ? Border.all(color: Colors.red, width: 1)
                       : null,
             ),
             child: Text(
               day,
               style: TextStyle(
-                color: !isEnabled || !isPastOrToday
-                    ? Colors.grey.shade300
-                    : isSelected
+                color:
+                    !isEnabled || !isPastOrToday
+                        ? Colors.grey.shade300
+                        : isSelected
                         ? const Color.fromARGB(255, 240, 99, 153)
                         : isToday
-                            ? Colors.red
-                            : Colors.black87,
-                fontWeight: isSelected || isToday 
-                    ? FontWeight.bold 
-                    : FontWeight.normal,
+                        ? Colors.red
+                        : Colors.black87,
+                fontWeight:
+                    isSelected || isToday ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ),
-          
+
           // Prediction indicator - dotted border with center dot
           if (isPredicted && isEnabled && !isSelected && day.isNotEmpty)
             CustomPaint(
@@ -96,9 +101,10 @@ class DottedCirclePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
 
     final center = Offset(size.width / 2, size.height / 2);
 

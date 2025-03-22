@@ -14,10 +14,7 @@ class PersonalInfoIllustration extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Image.asset(
-          'assets/personal_info.png',
-          fit: BoxFit.contain,
-        ),
+        child: Image.asset('assets/personal_info.png', fit: BoxFit.contain),
       ),
     );
   }

@@ -1,4 +1,3 @@
-// lib/screens/community/comment-with-replies-widget.dart
 import 'package:flutter/material.dart';
 import 'package:frontend/models/comment.dart';
 import 'package:frontend/models/reply.dart';
@@ -21,7 +20,8 @@ class CommentWithRepliesWidget extends StatefulWidget {
   });
 
   @override
-  _CommentWithRepliesWidgetState createState() => _CommentWithRepliesWidgetState();
+  _CommentWithRepliesWidgetState createState() =>
+      _CommentWithRepliesWidgetState();
 }
 
 class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
@@ -52,11 +52,13 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
           widget.postId,
           widget.comment.id,
         );
-        
+
         if (kDebugMode && replies.isNotEmpty) {
-          print('Loaded ${replies.length} replies for comment: ${widget.comment.id}');
+          print(
+            'Loaded ${replies.length} replies for comment: ${widget.comment.id}',
+          );
         }
-        
+
         setState(() {
           _replies = replies;
           _showReplies = true;
@@ -66,9 +68,9 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
         setState(() {
           _isLoadingReplies = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load replies: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load replies: $e')));
       }
     } else {
       setState(() {
@@ -98,7 +100,7 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
         authorName = 'Anonymous';
       } else {
         authorName = _communityService.getUserDisplayName();
-        
+
         if (kDebugMode) {
           print('Adding reply with author name: $authorName');
           print('User display name: ${user.displayName}');
@@ -137,9 +139,9 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
       setState(() {
         _isSubmittingReply = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add reply: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to add reply: $e')));
     }
   }
 
@@ -156,9 +158,9 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
         widget.comment.replyCount -= 1; // Update reply count
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete reply: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete reply: $e')));
     }
   }
 
@@ -222,9 +224,10 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: widget.comment.isAnonymous
-                            ? Colors.grey
-                            : Colors.pinkAccent,
+                        color:
+                            widget.comment.isAnonymous
+                                ? Colors.grey
+                                : Colors.pinkAccent,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -259,7 +262,8 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                               ),
                               if (widget.isPostAuthor &&
                                   !widget.comment.isAnonymous &&
-                                  _auth.currentUser?.uid == widget.comment.authorId)
+                                  _auth.currentUser?.uid ==
+                                      widget.comment.authorId)
                                 Container(
                                   margin: const EdgeInsets.only(left: 8),
                                   padding: const EdgeInsets.symmetric(
@@ -299,7 +303,7 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                     ),
                   ],
                 ),
-                
+
                 // Reply and Delete options
                 Padding(
                   padding: const EdgeInsets.only(top: 8, left: 46),
@@ -328,32 +332,38 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                           onTap: () {
                             showDialog(
                               context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Comment'),
-                                content: const Text(
-                                  'Are you sure you want to delete this comment?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      widget.onDelete(widget.comment.id);
-                                    },
-                                    child: const Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red),
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text('Delete Comment'),
+                                    content: const Text(
+                                      'Are you sure you want to delete this comment?',
                                     ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          widget.onDelete(widget.comment.id);
+                                        },
+                                        child: const Text(
+                                          'Delete',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
                             );
                           },
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 12, right: 4, top: 4, bottom: 4),
+                            padding: const EdgeInsets.only(
+                              left: 12,
+                              right: 4,
+                              top: 4,
+                              bottom: 4,
+                            ),
                             child: Text(
                               'Delete',
                               style: TextStyle(
@@ -451,25 +461,25 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                       const SizedBox(width: 8),
                       _isSubmittingReply
                           ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.pink,
-                                ),
-                                strokeWidth: 2,
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.pink,
                               ),
-                            )
-                          : IconButton(
-                              onPressed: _addReply,
-                              icon: const Icon(
-                                Icons.send_rounded,
-                                color: Colors.pinkAccent,
-                              ),
-                              iconSize: 24,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                              strokeWidth: 2,
                             ),
+                          )
+                          : IconButton(
+                            onPressed: _addReply,
+                            icon: const Icon(
+                              Icons.send_rounded,
+                              color: Colors.pinkAccent,
+                            ),
+                            iconSize: 24,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                     ],
                   ),
                   Row(
@@ -512,153 +522,182 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
               padding: const EdgeInsets.only(left: 46, right: 12, bottom: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: _replies.map((reply) {
-                  final isReplyAuthor = _auth.currentUser?.uid == reply.authorId;
-                  
-                  return Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                children:
+                    _replies.map((reply) {
+                      final isReplyAuthor =
+                          _auth.currentUser?.uid == reply.authorId;
+
+                      return Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Reply author avatar
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: reply.isAnonymous
-                                    ? Colors.grey
-                                    : Colors.pinkAccent.withOpacity(0.7),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  reply.isAnonymous
-                                      ? 'A'
-                                      : _getInitial(reply.authorName),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            // Reply content
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Reply author avatar
+                                Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    color:
                                         reply.isAnonymous
-                                            ? 'Anonymous'
-                                            : reply.authorName,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      if (widget.isPostAuthor &&
-                                          !reply.isAnonymous &&
-                                          _auth.currentUser?.uid == reply.authorId)
-                                        Container(
-                                          margin: const EdgeInsets.only(left: 8),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.pink[100],
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                          child: const Text(
-                                            'Author',
-                                            style: TextStyle(
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.pink,
+                                            ? Colors.grey
+                                            : Colors.pinkAccent.withOpacity(
+                                              0.7,
                                             ),
-                                          ),
-                                        ),
-                                      const Spacer(),
-                                      Text(
-                                        _formatDate(reply.createdAt),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
-                                    ],
+                                    shape: BoxShape.circle,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    reply.content,
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                  
-                                  // Delete reply option
-                                  if (isReplyAuthor)
-                                    Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: TextButton(
-                                        onPressed: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: const Text('Delete Reply'),
-                                              content: const Text(
-                                                'Are you sure you want to delete this reply?',
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.pop(context),
-                                                  child: const Text('Cancel'),
-                                                ),
-                                                TextButton(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _deleteReply(reply.id);
-                                                  },
-                                                  child: const Text(
-                                                    'Delete',
-                                                    style: TextStyle(color: Colors.red),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        },
-                                        style: TextButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 0,
-                                          ),
-                                          minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        ),
-                                        child: Text(
-                                          'Delete',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.red[700],
-                                          ),
-                                        ),
+                                  child: Center(
+                                    child: Text(
+                                      reply.isAnonymous
+                                          ? 'A'
+                                          : _getInitial(reply.authorName),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
                                       ),
                                     ),
-                                ],
-                              ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // Reply content
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            reply.isAnonymous
+                                                ? 'Anonymous'
+                                                : reply.authorName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          if (widget.isPostAuthor &&
+                                              !reply.isAnonymous &&
+                                              _auth.currentUser?.uid ==
+                                                  reply.authorId)
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                left: 8,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.pink[100],
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: const Text(
+                                                'Author',
+                                                style: TextStyle(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.pink,
+                                                ),
+                                              ),
+                                            ),
+                                          const Spacer(),
+                                          Text(
+                                            _formatDate(reply.createdAt),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        reply.content,
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+
+                                      // Delete reply option
+                                      if (isReplyAuthor)
+                                        Align(
+                                          alignment: Alignment.bottomRight,
+                                          child: TextButton(
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder:
+                                                    (context) => AlertDialog(
+                                                      title: const Text(
+                                                        'Delete Reply',
+                                                      ),
+                                                      content: const Text(
+                                                        'Are you sure you want to delete this reply?',
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed:
+                                                              () =>
+                                                                  Navigator.pop(
+                                                                    context,
+                                                                  ),
+                                                          child: const Text(
+                                                            'Cancel',
+                                                          ),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+                                                            _deleteReply(
+                                                              reply.id,
+                                                            );
+                                                          },
+                                                          child: const Text(
+                                                            'Delete',
+                                                            style: TextStyle(
+                                                              color: Colors.red,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                              );
+                                            },
+                                            style: TextButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 0,
+                                                  ),
+                                              minimumSize: Size.zero,
+                                              tapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            child: Text(
+                                              'Delete',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.red[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
               ),
             ),
         ],

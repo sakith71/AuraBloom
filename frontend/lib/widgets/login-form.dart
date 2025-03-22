@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../utils/validators.dart';
 import '../widgets/forgot-password-dialog.dart';
 import '../screens/signup-screen.dart';
-import '../screens/home-screen.dart';
-import '../screens/personal-info-screen.dart';
+import '../screens/home/home-screen.dart';
+import '../screens/register/personal-info-screen.dart';
 import '../services/auth-service.dart';
 
 class LoginForm extends StatefulWidget {
@@ -43,7 +43,8 @@ class _LoginFormState extends State<LoginForm> {
 
         if (user != null) {
           // Check if user has completed onboarding
-          bool hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
+          bool hasCompletedOnboarding =
+              await _authService.hasCompletedOnboarding();
 
           if (hasCompletedOnboarding) {
             // If onboarding is completed, go to home
@@ -186,7 +187,7 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
           ),
-          
+
           // Rest of the UI stayed the same
           const SizedBox(height: 10),
           Padding(

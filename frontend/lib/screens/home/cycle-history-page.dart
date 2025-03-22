@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../widgets/home-widgets/previous-cycle-data-widget.dart';
+import '../../widgets/home-widgets/previous-cycle-data-widget.dart';
 
 class CycleHistoryPage extends StatefulWidget {
   const CycleHistoryPage({super.key});

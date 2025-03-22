@@ -1,4 +1,3 @@
-// lib/models/comment.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Comment {
@@ -47,9 +46,10 @@ class Comment {
       authorId: map['authorId'] ?? '',
       authorName: map['authorName'] ?? 'Unknown',
       authorAvatar: map['authorAvatar'] ?? '',
-      createdAt: map.containsKey('createdAt') 
-          ? parseDateTime(map['createdAt'])
-          : DateTime.now(),
+      createdAt:
+          map.containsKey('createdAt')
+              ? parseDateTime(map['createdAt'])
+              : DateTime.now(),
       content: map['content'] ?? 'No content',
       isAnonymous: map['isAnonymous'] ?? false,
       replyCount: map['replyCount'] ?? 0,

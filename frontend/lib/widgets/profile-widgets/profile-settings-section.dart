@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/privacy-policy-screen.dart';
+import 'package:frontend/screens/profile-screen/privacy-policy-screen.dart';
 import 'package:url_launcher/url_launcher.dart'; // Added for URL navigation
 
 // App theme colors

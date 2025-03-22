@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class EatWellDetailScreen extends StatelessWidget {
-  const EatWellDetailScreen({super.key});
+class GetRestDetailScreen extends StatelessWidget {
+  const GetRestDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -9,7 +9,7 @@ class EatWellDetailScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFFCF0F7),
       appBar: AppBar(
         title: Text(
-          'Hydrate & Eat Well',
+          'Get Rest',
           style: TextStyle(
             color: Colors.pink[300],
             fontWeight: FontWeight.bold,
@@ -49,7 +49,7 @@ class EatWellDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 image: const DecorationImage(
-                  image: AssetImage('assets/hydrate-and-eat-well.png'),
+                  image: AssetImage('assets/get-rest.png'),
                   fit: BoxFit.cover,
                 ),
                 boxShadow: [
@@ -61,12 +61,12 @@ class EatWellDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Title section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Nutrition Matters',
+                'Allow Your Body to Recover',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -74,12 +74,12 @@ class EatWellDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Main content
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Staying hydrated and maintaining a balanced diet can significantly impact period pain. Dehydration can make cramps worse, as it causes the body to retain water, leading to bloating and discomfort. Drinking warm water or herbal teas can help reduce bloating and relax muscles.\nEating anti-inflammatory foods can also help manage period pain. Magnesium-rich foods (such as spinach, almonds, and bananas) help relax muscles and reduce cramps. Omega-3 fatty acids found in fish and flaxseeds help reduce inflammation, while foods high in iron (like leafy greens and red meat) help replenish lost blood and combat fatigue. ',
+                'Rest is essential for managing period pain, as the body needs time to recover from the physical and hormonal changes happening during menstruation. Lack of sleep and excessive physical strain can increase stress levels, making cramps feel worse. Prioritizing rest can help regulate hormones and reduce muscle tension.',
                 style: TextStyle(
                   fontSize: 16,
                   height: 1.5,
@@ -87,7 +87,7 @@ class EatWellDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Expert insight section
             Container(
               margin: const EdgeInsets.all(16),
@@ -113,7 +113,7 @@ class EatWellDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '"A healthy diet rich in omega-3s, magnesium, and iron can help reduce period cramps by decreasing inflammation and muscle tension." – Dr. Lara Briden, Naturopathic Doctor',
+                    '"Getting enough rest during your period is just as important as staying active. Sleep helps regulate hormones, reduce stress, and ease menstrual discomfort." – Dr. Jessica Shepherd, OB-GYN',
                     style: TextStyle(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
@@ -124,7 +124,7 @@ class EatWellDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Suggested exercises section (optional addition)
             Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -137,7 +137,7 @@ class EatWellDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Foods to Eat for Period Pain Relief:',
+                    'How to Rest Effectively:',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -145,8 +145,22 @@ class EatWellDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildExerciseTile('Good', 'Bananas, nuts, spinach, fish, dark chocolate, ginger, turmeric, and yogurt.'),
-                  _buildExerciseTile('Avoid', 'Processed foods, caffeine, excess salt, alcohol, and sugary snacks, which can trigger inflammation and worsen pain.'),
+                  _buildExerciseTile(
+                    'Get Enough Sleep',
+                    'Aim for 7–9 hours of quality sleep to allow the body to repair and reduce inflammation.',
+                  ),
+                  _buildExerciseTile(
+                    'Practice Good Sleep Hygiene',
+                    'Maintain a consistent bedtime routine, avoid screens before bed, and create a comfortable sleeping environment.',
+                  ),
+                  _buildExerciseTile(
+                    'Take Short Breaks',
+                    'If you are feeling fatigued, take short naps or relaxation breaks during the day to help your body recover.',
+                  ),
+                  _buildExerciseTile(
+                    'Use Comfortable Sleeping Positions',
+                    'Sleeping in a fetal position can help relieve pressure on abdominal muscles and ease cramping.',
+                  ),
                 ],
               ),
             ),
@@ -162,11 +176,7 @@ class EatWellDetailScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.circle,
-            size: 8,
-            color: Colors.pink[300],
-          ),
+          Icon(Icons.circle, size: 8, color: Colors.pink[300]),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -181,10 +191,7 @@ class EatWellDetailScreen extends StatelessWidget {
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                 ),
               ],
             ),

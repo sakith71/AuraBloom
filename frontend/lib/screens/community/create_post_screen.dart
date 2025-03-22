@@ -1,4 +1,3 @@
-// lib/screens/create_post_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/services/community-service.dart';

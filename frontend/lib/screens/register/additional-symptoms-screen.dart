@@ -1,15 +1,16 @@
-import '../widgets/navigation-buttons.dart';
+import '../../widgets/navigation-buttons.dart';
 import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
+import '../../services/firestore_service.dart';
 import 'cycle-length-screen.dart';
 
 class AdditionalSymptomsScreen extends StatefulWidget {
   final String userId;
-  
+
   const AdditionalSymptomsScreen({super.key, required this.userId});
 
   @override
-  State<AdditionalSymptomsScreen> createState() => _AdditionalSymptomsScreenState();
+  State<AdditionalSymptomsScreen> createState() =>
+      _AdditionalSymptomsScreenState();
 }
 
 class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
@@ -26,25 +27,27 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
   bool _isLoading = false;
   final FirestoreService _firestoreService = FirestoreService();
 
-  bool get hasSelectedSymptoms => _symptoms.any((symptom) => symptom['isSelected']);
+  bool get hasSelectedSymptoms =>
+      _symptoms.any((symptom) => symptom['isSelected']);
 
   Future<void> _saveSymptomsThenProceed() async {
     try {
       setState(() {
         _isLoading = true;
       });
-      
+
       // Extract selected symptoms
-      List<String> selectedSymptoms = _symptoms
-          .where((symptom) => symptom['isSelected'])
-          .map((symptom) => symptom['name'] as String)
-          .toList();
-      
+      List<String> selectedSymptoms =
+          _symptoms
+              .where((symptom) => symptom['isSelected'])
+              .map((symptom) => symptom['name'] as String)
+              .toList();
+
       // Update user document with selected symptoms
       await _firestoreService.users.doc(widget.userId).update({
         'additionalSymptoms': selectedSymptoms,
       });
-      
+
       // Navigate to next screen
       if (mounted) {
         Navigator.push(
@@ -56,9 +59,9 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving symptoms: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving symptoms: $e')));
       }
     } finally {
       if (mounted) {
@@ -83,31 +86,36 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 15,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: BoxDecoration(
-            color: symptom['isSelected']
-                ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
-                : Colors.white,
+            color:
+                symptom['isSelected']
+                    ? const Color.fromARGB(255, 240, 99, 153).withOpacity(0.001)
+                    : Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: symptom['isSelected']
-                  ? const Color.fromARGB(255, 240, 99, 153)
-                  : Colors.grey.shade300,
+              color:
+                  symptom['isSelected']
+                      ? const Color.fromARGB(255, 240, 99, 153)
+                      : Colors.grey.shade300,
               width: 2,
             ),
-            boxShadow: symptom['isSelected']
-                ? [
-                    BoxShadow(
-                      color: const Color.fromARGB(255, 240, 99, 153).withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : [],
+            boxShadow:
+                symptom['isSelected']
+                    ? [
+                      BoxShadow(
+                        color: const Color.fromARGB(
+                          255,
+                          240,
+                          99,
+                          153,
+                        ).withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                    : [],
           ),
           child: Row(
             children: [
@@ -116,12 +124,14 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                   symptom['name'],
                   style: TextStyle(
                     fontSize: 16,
-                    color: symptom['isSelected']
-                        ? const Color.fromARGB(255, 240, 99, 153)
-                        : Colors.black87,
-                    fontWeight: symptom['isSelected']
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+                    color:
+                        symptom['isSelected']
+                            ? const Color.fromARGB(255, 240, 99, 153)
+                            : Colors.black87,
+                    fontWeight:
+                        symptom['isSelected']
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                   ),
                 ),
               ),
@@ -141,9 +151,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFFCF0F7),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFFCF0F7)),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -153,10 +161,7 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                 const SizedBox(height: 40),
                 const Text(
                   'What additional symptoms do you\nexperience during menstruation?',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 30),
                 Expanded(
@@ -171,10 +176,10 @@ class _AdditionalSymptomsScreenState extends State<AdditionalSymptomsScreen> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : NavigationButtonRow(
-                        onPrevious: _handlePrevious,
-                        onNext: _saveSymptomsThenProceed,
-                        isNextEnabled: true, // Symptoms selection is optional
-                      ),
+                      onPrevious: _handlePrevious,
+                      onNext: _saveSymptomsThenProceed,
+                      isNextEnabled: true, // Symptoms selection is optional
+                    ),
               ],
             ),
           ),

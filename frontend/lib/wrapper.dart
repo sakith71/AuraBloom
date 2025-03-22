@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/auth-service.dart';
-import 'screens/home-screen.dart';
+import 'screens/home/home-screen.dart';
 import 'screens/login-page.dart';
 
 class Wrapper extends StatefulWidget {
