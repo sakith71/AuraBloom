@@ -13,12 +13,12 @@ class CommentWithRepliesWidget extends StatefulWidget {
   final bool isPostAuthor;
 
   const CommentWithRepliesWidget({
-    Key? key,
+    super.key,
     required this.comment,
     required this.postId,
     required this.onDelete,
     this.isPostAuthor = false,
-  }) : super(key: key);
+  });
 
   @override
   _CommentWithRepliesWidgetState createState() => _CommentWithRepliesWidgetState();
@@ -633,13 +633,6 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                                             ),
                                           );
                                         },
-                                        child: Text(
-                                          'Delete',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.red[700],
-                                          ),
-                                        ),
                                         style: TextButton.styleFrom(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 8,
@@ -647,6 +640,13 @@ class _CommentWithRepliesWidgetState extends State<CommentWithRepliesWidget> {
                                           ),
                                           minimumSize: Size.zero,
                                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        child: Text(
+                                          'Delete',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.red[700],
+                                          ),
                                         ),
                                       ),
                                     ),
