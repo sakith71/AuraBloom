@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../utils/validators.dart';
-import 'forgot-password-dialog.dart';
+import '../widgets/forgot-password-dialog.dart';
 import '../screens/signup-screen.dart';
 import '../screens/home-screen.dart';
+import '../screens/personal-info-screen.dart';
+import '../services/auth-service.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key});
@@ -16,8 +18,9 @@ class _LoginFormState extends State<LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _authService = AuthService();
   bool _isLoading = false;
-  bool _passwordVisible = false; // Toggle for password visibility
+  bool _passwordVisible = false;
 
   @override
   void dispose() {
@@ -36,17 +39,29 @@ class _LoginFormState extends State<LoginForm> {
       String password = _passwordController.text.trim();
 
       try {
-        UserCredential userCredential = await FirebaseAuth.instance
-            .signInWithEmailAndPassword(email: email, password: password);
+        User? user = await _authService.signInWithEmail(email, password);
 
-        if (userCredential.user != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) => HomeScreen(userId: userCredential.user!.uid),
-            ),
-          );
+        if (user != null) {
+          // Check if user has completed onboarding
+          bool hasCompletedOnboarding = await _authService.hasCompletedOnboarding();
+
+          if (hasCompletedOnboarding) {
+            // If onboarding is completed, go to home
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HomeScreen(userId: user.uid),
+              ),
+            );
+          } else {
+            // If onboarding is not completed, navigate to personal info screen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PersonalInfoScreen(userId: user.uid),
+              ),
+            );
+          }
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -62,6 +77,7 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
+    // Rest of the build method stays the same
     return Form(
       key: _formKey,
       child: Column(
@@ -130,7 +146,7 @@ class _LoginFormState extends State<LoginForm> {
               ),
               child: TextFormField(
                 controller: _passwordController,
-                obscureText: !_passwordVisible, // Updated to use toggle
+                obscureText: !_passwordVisible,
                 decoration: InputDecoration(
                   hintText: 'Enter Password',
                   filled: true,
@@ -170,8 +186,9 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
           ),
+          
+          // Rest of the UI stayed the same
           const SizedBox(height: 10),
-          // Forgot Password
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -196,7 +213,6 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 20),
-          // Login Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -221,7 +237,6 @@ class _LoginFormState extends State<LoginForm> {
             ),
           ),
           const SizedBox(height: 10),
-          // Sign Up Link
           const Text(
             "Don't have an account?",
             style: TextStyle(color: Colors.black45),

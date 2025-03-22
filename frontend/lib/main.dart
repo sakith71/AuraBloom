@@ -6,6 +6,7 @@ import 'screens/login-page.dart';
 import 'screens/signup-screen.dart';
 import 'screens/home-screen.dart';
 import 'screens/community/community-screen.dart';
+import 'screens/personal-info-screen.dart';
 import 'wrapper.dart';
 
 void main() async {
@@ -44,6 +45,10 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const HomeScreen(userId: 'someUserId'),
         '/community': (context) => const CommunityScreen(),
+        '/personal_info': (context) {
+          final userId = ModalRoute.of(context)?.settings.arguments as String;
+          return PersonalInfoScreen(userId: userId);
+        },
       },
     );
   }
