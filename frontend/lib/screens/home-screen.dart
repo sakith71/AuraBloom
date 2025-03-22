@@ -72,7 +72,7 @@ class _AnimatedWaveSectionState extends State<AnimatedWaveSection>
               Text(
                 'Period:',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 14, // Reduced from 16
                   color: Colors.grey[800],
                   fontWeight: FontWeight.w400,
                 ),
@@ -81,7 +81,7 @@ class _AnimatedWaveSectionState extends State<AnimatedWaveSection>
               Text(
                 widget.periodStatus,
                 style: const TextStyle(
-                  fontSize: 34,
+                  fontSize: 30, // Reduced from 34
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),
@@ -92,7 +92,7 @@ class _AnimatedWaveSectionState extends State<AnimatedWaveSection>
                   child: Text(
                     widget.periodSubtext,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13, // Reduced from 14
                       fontWeight: FontWeight.w400,
                       color: Colors.grey[700],
                     ),
@@ -347,72 +347,67 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final DateTime now = DateTime.now();
     final String todayFormatted = CalendarUtils.formatToYYYYMMDD(now);
+    final String yesterdayFormatted = CalendarUtils.formatToYYYYMMDD(
+      now.subtract(const Duration(days: 1)),
+    );
 
-    // Check if today is marked as a period day
+    // Convert all period dates to DateTime objects for comparison
+    List<DateTime> allPeriodDates = [];
+    for (String dateKey in _selectedDates) {
+      try {
+        if (dateKey.contains('-')) {
+          // Handle two possible formats
+          DateTime? date;
+          if (dateKey.split('-').length == 3) {
+            // Format like "January-01-2023"
+            final parts = dateKey.split('-');
+            date = CalendarUtils.parseDisplayDate(
+              '${parts[0]} ${parts[1]}, ${parts[2]}',
+            );
+          } else {
+            // Format like "2023-01-01"
+            date = DateTime.parse(dateKey);
+          }
+
+          if (date != null) {
+            allPeriodDates.add(DateTime(date.year, date.month, date.day));
+          }
+        }
+      } catch (e) {
+        print('Error parsing date: $e');
+      }
+    }
+    allPeriodDates.sort();
+
+    // Check if today is a period day
     if (_selectedDates.contains(todayFormatted)) {
       _isInPeriod = true;
 
-      // Convert all dateKeys to DateTime objects and sort them
-      List<String> sortedDates = _selectedDates.toList();
-      sortedDates.sort();
+      // Find the current period sequence
+      List<DateTime> currentPeriodSequence = [];
+      DateTime today = DateTime(now.year, now.month, now.day);
+      currentPeriodSequence.add(today);
 
-      // Find consecutive period days leading up to today
-      List<String> currentPeriodDays = [];
-      String? firstDay;
-
-      // First, find all consecutive days that include today
-      for (int i = 0; i < sortedDates.length; i++) {
-        if (sortedDates[i] == todayFormatted) {
-          // Found today - now go backward to find the first day of this period
-          currentPeriodDays.add(todayFormatted);
-
-          // Check previous days
-          int j = i - 1;
-          DateTime prevDate = now.subtract(const Duration(days: 1));
-
-          while (j >= 0) {
-            String prevDateFormatted = CalendarUtils.formatToYYYYMMDD(prevDate);
-
-            if (sortedDates.contains(prevDateFormatted)) {
-              currentPeriodDays.insert(0, prevDateFormatted);
-              prevDate = prevDate.subtract(const Duration(days: 1));
-              j--;
-            } else {
-              // Found a gap, this is the start of the period
-              break;
-            }
-          }
-
-          // Now go forward to capture remaining days if needed
-          int k = i + 1;
-          DateTime nextDate = now.add(const Duration(days: 1));
-
-          while (k < sortedDates.length) {
-            String nextDateFormatted = CalendarUtils.formatToYYYYMMDD(nextDate);
-
-            if (sortedDates.contains(nextDateFormatted)) {
-              currentPeriodDays.add(nextDateFormatted);
-              nextDate = nextDate.add(const Duration(days: 1));
-              k++;
-            } else {
-              // Found a gap, this is the end of the period
-              break;
-            }
-          }
-
-          firstDay = currentPeriodDays.first;
-          break;
-        }
+      // Search backward to find start of period
+      DateTime checkDate = today.subtract(const Duration(days: 1));
+      while (allPeriodDates.any(
+        (date) =>
+            date.year == checkDate.year &&
+            date.month == checkDate.month &&
+            date.day == checkDate.day,
+      )) {
+        currentPeriodSequence.insert(0, checkDate);
+        checkDate = checkDate.subtract(const Duration(days: 1));
       }
 
-      if (firstDay != null) {
-        // Calculate which day of period this is
-        DateTime firstDate = DateTime.parse(firstDay);
-        int dayNumber = now.difference(firstDate).inDays + 1;
+      // Calculate day of period
+      if (currentPeriodSequence.isNotEmpty) {
+        DateTime firstDayOfPeriod = currentPeriodSequence.first;
+        int dayNumber = today.difference(firstDayOfPeriod).inDays + 1;
 
         setState(() {
           _currentPeriodDay = dayNumber;
-          _periodStatus = 'Day $_currentPeriodDay';
+          _periodStatus = 'Day $dayNumber';
 
           if (dayNumber == 1) {
             _periodSubtext = 'Your period is starting today';
@@ -420,93 +415,97 @@ class _HomeScreenState extends State<HomeScreen> {
             _periodSubtext = 'of $_lastPeriodDuration days (est.)';
           }
         });
-      } else {
-        // Fallback if calculation fails
+      }
+      return;
+    }
+    // Check if yesterday was marked and we need to show Day 2 today
+    else if (_selectedDates.contains(yesterdayFormatted)) {
+      bool isPeriodContinuing = true;
+
+      if (isPeriodContinuing) {
+        _isInPeriod = true;
         setState(() {
-          _periodStatus = 'Active';
-          _periodSubtext = 'Your period is active';
+          _currentPeriodDay = 2; // It's day 2 since yesterday was day 1
+          _periodStatus = 'Day 2';
+          _periodSubtext = 'of $_lastPeriodDuration days (est.)';
         });
-      }
-    } else {
-      // Not currently in period
-      _isInPeriod = false;
-
-      // Check if next period prediction is available
-      if (_nextPeriodStartDate != null) {
-        int daysUntil = CalendarUtils.calculateDaysUntil(_nextPeriodStartDate!);
-
-        if (daysUntil <= 0) {
-          // Period should be starting soon/today
-          setState(() {
-            _periodStatus = 'Expected Today';
-            _periodSubtext = 'Your period may start today';
-          });
-        } else {
-          // Show countdown to next period
-          setState(() {
-            _daysUntilNextPeriod = daysUntil;
-            _periodStatus = '$daysUntil Days Away';
-            _periodSubtext = 'Until your next period';
-          });
-        }
-      } else {
-        // No prediction available
-        setState(() {
-          _periodStatus = 'No Prediction';
-          _periodSubtext = 'Check back soon';
-        });
-      }
-
-      // Check if period recently ended
-      List<String> convertedDates = [];
-      for (String dateKey in _selectedDates) {
-        // Make sure we convert dateKey to YYYY-MM-DD format if needed
-        final parts = dateKey.split('-');
-        if (parts.length == 3) {
-          // Format is like "January-01-2023", convert to DateTime then to YYYY-MM-DD
-          final month = parts[0];
-          final day = parts[1];
-          final year = parts[2];
-
-          final DateTime? date = CalendarUtils.parseDisplayDate(
-            '$month $day, $year',
-          );
-          if (date != null) {
-            convertedDates.add(CalendarUtils.formatToYYYYMMDD(date));
-          }
-        } else {
-          // Already in expected format
-          convertedDates.add(dateKey);
-        }
-      }
-
-      convertedDates.sort();
-
-      // Find the last period day
-      DateTime? lastPeriodDay;
-      for (String date in convertedDates) {
-        try {
-          lastPeriodDay = DateTime.parse(date);
-        } catch (e) {
-          // Skip invalid dates
-        }
-      }
-
-      if (lastPeriodDay != null) {
-        // Check if period recently ended (within 3 days)
-        int daysSinceEnd = now.difference(lastPeriodDay).inDays;
-
-        if (daysSinceEnd <= 3) {
-          setState(() {
-            _periodStatus = 'Period Over';
-            _periodSubtext =
-                daysSinceEnd == 0
-                    ? 'Period ended today'
-                    : 'Period ended $daysSinceEnd ${daysSinceEnd == 1 ? 'day' : 'days'} ago';
-          });
-        }
+        return;
       }
     }
+
+    // If we're here, check if prediction indicates we should be in period
+    if (_nextPeriodStartDate != null) {
+      final predictedStart = DateTime(
+        _nextPeriodStartDate!.year,
+        _nextPeriodStartDate!.month,
+        _nextPeriodStartDate!.day,
+      );
+
+      final today = DateTime(now.year, now.month, now.day);
+      final differenceInDays = today.difference(predictedStart).inDays;
+
+      if (differenceInDays == 0) {
+        // Expected to start today
+        _isInPeriod = true;
+        setState(() {
+          _currentPeriodDay = 1;
+          _periodStatus = 'Day 1';
+          _periodSubtext = 'Your period may start today';
+        });
+        return;
+      } else if (differenceInDays == 1) {
+        // Expected to have started yesterday, should be day 2 today
+        _isInPeriod = true;
+        setState(() {
+          _currentPeriodDay = 2;
+          _periodStatus = 'Day 2';
+          _periodSubtext = 'Your period was expected to start yesterday';
+        });
+        return;
+      } else if (differenceInDays < 0) {
+        // Future prediction
+        _isInPeriod = false;
+        setState(() {
+          _daysUntilNextPeriod = -differenceInDays;
+          _periodStatus = '$_daysUntilNextPeriod Days Away';
+          _periodSubtext = 'Until your next period';
+        });
+        return;
+      } else if (differenceInDays > 1) {
+        // Period was expected to start more than 1 day ago
+        _isInPeriod = false;
+        setState(() {
+          _periodStatus = 'Expected $differenceInDays Days Ago';
+          _periodSubtext = 'Your period was expected to start';
+        });
+        return;
+      }
+    }
+
+    // Check if period recently ended
+    if (allPeriodDates.isNotEmpty) {
+      final DateTime lastPeriodDate = allPeriodDates.last;
+      final int daysSinceEnd = now.difference(lastPeriodDate).inDays;
+
+      if (daysSinceEnd <= 3 && !_isInPeriod) {
+        setState(() {
+          _isInPeriod = false;
+          _periodStatus = 'Period Over';
+          _periodSubtext =
+              daysSinceEnd == 1
+                  ? 'Period ended yesterday'
+                  : 'Period ended $daysSinceEnd days ago';
+        });
+        return;
+      }
+    }
+
+    // Default state if no other conditions match
+    setState(() {
+      _isInPeriod = false;
+      _periodStatus = 'No Prediction';
+      _periodSubtext = 'Check back soon';
+    });
   }
 
   Future<void> _fetchCycleData() async {
@@ -624,7 +623,6 @@ class _HomeScreenState extends State<HomeScreen> {
           const TipOfTheDay(),
           const SizedBox(height: 20),
           const PredictionWidget(),
-
           PreviousCycleBox(
             lastCycleStartDate: _lastCycleStartDate,
             cycleDuration: _lastCycleDuration,

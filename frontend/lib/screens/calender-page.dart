@@ -504,27 +504,47 @@ class _CalendarPageState extends State<CalendarPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row
-            Padding(
+            // Header row - MODIFIED to match Health Tips style
+            Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
-                vertical: 8.0,
+                vertical: 12.0,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    isEditing ? 'Edit Period Dates' : 'Period Calendar',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  // Back arrow - styled like in Health Tips page
+                  GestureDetector(
+                    onTap: () {
+                      if (isEditing && hasChanges) {
+                        // If editing with changes, show confirmation
+                        _showExitConfirmation();
+                      } else if (isEditing) {
+                        // If editing but no changes, just exit edit mode
+                        setState(() {
+                          isEditing = false;
+                        });
+                      } else {
+                        // In normal mode (Period Calendar), navigate back to home
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      color: const Color.fromARGB(255, 240, 99, 153),
+                      size: 22,
                     ),
                   ),
-                  if (isEditing)
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: toggleEditMode,
+                  const SizedBox(width: 12),
+                  // Title in pink color
+                  Text(
+                    isEditing ? 'Edit Period Dates' : 'Period Calendar',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: const Color.fromARGB(255, 240, 99, 153),
                     ),
+                  ),
+                  // Removed the close icon for edit mode
                 ],
               ),
             ),
