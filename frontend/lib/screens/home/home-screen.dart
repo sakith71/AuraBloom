@@ -189,6 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Period tracking variables
   String _periodStatus = '';
   String _periodSubtext = '';
+  bool _isInPeriod = false;
   int _daysUntilNextPeriod = 0;
 
   // Track the current week dates
@@ -338,12 +339,16 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _periodStatus = 'No Data';
         _periodSubtext = 'Add your period dates';
+        _isInPeriod = false;
       });
       return;
     }
 
     final DateTime now = DateTime.now();
     final String todayFormatted = CalendarUtils.formatToYYYYMMDD(now);
+    final String yesterdayFormatted = CalendarUtils.formatToYYYYMMDD(
+      now.subtract(const Duration(days: 1)),
+    );
 
     // Convert all period dates to DateTime objects for comparison
     List<DateTime> allPeriodDates = [];
@@ -375,11 +380,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Check if today is a period day
     if (_selectedDates.contains(todayFormatted)) {
+      _isInPeriod = true;
 
-      // Find the current period sequence by working backwards
+      // Find the current period sequence
+      List<DateTime> currentPeriodSequence = [];
       DateTime today = DateTime(now.year, now.month, now.day);
-      List<DateTime> currentPeriodSequence = [today];
-      
+      currentPeriodSequence.add(today);
+
       // Search backward to find start of period
       DateTime checkDate = today.subtract(const Duration(days: 1));
       while (allPeriodDates.any(
@@ -393,70 +400,32 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // Calculate day of period
-      int dayNumber = currentPeriodSequence.length;
-      
-      setState(() {
-        _periodStatus = 'Day $dayNumber';
+      if (currentPeriodSequence.isNotEmpty) {
+        DateTime firstDayOfPeriod = currentPeriodSequence.first;
+        int dayNumber = today.difference(firstDayOfPeriod).inDays + 1;
 
-        if (dayNumber == 1) {
-          _periodSubtext = 'Your period is starting today';
-        } else {
-          _periodSubtext = 'of $_lastPeriodDuration days (est.)';
-        }
-      });
+        setState(() {
+          _periodStatus = 'Day $dayNumber';
+
+          if (dayNumber == 1) {
+            _periodSubtext = 'Your period is starting today';
+          } else {
+            _periodSubtext = 'of $_lastPeriodDuration days (est.)';
+          }
+        });
+      }
       return;
     }
-    
-    // If today is not marked, check if we're in a period by looking for recent consecutive days
-    // This handles cases where the user hasn't marked today yet but is still in their period
-    if (!_selectedDates.contains(todayFormatted) && allPeriodDates.isNotEmpty) {
-      // Find most recent marked date
-      DateTime mostRecent = allPeriodDates.last;
-      int daysSinceLastMarked = now.difference(mostRecent).inDays;
-      
-      // If the most recent date was within the last 2 days, we might still be in period
-      if (daysSinceLastMarked <= 2) {
-        // Count how many consecutive days were marked before this
-        List<DateTime> recentPeriodDays = [mostRecent];
-        DateTime checkDate = mostRecent.subtract(const Duration(days: 1));
-        
-        while (allPeriodDates.any(
-          (date) =>
-              date.year == checkDate.year &&
-              date.month == checkDate.month &&
-              date.day == checkDate.day,
-        )) {
-          recentPeriodDays.insert(0, checkDate);
-          checkDate = checkDate.subtract(const Duration(days: 1));
-        }
-        
-        int consecutiveDays = recentPeriodDays.length;
-        
-        // If we have marked consecutive days recently, and we're still within the expected period length
-        if (consecutiveDays > 0 && consecutiveDays + daysSinceLastMarked <= _lastPeriodDuration) {
-          setState(() {
-            _periodStatus = 'Day ${consecutiveDays + daysSinceLastMarked}';
-            _periodSubtext = 'of $_lastPeriodDuration days (est.)';
-          });
-          return;
-        }
-        // If the period might be over
-        else if (daysSinceLastMarked <= 2 && consecutiveDays >= _lastPeriodDuration - 2) {
-          setState(() {
-            _periodStatus = 'Period Ending';
-            _periodSubtext = 'Your period may be ending';
-          });
-          return;
-        }
-      }
-      
-      // If period recently ended (within 3 days)
-      if (daysSinceLastMarked <= 3) {
+    // Check if yesterday was marked and we need to show Day 2 today
+    else if (_selectedDates.contains(yesterdayFormatted)) {
+      bool isPeriodContinuing = true;
+
+      if (isPeriodContinuing) {
+        _isInPeriod = true;
         setState(() {
-          _periodStatus = 'Period Over';
-          _periodSubtext = daysSinceLastMarked == 1
-              ? 'Period ended yesterday'
-              : 'Period ended $daysSinceLastMarked days ago';
+          // It's day 2 since yesterday was day 1
+          _periodStatus = 'Day 2';
+          _periodSubtext = 'of $_lastPeriodDuration days (est.)';
         });
         return;
       }
@@ -473,36 +442,55 @@ class _HomeScreenState extends State<HomeScreen> {
       final today = DateTime(now.year, now.month, now.day);
       final differenceInDays = today.difference(predictedStart).inDays;
 
-      // Expected to start today (Day 1)
       if (differenceInDays == 0) {
+        // Expected to start today
+        _isInPeriod = true;
         setState(() {
           _periodStatus = 'Day 1';
           _periodSubtext = 'Your period may start today';
         });
         return;
-      } 
-      // Expected to be on Day 2-5 (based on predicted start and period length)
-      else if (differenceInDays > 0 && differenceInDays < _lastPeriodDuration) {
+      } else if (differenceInDays == 1) {
+        // Expected to have started yesterday, should be day 2 today
+        _isInPeriod = true;
         setState(() {
-          _periodStatus = 'Day ${differenceInDays + 1}';
-          _periodSubtext = 'Based on prediction';
+          _periodStatus = 'Day 2';
+          _periodSubtext = 'Your period was expected to start yesterday';
         });
         return;
-      }
-      // Future prediction
-      else if (differenceInDays < 0) {
+      } else if (differenceInDays < 0) {
+        // Future prediction
+        _isInPeriod = false;
         setState(() {
           _daysUntilNextPeriod = -differenceInDays;
           _periodStatus = '$_daysUntilNextPeriod Days Away';
           _periodSubtext = 'Until your next period';
         });
         return;
-      }
-      // Period was expected but possibly missed/late
-      else if (differenceInDays >= _lastPeriodDuration) {
+      } else if (differenceInDays > 1) {
+        // Period was expected to start more than 1 day ago
+        _isInPeriod = false;
         setState(() {
-          _periodStatus = 'Expected ${differenceInDays - _lastPeriodDuration + 1} Days Ago';
-          _periodSubtext = 'Your period was expected to end';
+          _periodStatus = 'Expected $differenceInDays Days Ago';
+          _periodSubtext = 'Your period was expected to start';
+        });
+        return;
+      }
+    }
+
+    // Check if period recently ended
+    if (allPeriodDates.isNotEmpty) {
+      final DateTime lastPeriodDate = allPeriodDates.last;
+      final int daysSinceEnd = now.difference(lastPeriodDate).inDays;
+
+      if (daysSinceEnd <= 3 && !_isInPeriod) {
+        setState(() {
+          _isInPeriod = false;
+          _periodStatus = 'Period Over';
+          _periodSubtext =
+              daysSinceEnd == 1
+                  ? 'Period ended yesterday'
+                  : 'Period ended $daysSinceEnd days ago';
         });
         return;
       }
@@ -510,6 +498,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Default state if no other conditions match
     setState(() {
+      _isInPeriod = false;
       _periodStatus = 'No Prediction';
       _periodSubtext = 'Check back soon';
     });
