@@ -413,7 +413,10 @@ class _EditHealthInfoScreenState extends State<EditHealthInfoScreen> {
             ),
             child: const Text(
               'Cancel',
-              style: TextStyle(fontSize: 16, color: Colors.purple),
+              style: TextStyle(
+                fontSize: 16,
+                color: Color.fromARGB(255, 0, 0, 0),
+              ),
             ),
           ),
         ),
