@@ -212,6 +212,37 @@ class _CalendarPageState extends State<CalendarPage> {
     // Only allow selecting/deselecting if in editing mode
     if (!isEditing) return;
 
+    // Extract date components from the dateKey (format: "Month-Day-Year")
+    final parts = dateKey.split('-');
+    if (parts.length != 3) return;
+    
+    final monthName = parts[0];
+    final day = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    
+    if (day == null || year == null) return;
+    
+    // Convert month name to month number (1-12)
+    final monthIndex = CalendarUtils.months.indexOf(monthName);
+    if (monthIndex == -1) return;
+    
+    // Create DateTime objects for the selected date and today
+    final selectedDate = DateTime(year, monthIndex + 1, day);
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    
+    // Only allow selecting dates that are on or before today
+    if (selectedDate.isAfter(todayDate)) {
+      // Optional: Show a message that future dates can't be selected
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot mark future dates'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       if (selectedDates.contains(dateKey)) {
         selectedDates.remove(dateKey);
@@ -535,7 +566,7 @@ class _CalendarPageState extends State<CalendarPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row - MODIFIED to match Health Tips style
+            // Header row with conditional back button
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -543,39 +574,37 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               child: Row(
                 children: [
-                  // Back arrow - styled like in Health Tips page
-                  GestureDetector(
-                    onTap: () {
-                      if (isEditing && hasChanges) {
-                        // If editing with changes, show confirmation
-                        _showExitConfirmation();
-                      } else if (isEditing) {
-                        // If editing but no changes, just exit edit mode
-                        setState(() {
-                          isEditing = false;
-                        });
-                      } else {
-                        // In normal mode (Period Calendar), navigate back to home
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                      color: const Color.fromARGB(255, 240, 99, 153),
-                      size: 22,
+                  // Back arrow - only show in edit mode
+                  if (isEditing)
+                    GestureDetector(
+                      onTap: () {
+                        if (hasChanges) {
+                          // If editing with changes, show confirmation
+                          _showExitConfirmation();
+                        } else {
+                          // If editing but no changes, just exit edit mode
+                          setState(() {
+                            isEditing = false;
+                          });
+                        }
+                      },
+                      child: Icon(
+                        Icons.arrow_back_ios,
+                        color: Color(0xFF424242),
+                        size: 24,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                  if (isEditing)
+                    const SizedBox(width: 12),
                   // Title in pink color
                   Text(
                     isEditing ? 'Edit Period Dates' : 'Period Calendar',
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: const Color.fromARGB(255, 240, 99, 153),
+                      color: Color(0xFF424242),
                     ),
                   ),
-                  // Removed the close icon for edit mode
                 ],
               ),
             ),

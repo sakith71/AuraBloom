@@ -188,10 +188,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   const Text(
                     'Community',
                     style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 28,
+                      color: Color(0xFF424242),
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
                     ),
                   ),
                   // Only notification bell icon, plus sign removed
