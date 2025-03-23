@@ -44,6 +44,37 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
   }
 
   void _handleDateSelection(String dateKey) {
+    // Extract date components from the dateKey (format: "Month-Day-Year")
+    final parts = dateKey.split('-');
+    if (parts.length != 3) return;
+    
+    final monthName = parts[0];
+    final day = int.tryParse(parts[1]);
+    final year = int.tryParse(parts[2]);
+    
+    if (day == null || year == null) return;
+    
+    // Convert month name to month number (1-12)
+    final monthIndex = CalendarUtils.months.indexOf(monthName);
+    if (monthIndex == -1) return;
+    
+    // Create DateTime objects for the selected date and today
+    final selectedDate = DateTime(year, monthIndex + 1, day);
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    
+    // Only allow selecting dates that are on or before today
+    if (selectedDate.isAfter(todayDate)) {
+      // Show a message that future dates can't be selected
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot select future dates'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       // Toggle selection
       if (_selectedDates.contains(dateKey)) {
@@ -163,7 +194,7 @@ class _PeriodLoggingScreenState extends State<PeriodLoggingScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Please select all days of your period',
+                  'Enter the start and end dates for each of your last three period cycles',
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
                 const SizedBox(height: 30),
