@@ -270,7 +270,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Color(0xFFFF5B9D)),
         actions: [
           TextButton(
             onPressed: _markAllAsRead,

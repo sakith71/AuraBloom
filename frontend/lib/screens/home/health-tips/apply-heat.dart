@@ -16,7 +16,7 @@ class ApplyHeatDetailScreen extends StatelessWidget {
             fontSize: 22,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFCF0F7),
         elevation: 0.5,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.pink[300]),

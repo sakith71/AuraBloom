@@ -223,9 +223,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Post Detail'),
+        title: const Text(
+          'Post Details',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: Color(0xFFFF5B9D),
         elevation: 1,
         actions: [
           // More options menu
@@ -709,7 +712,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           icon: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.pink,
+                              color: Color(0xFFFF5B9D),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
