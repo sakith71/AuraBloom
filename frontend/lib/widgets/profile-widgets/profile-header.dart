@@ -261,41 +261,67 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     // Using separate variable to track dialog state
     bool isUpdating = false;
 
-    // Get the screen size to make the dialog responsive
-    final screenSize = MediaQuery.of(context).size;
-    final dialogWidth = screenSize.width * 0.85;
+    // Handle keyboard visibility
+    final mediaQuery = MediaQuery.of(context);
+    final availableHeight =
+        mediaQuery.size.height - mediaQuery.viewInsets.bottom;
+    final isKeyboardVisible = mediaQuery.viewInsets.bottom > 0;
 
     showDialog(
       context: context,
-      builder:
-          (dialogContext) => StatefulBuilder(
-            builder:
-                (builderContext, setDialogState) => Dialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                  child: Container(
-                    width: dialogWidth,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
-                          ),
+      barrierDismissible:
+          !isKeyboardVisible, // Prevent dismissing when keyboard is up
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (builderContext, setDialogState) {
+            // Get updated mediaQuery
+            final updatedMediaQuery = MediaQuery.of(builderContext);
+            final keyboardHeight = updatedMediaQuery.viewInsets.bottom;
+            final isKeyboardOpen = keyboardHeight > 0;
+
+            return Dialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical:
+                    isKeyboardOpen
+                        ? 40
+                        : 24, // More top padding when keyboard is open
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              child: Container(
+                width: updatedMediaQuery.size.width * 0.9,
+                constraints: BoxConstraints(
+                  maxHeight:
+                      isKeyboardOpen
+                          ? updatedMediaQuery.size.height - keyboardHeight - 80
+                          : updatedMediaQuery.size.height * 0.8,
+                ),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Edit Profile',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
                         ),
-                        const SizedBox(height: 20),
-                        // Profile Picture section
+                      ),
+                      const SizedBox(height: 20),
+                      // Profile Picture section
+                      if (!isKeyboardOpen ||
+                          availableHeight >
+                              500) // Hide profile pic when space is limited
                         GestureDetector(
                           onTap: () async {
                             await _pickImage();
@@ -350,310 +376,309 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                             ],
                           ),
                         ),
+                      if (!isKeyboardOpen || availableHeight > 500)
                         const SizedBox(height: 24),
-                        // Name field
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Name',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF666666),
-                              ),
+                      // Name field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Name',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF666666),
                             ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: nameController,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: const Color.fromARGB(
-                                      255,
-                                      240,
-                                      99,
-                                      153,
-                                    ),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: nameController,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Email field
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Email',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF666666),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: emailController,
-                              enabled:
-                                  false, // Email changes require authentication, so disable it here
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: const Color.fromARGB(
-                                      255,
-                                      240,
-                                      99,
-                                      153,
-                                    ),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                filled: true,
-                                fillColor:
-                                    Colors
-                                        .grey
-                                        .shade200, // Darker background to indicate disabled
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
                                 ),
                               ),
-                              keyboardType: TextInputType.emailAddress,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        // Buttons
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextButton(
-                                onPressed:
-                                    isUpdating
-                                        ? null
-                                        : () => Navigator.pop(dialogContext),
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    side: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    color: Color(0xFF666666),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed:
-                                    isUpdating
-                                        ? null
-                                        : () async {
-                                          if (nameController.text
-                                              .trim()
-                                              .isEmpty) {
-                                            ScaffoldMessenger.of(
-                                              dialogContext,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Name cannot be empty',
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                            return;
-                                          }
-
-                                          // Update dialog state
-                                          setDialogState(() {
-                                            isUpdating = true;
-                                          });
-
-                                          try {
-                                            if (currentUserModel != null &&
-                                                _authService.currentUserId !=
-                                                    null) {
-                                              // Create updated user model
-                                              final updatedUser = UserModel(
-                                                uid: currentUserModel.uid,
-                                                name:
-                                                    nameController.text.trim(),
-                                                age: currentUserModel.age,
-                                                height: currentUserModel.height,
-                                                weight: currentUserModel.weight,
-                                                bmi: currentUserModel.bmi,
-                                                isRegularPeriod:
-                                                    currentUserModel
-                                                        .isRegularPeriod,
-                                                crampsExperience:
-                                                    currentUserModel
-                                                        .crampsExperience,
-                                                symptomDuration:
-                                                    currentUserModel
-                                                        .symptomDuration,
-                                                additionalSymptoms:
-                                                    currentUserModel
-                                                        .additionalSymptoms,
-                                                cycleLength:
-                                                    currentUserModel
-                                                        .cycleLength,
-                                                periodLength:
-                                                    currentUserModel
-                                                        .periodLength,
-                                                lastPeriodDate:
-                                                    currentUserModel
-                                                        .lastPeriodDate,
-                                              );
-
-                                              // Save to Firestore
-                                              await _firestoreService
-                                                  .saveUserProfile(updatedUser);
-
-                                              // Close dialog first
-                                              Navigator.pop(dialogContext);
-
-                                              // Then update state if widget is still mounted
-                                              if (mounted) {
-                                                setState(() {
-                                                  _userModel = updatedUser;
-                                                });
-
-                                                // Show success message after dialog is closed
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Profile updated successfully',
-                                                    ),
-                                                    backgroundColor:
-                                                        Color.fromARGB(
-                                                          255,
-                                                          240,
-                                                          99,
-                                                          153,
-                                                        ),
-                                                  ),
-                                                );
-                                              }
-                                            } else {
-                                              // Just close the dialog if we don't have a user model
-                                              Navigator.pop(dialogContext);
-                                            }
-                                          } catch (e) {
-                                            print('Error updating profile: $e');
-
-                                            // Only update dialog state if still in dialog
-                                            setDialogState(() {
-                                              isUpdating = false;
-                                            });
-
-                                            ScaffoldMessenger.of(
-                                              dialogContext,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Error updating profile: $e',
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                          }
-                                        },
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  backgroundColor: const Color.fromARGB(
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: const Color.fromARGB(
                                     255,
                                     240,
                                     99,
                                     153,
-                                  ), // Updated color
-                                  elevation: 0,
+                                  ),
+                                  width: 1.5,
                                 ),
-                                child:
-                                    isUpdating
-                                        ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                        : const Text(
-                                          'Save',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Email field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Email',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF666666),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: emailController,
+                            enabled:
+                                false, // Email changes require authentication, so disable it here
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    240,
+                                    99,
+                                    153,
+                                  ),
+                                  width: 1.5,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor:
+                                  Colors
+                                      .grey
+                                      .shade200, // Darker background to indicate disabled
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed:
+                                  isUpdating
+                                      ? null
+                                      : () => Navigator.pop(dialogContext),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Color(0xFF666666),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed:
+                                  isUpdating
+                                      ? null
+                                      : () async {
+                                        if (nameController.text
+                                            .trim()
+                                            .isEmpty) {
+                                          ScaffoldMessenger.of(
+                                            dialogContext,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Name cannot be empty',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        // Update dialog state
+                                        setDialogState(() {
+                                          isUpdating = true;
+                                        });
+
+                                        try {
+                                          if (currentUserModel != null &&
+                                              _authService.currentUserId !=
+                                                  null) {
+                                            // Create updated user model
+                                            final updatedUser = UserModel(
+                                              uid: currentUserModel.uid,
+                                              name: nameController.text.trim(),
+                                              age: currentUserModel.age,
+                                              height: currentUserModel.height,
+                                              weight: currentUserModel.weight,
+                                              bmi: currentUserModel.bmi,
+                                              isRegularPeriod:
+                                                  currentUserModel
+                                                      .isRegularPeriod,
+                                              crampsExperience:
+                                                  currentUserModel
+                                                      .crampsExperience,
+                                              symptomDuration:
+                                                  currentUserModel
+                                                      .symptomDuration,
+                                              additionalSymptoms:
+                                                  currentUserModel
+                                                      .additionalSymptoms,
+                                              cycleLength:
+                                                  currentUserModel.cycleLength,
+                                              periodLength:
+                                                  currentUserModel.periodLength,
+                                              lastPeriodDate:
+                                                  currentUserModel
+                                                      .lastPeriodDate,
+                                            );
+
+                                            // Save to Firestore
+                                            await _firestoreService
+                                                .saveUserProfile(updatedUser);
+
+                                            // Close dialog first
+                                            Navigator.pop(dialogContext);
+
+                                            // Then update state if widget is still mounted
+                                            if (mounted) {
+                                              setState(() {
+                                                _userModel = updatedUser;
+                                              });
+
+                                              // Show success message after dialog is closed
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Profile updated successfully',
+                                                  ),
+                                                  backgroundColor:
+                                                      Color.fromARGB(
+                                                        255,
+                                                        240,
+                                                        99,
+                                                        153,
+                                                      ),
+                                                ),
+                                              );
+                                            }
+                                          } else {
+                                            // Just close the dialog if we don't have a user model
+                                            Navigator.pop(dialogContext);
+                                          }
+                                        } catch (e) {
+                                          print('Error updating profile: $e');
+
+                                          // Only update dialog state if still in dialog
+                                          setDialogState(() {
+                                            isUpdating = false;
+                                          });
+
+                                          ScaffoldMessenger.of(
+                                            dialogContext,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Error updating profile: $e',
+                                              ),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
+                                      },
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  240,
+                                  99,
+                                  153,
+                                ),
+                                elevation: 0,
+                              ),
+                              child:
+                                  isUpdating
+                                      ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Text(
+                                        'Save',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-          ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
