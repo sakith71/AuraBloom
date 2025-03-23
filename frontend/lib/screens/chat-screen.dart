@@ -121,16 +121,9 @@ class _PeriodPainChatScreenState extends State<PeriodPainChatScreen> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: Color(0xFF424242),
           ),
         ),
-        // actions: [
-        //   // Add debug button
-        //   IconButton(
-        //     icon: const Icon(Icons.bug_report),
-        //     onPressed: () => showNetworkDebugInfo(context),
-        //   ),
-        // ],
       ),
       body: Column(
         children: [
