@@ -99,7 +99,6 @@ class ChatInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define the pink color used in "Save Daily Entry" button
     final Color primaryPink = const Color(0xFFFF5B9D);
 
     return Container(
@@ -138,7 +137,7 @@ class ChatInputField extends StatelessWidget {
             ),
           ),
           SizedBox(width: 8),
-          // Updated with custom chevron arrow shape from reference image
+          // Updated with circular button matching post detail screen
           GestureDetector(
             onTap: () {
               if (controller.text.isNotEmpty) {
@@ -150,14 +149,12 @@ class ChatInputField extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 color: primaryPink,
-                borderRadius: BorderRadius.circular(12),
+                shape:
+                    BoxShape
+                        .circle, // Change from borderRadius to circular shape
               ),
               child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CustomPaint(painter: TriangleArrowPainter()),
-                ),
+                child: Icon(Icons.send, color: Colors.white, size: 20),
               ),
             ),
           ),

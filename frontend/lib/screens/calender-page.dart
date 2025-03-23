@@ -126,7 +126,8 @@ class _CalendarPageState extends State<CalendarPage> {
         // Use the average period length, not the cycle length
         // Period length is how many days bleeding lasts
         final periodLength = _averagePeriodLength; // Use the value from stats
-        final cycleLength = _averageCycleLength; // Use for calculating future cycles
+        final cycleLength =
+            _averageCycleLength; // Use for calculating future cycles
 
         // Set the next period date for display
         setState(() {
@@ -156,10 +157,10 @@ class _CalendarPageState extends State<CalendarPage> {
     int numberOfCycles,
   ) {
     Set<String> allPredictedDates = {};
-    
+
     // Start with the first predicted cycle
     DateTime currentCycleStart = firstCycleStart;
-    
+
     // Generate dates for each cycle
     for (int cycle = 0; cycle < numberOfCycles; cycle++) {
       // Add all the dates for this period
@@ -173,7 +174,7 @@ class _CalendarPageState extends State<CalendarPage> {
         String dateKey = '$monthName-$dayNum-$year';
         allPredictedDates.add(dateKey);
       }
-      
+
       // Move to the start of the next cycle
       currentCycleStart = currentCycleStart.add(Duration(days: cycleLength));
     }
@@ -184,25 +185,27 @@ class _CalendarPageState extends State<CalendarPage> {
   void _scrollToCurrentMonth() {
     // Make sure scroll controller is ready
     if (!_scrollController.hasClients) return;
-    
+
     // The current month is exactly at the middle index (6) for a -6 to +6 range
     final int currentMonthIndex = 6; // Current month (i=0) is at index 6
-    
+
     // Since we want to ensure the current month is visible on screen,
     // let's jump directly to it
-    
+
     // Determine scroll position by approximate calculation - this is more reliable
     final double estimatedPositionPerMonth = 350.0; // Approximate height
-    
+
     // Target the exact position of the current month
-    double targetPosition = (currentMonthIndex - 2) * estimatedPositionPerMonth; //(currentMonthIndex - 2)-looking at 2 months first.
-    
+    double targetPosition =
+        (currentMonthIndex - 2) *
+        estimatedPositionPerMonth; //(currentMonthIndex - 2)-looking at 2 months first.
+
     // Ensure we don't scroll beyond limits
     targetPosition = targetPosition.clamp(
-      0.0, 
-      _scrollController.position.maxScrollExtent
+      0.0,
+      _scrollController.position.maxScrollExtent,
     );
-    
+
     // Use jumpTo instead of animateTo for immediate positioning
     // This eliminates any timing issues with animation
     _scrollController.jumpTo(targetPosition);
@@ -215,22 +218,22 @@ class _CalendarPageState extends State<CalendarPage> {
     // Extract date components from the dateKey (format: "Month-Day-Year")
     final parts = dateKey.split('-');
     if (parts.length != 3) return;
-    
+
     final monthName = parts[0];
     final day = int.tryParse(parts[1]);
     final year = int.tryParse(parts[2]);
-    
+
     if (day == null || year == null) return;
-    
+
     // Convert month name to month number (1-12)
     final monthIndex = CalendarUtils.months.indexOf(monthName);
     if (monthIndex == -1) return;
-    
+
     // Create DateTime objects for the selected date and today
     final selectedDate = DateTime(year, monthIndex + 1, day);
     final today = DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
-    
+
     // Only allow selecting dates that are on or before today
     if (selectedDate.isAfter(todayDate)) {
       // Optional: Show a message that future dates can't be selected
@@ -589,13 +592,12 @@ class _CalendarPageState extends State<CalendarPage> {
                         }
                       },
                       child: Icon(
-                        Icons.arrow_back_ios,
+                        Icons.arrow_back_outlined,
                         color: Color(0xFF424242),
                         size: 24,
                       ),
                     ),
-                  if (isEditing)
-                    const SizedBox(width: 12),
+                  if (isEditing) const SizedBox(width: 12),
                   // Title in pink color
                   Text(
                     isEditing ? 'Edit Period Dates' : 'Period Calendar',
